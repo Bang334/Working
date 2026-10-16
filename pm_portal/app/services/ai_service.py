@@ -5,7 +5,7 @@ import logging
 import re
 import urllib.error
 import urllib.request
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from app.config import CANDIDATE_MODELS, DEFAULT_GEMINI_KEY, DEFAULT_MODEL, DEFAULT_GEMINI_KEYS
 from app.services.payment_schedule_service import resolve_payment_schedule
