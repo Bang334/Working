@@ -89,11 +89,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    CREATE TABLE IF NOT EXISTS system_settings (
-        setting_key TEXT PRIMARY KEY,
-        setting_value TEXT
-    );
-
     CREATE INDEX IF NOT EXISTS idx_contracts_code ON contracts(contract_code);
     CREATE INDEX IF NOT EXISTS idx_milestones_contract ON payment_milestones(contract_code);
     CREATE INDEX IF NOT EXISTS idx_documents_contract ON documents(contract_code);
@@ -124,24 +119,10 @@ def seed_database():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Check if user explicitly cleared dummy/sample contracts
-    try:
-        cursor.execute("SELECT setting_value FROM system_settings WHERE setting_key = 'cleared_seed_data'")
-        setting_row = cursor.fetchone()
-        if setting_row and setting_row[0] == '1':
-            # User has cleared dummy contracts, DO NOT recreate them!
-            conn.close()
-            return
-    except Exception:
-        pass
-
     # Check if contracts already populated
     cursor.execute("SELECT COUNT(*) FROM contracts")
     if cursor.fetchone()[0] > 0:
         # Tables already seeded, rescan documents only
-        scan_and_index_documents(conn)
-        conn.close()
-        return
         scan_and_index_documents(conn)
         conn.close()
         return
@@ -1023,4 +1004,22 @@ def clear_all_contracts() -> int:
     cursor.execute("SELECT COUNT(*) FROM contracts")
     count = cursor.fetchone()[0]
 
-    # Delete physi
+    # Delete physical files for all documents
+    cursor.execute("SELECT file_path FROM documents")
+    for d in cursor.fetchall():
+        try:
+            fp_str = d["file_path"]
+            if fp_str:
+                p = Path(fp_str)
+                if p.exists() and p.is_file():
+                    p.unlink(missing_ok=True)
+        except Exception as err:
+            logger.warning("Error deleting file during clear_all: %s", err)
+
+    cursor.execute("DELETE FROM payment_milestones")
+    cursor.execute("DELETE FROM documents")
+    cursor.execute("DELETE FROM contracts")
+    conn.commit()
+    conn.close()
+    return count
+
