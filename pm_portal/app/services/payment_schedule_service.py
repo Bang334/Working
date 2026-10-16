@@ -140,14 +140,34 @@ def _extract_explicit_schedule(
             if not m_pct:
                 break
             pcts.append(_clean_percentage(m_pct.group(1)))
-            m_day = _DAYS_RE.search(block)
-            dls.append(int(m_day.group(1)) if m_day else None)
+            after_pct = block[m_pct.end():]
+            m_day = _DAYS_RE.search(after_pct)
+            m_deadline = None
+            if m_day:
+                m_deadline = int(m_day.group(1))
+            elif re.search(r"\b(?:ngay\s+lập\s+tức|ngay\s+sau\s+khi\s+ký|ngay\s+khi\s+ký|tức\s+thì)\b", after_pct, re.I):
+                m_deadline = 0
+            else:
+                m_num = re.search(r"(?<!\d)(\d{1,3})(?!\d)", after_pct)
+                if m_num:
+                    m_deadline = int(m_num.group(1))
+            dls.append(m_deadline)
             desc = block
             if "Thanh toán" in block:
                 desc = block.split("Thanh toán", 1)[1]
                 if ")" in desc:
                     desc = desc.split(")", 1)[1].strip()
-            descs.append(desc.strip().rstrip("."))
+            desc = _DAYS_RE.sub("", desc)
+            desc = re.sub(
+                r"\b(?:trong\s+vòng|thời\s+hạn|T/T|ngay\s+lập\s+tức|ngay\s+sau\s+khi\s+ký|ngay\s+khi\s+ký)\b",
+                "",
+                desc,
+                flags=re.IGNORECASE,
+            )
+            if m_deadline is not None and not m_day:
+                desc = re.sub(r"(?<!\d)" + str(m_deadline) + r"(?!\d)", "", desc)
+            desc = re.sub(r"^[\s,;:./()\-]+|[\s,;:./()\-]+$", "", desc).strip()
+            descs.append(desc)
         if len(pcts) == len(numbered_blocks) and abs(sum(float(p) for p in pcts) - 100.0) < 0.01:
             return pcts, dls, descs
 
@@ -167,15 +187,26 @@ def _extract_explicit_schedule(
             raw_segment = candidate[match.end():end]
             segment = raw_segment.splitlines()[0] if raw_segment else ""
             day_match = _DAYS_RE.search(segment)
-            deadlines.append(int(day_match.group(1)) if day_match else None)
+            deadline = None
+            if day_match:
+                deadline = int(day_match.group(1))
+            elif re.search(r"\b(?:ngay\s+lập\s+tức|ngay\s+sau\s+khi\s+ký|ngay\s+khi\s+ký|tức\s+thì)\b", segment, re.I):
+                deadline = 0
+            else:
+                m_num = re.search(r"(?<!\d)(\d{1,3})(?!\d)", segment)
+                if m_num:
+                    deadline = int(m_num.group(1))
+            deadlines.append(deadline)
             description = _DAYS_RE.sub("", segment)
             description = re.sub(
-                r"\b(?:trong\s+vòng|thời\s+hạn|T/T)\b",
+                r"\b(?:trong\s+vòng|thời\s+hạn|T/T|ngay\s+lập\s+tức|ngay\s+sau\s+khi\s+ký|ngay\s+khi\s+ký)\b",
                 "",
                 description,
                 flags=re.IGNORECASE,
             )
-            description = re.sub(r"^[\s,;:./-]+|[\s,;:./-]+$", "", description).strip()
+            if deadline is not None and not day_match:
+                description = re.sub(r"(?<!\d)" + str(deadline) + r"(?!\d)", "", description)
+            description = re.sub(r"^[\s,;:./()\-]+|[\s,;:./()\-]+$", "", description).strip()
             descriptions.append(description)
         return percentages, deadlines, descriptions
 
@@ -339,6 +370,13 @@ def _condition_for_role(role: str, deadline: Optional[int]) -> Dict[str, str]:
     if deadline is None:
         condition_vi = event_vi
         condition_zh = event_zh
+    elif deadline == 0:
+        if role == "signing":
+            condition_vi = "ngay sau khi hai bên ký kết hợp đồng ngay lập tức"
+            condition_zh = event_zh
+        else:
+            condition_vi = f"{event_vi} ngay lập tức"
+            condition_zh = f"{clean_event_zh}後即期以電匯（T/T）方式支付"
     else:
         condition_vi = f"{event_vi}, thời hạn thanh toán T/T {deadline} ngày"
         condition_zh = f"{clean_event_zh}後，付款期限為 T/T {deadline} 天"
@@ -420,7 +458,11 @@ def resolve_payment_schedule(
             if not description:
                 continue
             resolved[index]["mo_ta_nguoi_dung"] = description
-            resolved[index]["dieu_kien_viet"] = description
+            dl = resolved[index].get("thoi_han_tt_ngay")
+            if dl and "thời hạn" not in description.lower() and "t/t" not in description.lower():
+                resolved[index]["dieu_kien_viet"] = f"{description}, thời hạn thanh toán T/T {dl} ngày"
+            else:
+                resolved[index]["dieu_kien_viet"] = description
             if ai_matches:
                 ai_row = ai_schedule[index]
                 if ai_row.get("dieu_kien_viet"):

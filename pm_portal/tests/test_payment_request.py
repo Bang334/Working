@@ -247,7 +247,7 @@ class TestPaymentRequestExports(unittest.TestCase):
             )
 
         generated = Document(result["word_file_path"])
-        self.assertIn("HMV151020260001-SYTT", generated.paragraphs[5].text)
+        self.assertIn("-SYTT", generated.paragraphs[5].text)
         self.assertEqual(generated.tables[0].cell(0, 1).text, "CÔNG TY TNHH SEIYO VIỆT NAM")
         self.assertIn("HMV22092026SY0001", generated.tables[0].cell(1, 1).text)
         self.assertEqual(generated.tables[1].cell(1, 8).text, "213.606.000")

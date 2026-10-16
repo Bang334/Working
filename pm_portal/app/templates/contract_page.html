@@ -49,7 +49,7 @@
         <span class="badge-pill blue" style="font-size: 0.7rem; padding: 2px 7px;">Text · File Excel · Ảnh · Screenshot</span>
       </div>
       <div style="font-size: 0.78rem; color: var(--text-muted);">
-        💡 Hỗ trợ: Nhập văn bản, <strong>tải file Excel</strong>, <strong>ảnh chụp bảng giá</strong> hoặc nhấn <strong>Ctrl+V</strong> để dán ảnh trực tiếp từ clipboard!
+        💡 Hỗ trợ: Nhập văn bản, <strong>tải file Excel</strong>, <strong>ảnh bảng giá</strong> hoặc nhấn <strong>Ctrl+V</strong> để dán ảnh! Hỗ trợ viết tắt tiến độ: <code>35% 0, 55% 60, 10% 60</code> (0 = ngay lập tức, 60 = 60 ngày).
       </div>
     </div>
 
@@ -57,7 +57,7 @@
     <input type="file" id="aiFileInput" accept=".xlsx,.xls,.xlsm,.png,.jpg,.jpeg,.webp,.docx,.txt" style="display: none;" onchange="handleAiFileSelected(this)">
 
     <div class="form-group" style="margin-bottom: 0.75rem; position: relative;">
-      <textarea id="aiPromptInput" class="form-control" rows="4" placeholder="Dán văn bản bảng giá, tin nhắn WeChat/Zalo, hoặc nhấn Ctrl+V để dán ảnh chụp màn hình vào đây..."></textarea>
+      <textarea id="aiPromptInput" class="form-control" rows="4" placeholder="Dán văn bản bảng giá, tin nhắn WeChat/Zalo, tiến độ thanh toán (ví dụ: 35% 0, 55% 60, 10% 60), hoặc nhấn Ctrl+V dán ảnh chụp màn hình vào đây..."></textarea>
       <div id="aiDragOverlay" style="display: none; position: absolute; inset: 0; background: rgba(239, 246, 255, 0.94); border: 2px dashed #2563eb; border-radius: var(--radius-sm); align-items: center; justify-content: center; z-index: 10; pointer-events: none;">
         <span style="font-weight: 700; color: #1d4ed8; font-size: 0.95rem;">📥 Thả tệp Excel hoặc Ảnh báo giá vào đây để AI phân tích</span>
       </div>

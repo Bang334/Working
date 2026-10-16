@@ -31,7 +31,7 @@ QUY TẮC CỐT LÕI:
    - validity: "30 ngày kể từ ngày phát hành"
    - lead_time: "60 - 80 ngày sau khi nhận đủ tiền đặt cọc"
    - warranty: "12 tháng chính hãng kể từ ngày nghiệm thu"
-   - payment_terms: "Tạm ứng 50%, Giao hàng 40%, Nghiệm thu 10%"
+   - payment_terms: "Tạm ứng 50%, Giao hàng 40%, Nghiệm thu 10%". HỖ TRỢ CÚ PHÁP VIẾT TẮT: số 0 là "ngay lập tức", số N (như 30, 60) là "N ngày". Ví dụ: "35% 0, 55% 60, 10% 60" -> "Tạm ứng 35% ngay lập tức, Giao hàng 55% (60 ngày), Nghiệm thu 10% (60 ngày)".
 5. Trả về đúng định dạng JSON thuần túy, không bọc giải thích rườm rà.
 
 ĐỊNH DẠNG JSON ĐẦU RA BẮT BUỘC:

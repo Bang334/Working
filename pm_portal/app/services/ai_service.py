@@ -29,7 +29,15 @@ QUY TẮC CỐT LÕI:
 3. Nếu người dùng cung cấp cả tiếng Việt và tiếng Trung thì điền chính xác vào các trường tương ứng. Nếu không có tiếng Trung thì để chuỗi rỗng. Tuyệt đối không tự suy diễn hoặc bịa đặt thông tin.
 4. Tự động tính toán hoặc đọc chính xác Tổng tiền hợp đồng, Tổng số lượng.
 5. Dự án: Tự động trích xuất hoặc đặt tên dự án phù hợp với danh mục sản phẩm (VD: "Hệ thống quản lý kho WMS & Phần mềm MES Pro").
-6. Tiến độ thanh toán: Chỉ trích xuất đúng tỷ lệ, thời hạn và mục đích/điều kiện riêng của từng đợt mà đầu vào nêu rõ, giữ nguyên thứ tự và số đợt (1 đến 4 đợt). Với mỗi đợt, trả thêm "thoi_han_tt_ngay" nếu có. Trường "dieu_kien_viet" phải giữ đúng ý người dùng; "dieu_kien_trung" là bản dịch tiếng Trung Phồn thể chính xác của chính điều kiện đó. Nếu người dùng không mô tả một đợt thì không tự bịa nội dung cho đợt đó. Nếu đầu vào không nêu tiến độ thì trả về danh sách rỗng; hệ thống sẽ đối chiếu mẫu 備註 trong workbook đã phê duyệt. Tuyệt đối không tự đặt tỷ lệ mặc định.
+6. Tiến độ thanh toán: HỖ TRỢ ĐẶC BIỆT CÚ PHÁP VIẾT TẮT SỐ NGÀY:
+   - Số `0`: quy ước là "ngay lập tức" (thanh toán ngay sau khi hai bên ký kết hợp đồng / 雙方簽約後即期以電匯（T/T）方式支付, "thoi_han_tt_ngay": 0).
+   - Số nguyên dương N (ví dụ `30`, `60`, `90`): quy ước là thời hạn thanh toán N ngày ("thoi_han_tt_ngay": N, điều kiện tiếng Việt có "thời hạn thanh toán T/T N ngày", tiếng Trung có "付款期限為 T/T N 天").
+   - VÍ DỤ CÚ PHÁP VIẾT TẮT: Khi người dùng nhập "35% 0, 55% 60, 10% 60" hoặc "35% 0 55% 60 10% 60", AI phải hiểu ngay và bóc tách thành 3 đợt:
+     + Đợt 1 (35%): thoi_han_tt_ngay: 0, tieu_de: "Tạm ứng ký hợp đồng", tieu_de_trung: "簽約定金", dieu_kien_viet: "Thanh toán tạm ứng 35% ngay sau khi hai bên ký kết hợp đồng ngay lập tức", dieu_kien_trung: "雙方簽約後即期以電匯（T/T）方式支付"
+     + Đợt 2 (55%): thoi_han_tt_ngay: 60, tieu_de: "Lắp đặt thiết bị", tieu_de_trung: "設備安裝款", dieu_kien_viet: "Sau khi bàn giao thiết bị và hoàn thành cài đặt hệ thống, thời hạn thanh toán T/T 60 ngày", dieu_kien_trung: "於設備安裝及系統建置完成並經雙方簽署確認文件後，付款期限為 T/T 60 天"
+     + Đợt 3 (10%): thoi_han_tt_ngay: 60, tieu_de: "Nghiệm thu cuối cùng (FAC)", tieu_de_trung: "驗收尾款", dieu_kien_viet: "Sau khi khách hàng nghiệm thu hoàn tất và ký biên bản bàn giao (FAC), thời hạn thanh toán T/T 60 ngày", dieu_kien_trung: "於最終驗收（FAC）完成並簽署驗收交付文件後，付款期限為 T/T 60 天"
+   - Giữ nguyên thứ tự và số đợt (1 đến 4 đợt). Với mỗi đợt, luôn trả "thoi_han_tt_ngay" (số nguyên hoặc null).
+   - Nếu đầu vào không nêu tiến độ thì trả về danh sách rỗng; hệ thống sẽ đối chiếu mẫu 備註 trong workbook đã phê duyệt. Tuyệt đối không tự đặt tỷ lệ mặc định.
 
 ĐỊNH DẠNG JSON ĐẦU RA BẮT BUỘC:
 {
