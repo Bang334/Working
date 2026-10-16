@@ -37,6 +37,15 @@ from app.controllers.reminder_controller import (
 from app.models.acceptance_models import AcceptanceAIParseRequest
 from app.models.contract_models import AIParseRequest
 from app.models.reminder_models import ReminderAIParseRequest
+from app.controllers.custom_reminder_controller import (
+    create_custom_reminder_controller,
+    delete_custom_reminder_controller,
+    download_reminder_attachment_controller,
+    list_available_project_files_controller,
+    list_custom_reminders_controller,
+    toggle_reminder_status_controller,
+    update_custom_reminder_controller,
+)
 
 from app.controllers.quotation_controller import (
     download_quotation_file_controller,
@@ -639,4 +648,95 @@ async def download_quotation_file_endpoint(file_name: str):
 async def list_quotation_files_endpoint():
     """Retrieve list of generated quotation files."""
     return list_quotation_files_controller()
+
+
+# ==========================================
+# CUSTOM PERSONAL REMINDERS & SCHEDULE
+# ==========================================
+
+@router.get("/custom-reminders")
+async def list_custom_reminders_endpoint(
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    search: Optional[str] = None,
+):
+    """Retrieve list of custom personal reminders with stats and filters."""
+    return await list_custom_reminders_controller(status=status, priority=priority, search=search)
+
+
+@router.post("/custom-reminders")
+async def create_custom_reminder_endpoint(
+    title: str = Form(...),
+    due_date: str = Form(...),
+    description: str = Form(""),
+    due_time: str = Form("09:00"),
+    priority: str = Form("NORMAL"),
+    category: str = Form("GENERAL"),
+    existing_file_path: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+):
+    """Create a new custom personal reminder with optional file upload or link."""
+    return await create_custom_reminder_controller(
+        title=title,
+        due_date=due_date,
+        description=description,
+        due_time=due_time,
+        priority=priority,
+        category=category,
+        file=file,
+        existing_file_path=existing_file_path,
+    )
+
+
+@router.put("/custom-reminders/{reminder_id}")
+async def update_custom_reminder_endpoint(
+    reminder_id: int,
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    due_date: Optional[str] = Form(None),
+    due_time: Optional[str] = Form(None),
+    priority: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),
+    existing_file_path: Optional[str] = Form(None),
+    remove_attachment: bool = Form(False),
+    file: Optional[UploadFile] = File(None),
+):
+    """Update custom personal reminder details or attachment."""
+    return await update_custom_reminder_controller(
+        reminder_id=reminder_id,
+        title=title,
+        description=description,
+        due_date=due_date,
+        due_time=due_time,
+        priority=priority,
+        category=category,
+        file=file,
+        existing_file_path=existing_file_path,
+        remove_attachment=remove_attachment,
+    )
+
+
+@router.patch("/custom-reminders/{reminder_id}/toggle")
+async def toggle_custom_reminder_endpoint(reminder_id: int):
+    """Toggle status between PENDING and COMPLETED."""
+    return await toggle_reminder_status_controller(reminder_id)
+
+
+@router.delete("/custom-reminders/{reminder_id}")
+async def delete_custom_reminder_endpoint(reminder_id: int, delete_file: bool = False):
+    """Delete a custom reminder and optionally its uploaded file."""
+    return await delete_custom_reminder_controller(reminder_id, delete_file)
+
+
+@router.get("/custom-reminders/{reminder_id}/download")
+async def download_custom_reminder_attachment_endpoint(reminder_id: int):
+    """Download attached file for a custom reminder."""
+    return await download_reminder_attachment_controller(reminder_id)
+
+
+@router.get("/custom-reminders/project-files")
+async def list_project_files_for_reminders_endpoint():
+    """List available project files from Ho So Du An to link with 1 click."""
+    return await list_available_project_files_controller()
+
 

@@ -121,12 +121,31 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS custom_reminders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        due_date TEXT NOT NULL,
+        due_time TEXT DEFAULT '09:00',
+        priority TEXT DEFAULT 'NORMAL',
+        category TEXT DEFAULT 'GENERAL',
+        status TEXT DEFAULT 'PENDING',
+        attachment_name TEXT,
+        attachment_path TEXT,
+        attachment_size INTEGER DEFAULT 0,
+        completed_at TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_contracts_code ON contracts(contract_code);
     CREATE INDEX IF NOT EXISTS idx_milestones_contract ON payment_milestones(contract_code);
     CREATE INDEX IF NOT EXISTS idx_documents_contract ON documents(contract_code);
     CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(doc_type);
     CREATE INDEX IF NOT EXISTS idx_quotations_no ON quotations(quotation_no);
     CREATE INDEX IF NOT EXISTS idx_quotations_current ON quotations(is_current);
+    CREATE INDEX IF NOT EXISTS idx_custom_reminders_status ON custom_reminders(status);
+    CREATE INDEX IF NOT EXISTS idx_custom_reminders_due ON custom_reminders(due_date);
     """)
 
     # Backward-compatible migration for databases created before event-based

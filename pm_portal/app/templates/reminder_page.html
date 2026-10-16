@@ -3,6 +3,24 @@
 {% block content %}
 <div class="workspace-single">
 
+  <link rel="stylesheet" href="/static/css/custom_reminder.css?v=1.0">
+
+  <!-- Master Tabs Nav: Chuyển đổi giữa Nhắc Nợ Dự Án & Nhắc Nhở Riêng -->
+  <div class="master-tabs-nav">
+    <button type="button" class="master-tab-btn active" id="tabBtnProjectReminders" onclick="switchMasterReminderTab('project')">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span>Nhắc Nợ Hợp Đồng & Dự Án</span>
+    </button>
+    <button type="button" class="master-tab-btn" id="tabBtnCustomReminders" onclick="switchMasterReminderTab('custom')">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+      <span>Nhắc Nhở Riêng & Lịch Hẹn Đính Kèm File</span>
+      <span class="tab-badge" id="badgeCustomCount">0</span>
+    </button>
+  </div>
+
+  <!-- TAB 1: NHẮC NỢ DỰ ÁN & HỢP ĐỒNG -->
+  <div id="projectRemindersPanel">
+
   <!-- Action & Status Bar -->
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
     <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
@@ -561,6 +579,121 @@
 
   </div>
 
+  </div> <!-- end projectRemindersPanel -->
+
+  <!-- ============================================================== -->
+  <!-- TAB 2: NHẮC NHỞ RIÊNG BIỆT & LỊCH HẸN ĐÍNH KÈM TỆP (CÁ NHÂN) -->
+  <!-- ============================================================== -->
+  <div id="customRemindersPanel" style="display: none;">
+    <!-- Header Box -->
+    <div class="cr-header-box">
+      <div>
+        <h3 class="cr-header-title">
+          <span>📌 Nhắc Nhở Riêng Biệt & Lịch Hẹn Công Việc</span>
+          <span class="badge-pill blue" style="font-size: 0.72rem; padding: 2px 8px;">Cá Nhân & Đối Tác</span>
+        </h3>
+        <p class="cr-header-desc">
+          Ghi nhớ việc riêng, đặt hẹn gửi file cho khách hàng đúng ngày (Thứ Hai, Thứ Ba...), đính kèm tệp trực tiếp từ máy tính hoặc liên kết nhanh với hồ sơ dự án đã lưu.
+        </p>
+      </div>
+
+      <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary" onclick="CustomReminderManager.openCreateModal()" style="font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>➕ Thêm Nhắc Nhở Riêng</span>
+        </button>
+        <button type="button" class="btn btn-outline" onclick="CustomReminderManager.loadReminders()" title="Tải lại danh sách nhắc nhở">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+          <span>Làm Mới</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Overview Grid -->
+    <div class="cr-stats-grid">
+      <div class="cr-stat-card total" onclick="CustomReminderManager.setFilter('all', document.getElementById('crFilterBtnAll'))" style="cursor: pointer;">
+        <div class="cr-stat-icon">📋</div>
+        <div class="cr-stat-info">
+          <span class="cr-stat-number" id="crStatTotal">0</span>
+          <span class="cr-stat-label">Tổng Lời Nhắc</span>
+        </div>
+      </div>
+      <div class="cr-stat-card today" onclick="CustomReminderManager.setFilter('today', document.getElementById('crFilterBtnToday'))" style="cursor: pointer;">
+        <div class="cr-stat-icon">⏰</div>
+        <div class="cr-stat-info">
+          <span class="cr-stat-number" id="crStatToday" style="color: #ea580c;">0</span>
+          <span class="cr-stat-label">Hôm Nay Cần Làm</span>
+        </div>
+      </div>
+      <div class="cr-stat-card upcoming" onclick="CustomReminderManager.setFilter('upcoming', document.getElementById('crFilterBtnUpcoming'))" style="cursor: pointer;">
+        <div class="cr-stat-icon">📅</div>
+        <div class="cr-stat-info">
+          <span class="cr-stat-number" id="crStatUpcoming" style="color: #0284c7;">0</span>
+          <span class="cr-stat-label">Sắp Tới (7 ngày)</span>
+        </div>
+      </div>
+      <div class="cr-stat-card overdue" onclick="CustomReminderManager.setFilter('overdue', document.getElementById('crFilterBtnOverdue'))" style="cursor: pointer;">
+        <div class="cr-stat-icon">⚠️</div>
+        <div class="cr-stat-info">
+          <span class="cr-stat-number" id="crStatOverdue" style="color: #dc2626;">0</span>
+          <span class="cr-stat-label">Quá Hạn Chưa Xong</span>
+        </div>
+      </div>
+      <div class="cr-stat-card completed" onclick="CustomReminderManager.setFilter('completed', document.getElementById('crFilterBtnCompleted'))" style="cursor: pointer;">
+        <div class="cr-stat-icon">✅</div>
+        <div class="cr-stat-info">
+          <span class="cr-stat-number" id="crStatCompleted" style="color: #16a34a;">0</span>
+          <span class="cr-stat-label">Đã Hoàn Thành</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="cr-toolbar">
+      <div class="cr-filter-group">
+        <button type="button" class="cr-filter-btn active" id="crFilterBtnAll" onclick="CustomReminderManager.setFilter('all', this)">
+          Tất cả (<span id="crPillCountAll">0</span>)
+        </button>
+        <button type="button" class="cr-filter-btn" id="crFilterBtnToday" onclick="CustomReminderManager.setFilter('today', this)" style="border-color: #fdba74; color: #c2410c;">
+          🔥 Hôm nay (<span id="crPillCountToday">0</span>)
+        </button>
+        <button type="button" class="cr-filter-btn" id="crFilterBtnUpcoming" onclick="CustomReminderManager.setFilter('upcoming', this)">
+          ⏳ Sắp tới (<span id="crPillCountUpcoming">0</span>)
+        </button>
+        <button type="button" class="cr-filter-btn" id="crFilterBtnOverdue" onclick="CustomReminderManager.setFilter('overdue', this)" style="border-color: #fca5a5; color: #dc2626;">
+          ⚠️ Quá hạn (<span id="crPillCountOverdue">0</span>)
+        </button>
+        <button type="button" class="cr-filter-btn" id="crFilterBtnPending" onclick="CustomReminderManager.setFilter('pending', this)">
+          Chưa xong (<span id="crPillCountPending">0</span>)
+        </button>
+        <button type="button" class="cr-filter-btn" id="crFilterBtnCompleted" onclick="CustomReminderManager.setFilter('completed', this)">
+          ✓ Đã xong (<span id="crPillCountCompleted">0</span>)
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <!-- Priority Filter -->
+        <select id="crPriorityFilter" class="form-control" style="width: auto; height: 32px; padding: 0.15rem 0.6rem; font-size: 0.8rem; border-radius: 6px;">
+          <option value="ALL">Mọi mức độ ưu tiên</option>
+          <option value="URGENT">🔥 Khẩn cấp</option>
+          <option value="HIGH">⚡ Quan trọng</option>
+          <option value="NORMAL">🟢 Bình thường</option>
+        </select>
+
+        <!-- Search Input -->
+        <div style="position: relative; width: 230px;">
+          <input type="text" id="crSearchInput" class="form-control" placeholder="Tìm kiếm lời nhắc, file..." style="font-size: 0.82rem; padding: 0.35rem 0.65rem 0.35rem 2rem; border-radius: 20px;">
+          <svg class="icon" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: #64748b;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards Container -->
+    <div id="crCardsContainer" class="cr-cards-grid">
+      <!-- Populated dynamically by CustomReminderManager -->
+    </div>
+  </div>
+
 </div>
 
 <!-- Modal Confirmation for Direct Sending -->
@@ -795,13 +928,155 @@
     </div>
   </div>
 </div>
+
+<!-- Modal: Thêm / Chỉnh Sửa Nhắc Nhở Riêng Biệt -->
+<div id="customReminderModal" class="loading-overlay" style="display: none; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(2px);" role="dialog">
+  <div class="card" style="max-width: 620px; width: 94%; max-height: 90vh; overflow-y: auto; padding: 1.5rem; text-align: left; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); border-radius: 12px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+      <h3 id="crModalTitle" style="margin: 0; color: #1e3a8a; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 800;">
+        ➕ Thêm Nhắc Nhở Riêng & Lịch Hẹn
+      </h3>
+      <button type="button" class="btn btn-outline btn-sm" onclick="CustomReminderManager.closeModal()" style="border-radius: 50%; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-weight: 700;">✕</button>
+    </div>
+
+    <form onsubmit="event.preventDefault(); CustomReminderManager.submitReminder();">
+      <!-- Tiêu đề -->
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+          📌 Tiêu Đề Lời Nhắc: <span style="color: #dc2626;">*</span>
+        </label>
+        <input type="text" id="crTitleInput" class="form-control" placeholder="Ví dụ: Thứ 2 gửi bản báo giá cập nhật & hợp đồng cho anh Trương CX..." required style="font-weight: 600; font-size: 0.95rem;">
+      </div>
+
+      <!-- Ghi chú nội dung -->
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+          📝 Nội Dung Chi Tiết / Ghi Chú:
+        </label>
+        <textarea id="crDescInput" class="form-control" rows="3" placeholder="Nhập chi tiết yêu cầu, thông tin cần trao đổi, link hoặc hướng dẫn..." style="font-size: 0.85rem;"></textarea>
+      </div>
+
+      <!-- Ngày & Giờ đến hạn -->
+      <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 0.75rem; margin-bottom: 0.5rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+            📅 Ngày Hẹn Đến Hạn: <span style="color: #dc2626;">*</span>
+          </label>
+          <input type="date" id="crDueDateInput" class="form-control" required style="font-weight: 600;">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+            ⏰ Giờ Hẹn:
+          </label>
+          <input type="time" id="crDueTimeInput" class="form-control" value="09:00" style="font-weight: 600;">
+        </div>
+      </div>
+
+      <!-- Quick Date Selector Buttons -->
+      <div style="margin-bottom: 1rem;">
+        <div class="cr-quick-dates">
+          <span style="font-size: 0.72rem; color: #64748b; align-self: center; margin-right: 0.2rem;">Chọn nhanh:</span>
+          <button type="button" class="cr-quick-btn" onclick="CustomReminderManager.setQuickDate(0)">Hôm nay</button>
+          <button type="button" class="cr-quick-btn" onclick="CustomReminderManager.setQuickDate(1)">Ngày mai</button>
+          <button type="button" class="cr-quick-btn" onclick="CustomReminderManager.setQuickDate(0, true)">Thứ Hai tới</button>
+          <button type="button" class="cr-quick-btn" onclick="CustomReminderManager.setQuickDate(3)">+3 ngày</button>
+          <button type="button" class="cr-quick-btn" onclick="CustomReminderManager.setQuickDate(7)">+1 tuần</button>
+        </div>
+      </div>
+
+      <!-- Mức độ ưu tiên & Phân loại -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+            ⚡ Mức Độ Ưu Tiên:
+          </label>
+          <select id="crPrioritySelect" class="form-control">
+            <option value="NORMAL">🟢 Bình thường</option>
+            <option value="HIGH">🟡 Quan trọng</option>
+            <option value="URGENT">🔴 Khẩn cấp</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+            🏷️ Phân Loại Công Việc:
+          </label>
+          <select id="crCategorySelect" class="form-control">
+            <option value="CUSTOMER_FILE">📤 Gửi file cho khách hàng</option>
+            <option value="MEETING">🤝 Cuộc hẹn / Họp đối tác</option>
+            <option value="PAYMENT">💰 Nhắc nợ / Thanh toán</option>
+            <option value="TECHNICAL">⚙️ Kỹ thuật / Nghiệm thu</option>
+            <option value="GENERAL">📌 Công việc chung / Khác</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tệp đính kèm -->
+      <div class="card" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem;">
+        <label class="form-label" style="font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; display: block; font-size: 0.9rem;">
+          📎 Tệp Đính Kèm Cần Gửi / Cần Lưu Trữ:
+        </label>
+
+        <!-- Current Attachment Warning (if editing) -->
+        <div id="crCurrentAttachmentWrapper" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.6rem 0.85rem; border-radius: 6px; margin-bottom: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.82rem; color: #1e3a8a; font-weight: 600;">
+              📂 Tệp hiện tại: <span id="crCurrentAttachmentName"></span>
+            </span>
+            <label style="font-size: 0.76rem; color: #dc2626; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;">
+              <input type="checkbox" id="crRemoveAttachmentCheck"> Gỡ tệp này
+            </label>
+          </div>
+        </div>
+
+        <!-- Attachment Mode Switcher -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <button type="button" class="btn btn-outline btn-sm active" id="crAttachTabUpload" style="font-size: 0.78rem;">
+            📁 Tải Tệp Mới Từ Máy
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" id="crAttachTabProject" style="font-size: 0.78rem;">
+            📂 Chọn Từ Hồ Sơ Dự Án
+          </button>
+        </div>
+
+        <!-- Mode 1: Upload File -->
+        <div id="crAttachContentUpload">
+          <input type="file" id="crFileInput" class="form-control" style="background: #ffffff;">
+          <p style="font-size: 0.74rem; color: #64748b; margin: 0.35rem 0 0 0;">
+            Hỗ trợ tài liệu Word (.docx), Excel (.xlsx), PDF (.pdf), hình ảnh hoặc file nén (.zip). Tệp sẽ được lưu vào <code>Ho So Du An/Nhac Nho/</code>.
+          </p>
+        </div>
+
+        <!-- Mode 2: Link Project File -->
+        <div id="crAttachContentProject" style="display: none;">
+          <select id="crProjectFileSelect" class="form-control" style="background: #ffffff;">
+            <option value="">-- Đang quét file từ Hồ Sơ Dự Án... --</option>
+          </select>
+          <p style="font-size: 0.74rem; color: #64748b; margin: 0.35rem 0 0 0;">
+            Chọn nhanh báo giá, hợp đồng hoặc biên bản nghiệm thu đã lập trước đó để gắn vào lịch hẹn mà không cần tải lại file.
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; justify-content: flex-end; gap: 0.6rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+        <button type="button" class="btn btn-secondary" onclick="CustomReminderManager.closeModal()">Hủy Bỏ</button>
+        <button type="submit" id="btnSubmitCustomReminder" class="btn btn-primary" style="font-weight: 700; padding: 0.5rem 1.25rem;">
+          💾 Lưu Lời Nhắc
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="/static/js/reminder_editor.js?v=4.4"></script>
+<script src="/static/js/custom_reminder_manager.js?v=1.0"></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     ReminderEditor.init();
+    CustomReminderManager.init();
   });
 </script>
 {% endblock %}
