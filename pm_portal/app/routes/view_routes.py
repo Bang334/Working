@@ -31,6 +31,13 @@ async def index_view(request: Request):
 @router.get("/contracts", response_class=HTMLResponse)
 async def contracts_page(request: Request):
     """Main contract generator view."""
+    from app.services.contract_service import get_all_contracts_list
+    try:
+        contracts = get_all_contracts_list()
+        contract_count = len(contracts)
+    except Exception:
+        contract_count = 0
+
     return templates.TemplateResponse(
         "contract_page.html",
         {
@@ -38,11 +45,13 @@ async def contracts_page(request: Request):
             "active_tab": "contracts",
             "models": CANDIDATE_MODELS,
             "default_model": DEFAULT_MODEL,
-            "page_title": "Tạo Hợp Đồng Mua Bán Song Ngữ"
+            "page_title": "Tạo Hợp Đồng Mua Bán Song Ngữ",
+            "contract_count": contract_count
         }
     )
 
 
+@router.get("/quotation", response_class=HTMLResponse)
 @router.get("/quotations", response_class=HTMLResponse)
 async def quotations_page(request: Request):
     """Quotation generator view."""

@@ -16,7 +16,9 @@ def sanitize_filename(name: str) -> str:
 
 def generate_contract_filename(company_name: str, contract_no: str = "") -> str:
     """Generate standardized filename for contracts."""
-    date_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_company = sanitize_filename(company_name)
     safe_no = sanitize_filename(contract_no) if contract_no else "NEW"
+    if contract_no and safe_no != "NEW":
+        return f"Hop_Dong_{safe_company}_{safe_no}.docx"
+    date_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     return f"Hop_Dong_{safe_company}_{safe_no}_{date_stamp}.docx"

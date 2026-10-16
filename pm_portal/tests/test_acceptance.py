@@ -279,7 +279,55 @@ class TestAcceptanceModule(unittest.TestCase):
             self.assertEqual(result["assigned_count"], 1)
             self.assertEqual(result["ignored_note_count"], 1)
             self.assertEqual(result["blank_count"], 1)
-            self.assertTrue((outputs / result["file_name"]).is_file())
+            target_path = root / "Ho So Du An" / "Nghiem Thu" / result["file_name"]
+            self.assertTrue(target_path.is_file())
+            self.assertFalse(result["is_linked_contract"])
+
+    def test_07b_repair_upload_with_linked_contract(self):
+        """Verify acceptance workbook can optionally link to an existing contract."""
+        from app.services import acceptance_repair_upload_service as service
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            template = root / "acceptance_template.xlsx"
+            template.write_bytes(b"PK\x03\x04template")
+
+            def fake_generate(source_path, target_path, workspace, **kwargs):
+                return {
+                    "saved_path": str(target_path),
+                    "gemini_model": "gemini-test",
+                    "note_text": "1. SERIAL-01 - Ghi chú",
+                    "assignments": {"SERIAL-01": "Ghi chú"},
+                    "blank_detail_sheets": [],
+                }
+
+            fake_module = SimpleNamespace(generate=fake_generate)
+            with patch.object(service, "REPAIR_ACCEPTANCE_TEMPLATE", template), patch.object(
+                service, "WORKING_DIR", root
+            ), patch.object(
+                service, "_load_generator_module", return_value=fake_module
+            ):
+                # 1. Test with linked contract HD-20261013-001
+                result_linked = service.process_uploaded_repair_file(
+                    "bien_ban_sua_chua.xlsx", b"PK\x03\x04uploaded", contract_code="HD-20261013-001"
+                )
+                self.assertTrue(result_linked["is_linked_contract"])
+                self.assertEqual(result_linked["contract_code"], "HD-20261013-001")
+                self.assertIn("HD-20261013-001", result_linked["file_name"])
+
+                # 2. Test without contract ("không thì thôi")
+                result_unlinked = service.process_uploaded_repair_file(
+                    "bien_ban_sua_chua.xlsx", b"PK\x03\x04uploaded", contract_code=""
+                )
+                self.assertFalse(result_unlinked["is_linked_contract"])
+                self.assertEqual(result_unlinked["contract_code"], "")
+
+                # 3. Test with non-existent contract ("không thì thôi")
+                result_nonexistent = service.process_uploaded_repair_file(
+                    "bien_ban_sua_chua.xlsx", b"PK\x03\x04uploaded", contract_code="HD-NON-EXISTENT-999"
+                )
+                self.assertFalse(result_nonexistent["is_linked_contract"])
+                self.assertEqual(result_nonexistent["contract_code"], "")
 
     def test_08_repair_upload_rejects_non_xlsx(self):
         """Reject non-Excel uploads before invoking Gemini or writing an output."""
@@ -297,7 +345,8 @@ class TestAcceptanceModule(unittest.TestCase):
         from app.services import acceptance_repair_upload_service as service
 
         source = BASE_DIR.parent / "Bieu Mau" / "Biên bản sữa chữa_TEST_14_BAN_GHI.xlsx"
-        self.assertTrue(source.is_file(), source)
+        if not source.is_file():
+            self.skipTest("Bieu Mau test fixture not found")
 
         source_wb = openpyxl.load_workbook(source, data_only=True)
         source_ws = source_wb["CX Technology (VN)"]

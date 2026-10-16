@@ -52,8 +52,15 @@ def _validate_upload(file_name: str, content: bytes) -> None:
         raise ValueError("File tải lên không phải workbook Excel .xlsx hợp lệ.")
 
 
-def process_uploaded_repair_file(file_name: str, content: bytes) -> Dict[str, Any]:
-    """Generate an acceptance workbook from one uploaded repair workbook."""
+def process_uploaded_repair_file(
+    file_name: str,
+    content: bytes,
+    contract_code: Optional[str] = None
+) -> Dict[str, Any]:
+    """Generate an acceptance workbook from one uploaded repair workbook, checking contract code."""
+    import re
+    from app.services.contract_service import find_matching_contract
+
     _validate_upload(file_name, content)
 
     if not REPAIR_ACCEPTANCE_TEMPLATE.is_file():
@@ -67,17 +74,55 @@ def process_uploaded_repair_file(file_name: str, content: bytes) -> Dict[str, An
     clean_stem = "".join(c for c in Path(file_name).stem if c.isalnum() or c in (" ", "-", "_", "(", ")", ",")).strip()
     clean_stem = clean_stem[:50] if clean_stem else "Tu_Sua_Chua"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_name = f"Bien_Ban_Nghiem_Thu_{clean_stem}_{timestamp}.xlsx"
-    output_path = target_dir / output_name
+
+    # 1. Kiểm tra đối chiếu mã hợp đồng nếu người dùng gửi lên
+    matched_contract = None
+    if contract_code and str(contract_code).strip():
+        matched_contract = find_matching_contract(str(contract_code).strip())
 
     with tempfile.TemporaryDirectory(prefix="repair_upload_", dir=str(target_dir)) as temp_dir:
         source_path = Path(temp_dir) / "bien_ban_sua_chua.xlsx"
         source_path.write_bytes(content)
+        generator = _load_generator_module()
+
+        # 2. Nếu người dùng chưa chọn HĐ, thử đọc từ file nguồn xem có mã HĐ khớp hệ thống không
+        if not matched_contract:
+            try:
+                if hasattr(generator, "extract_source_data"):
+                    src_meta = generator.extract_source_data(source_path)
+                    src_so_hd = (src_meta.get("so_hop_dong") or "").strip()
+                    if src_so_hd:
+                        matched_contract = find_matching_contract(src_so_hd)
+            except Exception:
+                pass
+
+        # 3. Phân nhánh: Có liên kết HĐ hoặc độc lập
+        if matched_contract:
+            final_contract_code = matched_contract["contract_code"]
+            final_contract_id = matched_contract["id"]
+            cust_name = matched_contract.get("customer_name_vi", "")
+            clean_c_code = re.sub(r'[\\/*?:"<>|]', '_', final_contract_code).strip()
+            output_name = f"Bien_Ban_Nghiem_Thu_{clean_c_code}_{clean_stem}_{timestamp}.xlsx"
+        else:
+            final_contract_code = ""
+            final_contract_id = None
+            cust_name = ""
+            output_name = f"Bien_Ban_Nghiem_Thu_{clean_stem}_{timestamp}.xlsx"
+
+        output_path = target_dir / output_name
         shutil.copy2(REPAIR_ACCEPTANCE_TEMPLATE, output_path)
 
         try:
-            generator = _load_generator_module()
-            result = generator.generate(source_path, output_path, WORKING_DIR)
+            try:
+                result = generator.generate(
+                    source_path,
+                    output_path,
+                    WORKING_DIR,
+                    override_contract_code=final_contract_code or None,
+                    override_customer_name=cust_name or None
+                )
+            except TypeError:
+                result = generator.generate(source_path, output_path, WORKING_DIR)
         except Exception:
             output_path.unlink(missing_ok=True)
             raise
@@ -92,18 +137,29 @@ def process_uploaded_repair_file(file_name: str, content: bytes) -> Dict[str, An
     note_line_count = len([line for line in note_text.splitlines() if line.strip()])
     ignored_note_count = max(0, note_line_count - len(assignments))
 
-    # Ghi nhận tài liệu vào hệ thống
+    # Ghi nhận tài liệu vào hệ thống (documents table)
     try:
         from app.database import index_single_document
+        doc_desc = (
+            f"Biên bản nghiệm thu thiết bị [HĐ: {final_contract_code} - {cust_name}]: {Path(file_name).name}"
+            if final_contract_code
+            else f"Biên bản nghiệm thu thiết bị độc lập: {Path(file_name).name}"
+        )
+        doc_display_name = (
+            f"Biên Bản Nghiệm Thu ({final_contract_code}) - {Path(file_name).name}"
+            if final_contract_code
+            else f"Biên Bản Nghiệm Thu - {Path(file_name).name}"
+        )
         index_single_document(
-            contract_code="",
+            contract_code=final_contract_code,
+            contract_id=final_contract_id,
             doc_type="NGHIEM_THU",
-            doc_name=f"Biên Bản Nghiệm Thu - {Path(file_name).name}",
+            doc_name=doc_display_name,
             file_name=saved_path.name,
             file_path=str(saved_path),
             file_size=saved_path.stat().st_size,
             file_format="xlsx",
-            description=f"Biên bản nghiệm thu thiết bị sửa chữa: {Path(file_name).name}"
+            description=doc_desc
         )
     except Exception:
         pass
@@ -120,5 +176,9 @@ def process_uploaded_repair_file(file_name: str, content: bytes) -> Dict[str, An
         "ignored_note_count": ignored_note_count,
         "assigned_products": sorted(assignments),
         "blank_products": sorted(blank_sheets),
+        "contract_code": final_contract_code,
+        "contract_id": final_contract_id,
+        "customer_name": cust_name,
+        "is_linked_contract": bool(matched_contract),
     }
 

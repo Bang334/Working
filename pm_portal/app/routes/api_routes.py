@@ -22,6 +22,7 @@ from app.controllers.contract_controller import (
     download_contract_file_controller,
     generate_contract_controller,
     get_contract_detail_controller,
+    get_contract_dossier_controller,
     list_contracts_controller,
     render_preview_controller,
     save_contract_controller,
@@ -37,6 +38,17 @@ from app.models.acceptance_models import AcceptanceAIParseRequest
 from app.models.contract_models import AIParseRequest
 from app.models.reminder_models import ReminderAIParseRequest
 
+from app.controllers.quotation_controller import (
+    download_quotation_file_controller,
+    generate_quotation_excel_controller,
+    generate_quotation_word_controller,
+    get_quotation_detail_controller,
+    get_quotation_history_controller,
+    list_quotation_files_controller,
+    parse_raw_quotation_text_controller,
+    save_quotation_controller,
+)
+from app.models.quotation_models import QuotationAIParseRequest, QuotationSaveRequest
 from app.services.font_service import (
     get_active_font_setting,
     get_all_fonts,
@@ -159,6 +171,12 @@ async def save_contract_endpoint(payload: Dict[str, Any]):
     return save_contract_controller(payload)
 
 
+@router.get("/contracts/{identifier}/dossier")
+async def get_contract_dossier_endpoint(identifier: str):
+    """Retrieve full contract dossier (contract, milestones, and all linked documents)."""
+    return get_contract_dossier_controller(identifier)
+
+
 # ==========================================
 # ACCEPTANCE (NGHIỆM THU) ENDPOINTS
 # ==========================================
@@ -190,9 +208,10 @@ async def render_acceptance_preview(payload: Dict[str, Any]):
 @router.post("/acceptance/process-repair-file")
 async def process_repair_workbook_upload(
     file: UploadFile = File(..., description="Biên bản sửa chữa định dạng .xlsx"),
+    contract_code: Optional[str] = Form(None, description="Mã hợp đồng liên kết (tùy chọn)"),
 ):
-    """Create an acceptance workbook from an uploaded repair workbook."""
-    return await process_repair_workbook_upload_controller(file)
+    """Create an acceptance workbook from an uploaded repair workbook, checking and linking contract."""
+    return await process_repair_workbook_upload_controller(file, contract_code)
 
 
 @router.get("/acceptance/download/{file_name}")
@@ -568,3 +587,56 @@ async def open_system_path_endpoint(payload: Dict[str, Any]):
             "status": "error",
             "message": f"Không thể mở đường dẫn: {str(exc)}"
         }
+
+
+# ============================================================================
+# Quotation Endpoints (Báo Giá - Word, Excel, AI Parse & Version History)
+# ============================================================================
+
+@router.post("/quotation/ai-parse")
+async def parse_quotation_ai_endpoint(request: QuotationAIParseRequest):
+    """Parse unstructured text or uploaded files using Gemini AI for quotation form."""
+    return parse_raw_quotation_text_controller(request)
+
+
+@router.post("/quotation/save")
+async def save_quotation_endpoint(payload: Dict[str, Any]):
+    """Save quotation with versioning, replacing old active quotation while backing up previous version."""
+    return save_quotation_controller(payload)
+
+
+@router.get("/quotation/history/{quotation_no}")
+async def get_quotation_history_endpoint(quotation_no: str):
+    """Retrieve full version history for a specific quotation number."""
+    return get_quotation_history_controller(quotation_no)
+
+
+@router.get("/quotation/detail/{identifier}")
+async def get_quotation_detail_endpoint(identifier: str):
+    """Retrieve complete quotation details (including items) to load into form."""
+    return get_quotation_detail_controller(identifier)
+
+
+@router.post("/quotation/generate-word")
+async def generate_quotation_word_endpoint(payload: Dict[str, Any]):
+    """Generate official bilingual Word (.docx) quotation."""
+    return generate_quotation_word_controller(payload)
+
+
+@router.post("/quotation/generate-excel")
+async def generate_quotation_excel_endpoint(payload: Dict[str, Any]):
+    """Generate official bilingual Excel (.xlsx) quotation."""
+    return generate_quotation_excel_controller(payload)
+
+
+@router.get("/quotation/download/{file_name}")
+async def download_quotation_file_endpoint(file_name: str):
+    """Download generated quotation file (.docx or .xlsx)."""
+    return download_quotation_file_controller(file_name)
+
+
+@router.get("/quotation/files")
+async def list_quotation_files_endpoint():
+    """Retrieve list of generated quotation files."""
+    return list_quotation_files_controller()
+

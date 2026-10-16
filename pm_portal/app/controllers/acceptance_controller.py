@@ -26,7 +26,10 @@ from app.services.acceptance_word_service import generate_acceptance_word
 logger = logging.getLogger(__name__)
 
 
-async def process_repair_workbook_upload_controller(file: UploadFile) -> Dict[str, Any]:
+async def process_repair_workbook_upload_controller(
+    file: UploadFile,
+    contract_code: Any = None
+) -> Dict[str, Any]:
     """Validate and process one uploaded repair workbook without blocking the event loop."""
     try:
         content = await file.read(MAX_REPAIR_UPLOAD_BYTES + 1)
@@ -34,14 +37,21 @@ async def process_repair_workbook_upload_controller(file: UploadFile) -> Dict[st
             process_uploaded_repair_file,
             file.filename or "bien_ban_sua_chua.xlsx",
             content,
+            contract_code=str(contract_code).strip() if contract_code else None,
         )
+        msg = (
+            "Đã phân tích file sửa chữa và tạo biên bản nghiệm thu thành công. "
+            f"Đã nhập đủ {result.get('record_count', 0)} bản ghi và gán đúng "
+            f"{result['assigned_count']} ghi chú theo sản phẩm."
+        )
+        if result.get("is_linked_contract") and result.get("contract_code"):
+            msg += f" (Đã liên kết với HĐ {result['contract_code']})"
+        else:
+            msg += " (Biên bản nghiệm thu độc lập)"
+
         return {
             "status": "success",
-            "message": (
-                "Đã phân tích file sửa chữa và tạo biên bản nghiệm thu thành công. "
-                f"Đã nhập đủ {result.get('record_count', 0)} bản ghi và gán đúng "
-                f"{result['assigned_count']} ghi chú theo sản phẩm."
-            ),
+            "message": msg,
             **result,
         }
     except Exception as exc:
@@ -183,17 +193,39 @@ def download_acceptance_file_controller(file_name: str) -> FileResponse:
 
 
 def list_acceptance_files_controller() -> Dict[str, Any]:
-    """List all created acceptance workbooks in Ho So Du An/Nghiem Thu."""
+    """List all created acceptance workbooks in Ho So Du An/Nghiem Thu with contract link details."""
     from datetime import datetime
+    from app.database import get_db_connection
+
     nghiem_thu_dir = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
     if not nghiem_thu_dir.exists():
         return {"status": "success", "files": []}
+
+    doc_map = {}
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT d.file_name, d.contract_code, d.contract_id, 
+                   c.customer_name_vi, c.project_name_vi
+            FROM documents d
+            LEFT JOIN contracts c ON (c.id = d.contract_id OR c.contract_code = d.contract_code)
+            WHERE d.doc_type = 'NGHIEM_THU'
+        """)
+        for row in cursor.fetchall():
+            doc_map[row["file_name"]] = dict(row)
+        conn.close()
+    except Exception:
+        pass
 
     files = []
     for f in nghiem_thu_dir.glob("*.xlsx"):
         if f.is_file() and not f.name.startswith("~$"):
             stat = f.stat()
             mtime_str = datetime.fromtimestamp(stat.st_mtime).strftime("%d/%m/%Y %H:%M:%S")
+            doc_info = doc_map.get(f.name) or {}
+            c_code = (doc_info.get("contract_code") or "").strip()
+
             files.append({
                 "file_name": f.name,
                 "file_path": str(f.resolve()),
@@ -201,7 +233,12 @@ def list_acceptance_files_controller() -> Dict[str, Any]:
                 "file_size_formatted": f"{stat.st_size / 1024:.1f} KB",
                 "modified_time": mtime_str,
                 "mtime_ts": stat.st_mtime,
-                "download_url": f"/api/v1/acceptance/download/{f.name}"
+                "download_url": f"/api/v1/acceptance/download/{f.name}",
+                "contract_code": c_code,
+                "contract_id": doc_info.get("contract_id"),
+                "customer_name": doc_info.get("customer_name_vi") or "",
+                "project_name": doc_info.get("project_name_vi") or "",
+                "is_linked_contract": bool(c_code),
             })
 
     files.sort(key=lambda x: x["mtime_ts"], reverse=True)

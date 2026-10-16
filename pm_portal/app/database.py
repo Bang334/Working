@@ -94,10 +94,39 @@ def init_db():
         setting_value TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS quotations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        quotation_no TEXT NOT NULL,
+        customer_name_vi TEXT NOT NULL,
+        customer_name_zh TEXT,
+        tax_code TEXT,
+        project_name TEXT,
+        contact_person TEXT,
+        validity TEXT,
+        lead_time TEXT,
+        warranty TEXT,
+        payment_terms TEXT,
+        notes TEXT,
+        subtotal REAL DEFAULT 0,
+        vat_amount REAL DEFAULT 0,
+        total_amount REAL DEFAULT 0,
+        version INTEGER DEFAULT 1,
+        is_current INTEGER DEFAULT 1,
+        docx_file_name TEXT,
+        docx_file_path TEXT,
+        xlsx_file_name TEXT,
+        xlsx_file_path TEXT,
+        items_json TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_contracts_code ON contracts(contract_code);
     CREATE INDEX IF NOT EXISTS idx_milestones_contract ON payment_milestones(contract_code);
     CREATE INDEX IF NOT EXISTS idx_documents_contract ON documents(contract_code);
     CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(doc_type);
+    CREATE INDEX IF NOT EXISTS idx_quotations_no ON quotations(quotation_no);
+    CREATE INDEX IF NOT EXISTS idx_quotations_current ON quotations(is_current);
     """)
 
     # Backward-compatible migration for databases created before event-based

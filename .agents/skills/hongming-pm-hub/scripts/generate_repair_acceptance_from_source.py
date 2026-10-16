@@ -607,6 +607,8 @@ def _update_summary_sheet(worksheet, source_data: Dict[str, Any], sheet_names: S
 
     if source_data.get("so_hop_dong"):
         worksheet["A3"].value = _replace_after_colon(worksheet["A3"].value, source_data["so_hop_dong"])
+    else:
+        worksheet["A3"].value = "Số HĐ / 合約編號: ---"
     if source_data.get("ngay_nghiem_thu"):
         original = str(worksheet["E3"].value or "")
         worksheet["E3"].value = re.sub(
@@ -658,9 +660,18 @@ def _populate_detail_sheet(worksheet, item: Dict[str, Any], sheet_name: str) -> 
     worksheet.cell(8, 1).hyperlink = "#'Nghiệm Thu'!A1"
 
 
-def synchronize_acceptance_from_source(source_path: Path, target_path: Path) -> Dict[str, Any]:
+def synchronize_acceptance_from_source(
+    source_path: Path,
+    target_path: Path,
+    override_contract_code: Optional[str] = None,
+    override_customer_name: Optional[str] = None,
+) -> Dict[str, Any]:
     """Rebuild the template's device data and detail sheets from the upload."""
     source_data = extract_source_data(source_path)
+    if override_contract_code is not None:
+        source_data["so_hop_dong"] = override_contract_code
+    if override_customer_name is not None:
+        source_data["ben_a"] = override_customer_name
     items = source_data["items"]
     sheet_names = _unique_sheet_names(items)
 
@@ -701,8 +712,15 @@ def generate(
     source_path: Path,
     target_path: Path,
     workspace: Path,
+    override_contract_code: Optional[str] = None,
+    override_customer_name: Optional[str] = None,
 ) -> Dict[str, Any]:
-    source_data = synchronize_acceptance_from_source(source_path, target_path)
+    source_data = synchronize_acceptance_from_source(
+        source_path,
+        target_path,
+        override_contract_code=override_contract_code,
+        override_customer_name=override_customer_name,
+    )
     note_text, source_sheet, source_label_cell = extract_source_note(source_path)
 
     workbook = load_workbook(target_path, data_only=False, read_only=False)

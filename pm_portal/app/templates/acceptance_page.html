@@ -55,6 +55,29 @@
           <button type="button" class="repair-clear-button" id="repairClearFileButton" aria-label="Bỏ file đã chọn" title="Bỏ file đã chọn">×</button>
         </div>
 
+        <!-- Khối Liên Kết Hợp Đồng (Tùy Chọn / Có Thể Có Hoặc Không) -->
+        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.25rem;">
+            <label for="acceptanceContractSelect" style="font-weight: 750; font-size: 0.86rem; color: #1e293b; display: flex; align-items: center; gap: 0.4rem; margin: 0;">
+              <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; color: #2563eb;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span>Hợp Đồng Mua Bán Liên Kết</span>
+            </label>
+            <span class="badge-pill" style="font-size: 0.72rem; background: #e0e7ff; color: #3730a3; font-weight: 600;">Tùy chọn (Có hoặc không)</span>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <select id="acceptanceContractSelect" class="form-control form-control-sm" style="flex: 1; font-weight: 600; font-size: 0.84rem;" onchange="onAcceptanceContractSelectChange(this.value)">
+              <option value="">-- Không liên kết (Tạo biên bản nghiệm thu độc lập) --</option>
+            </select>
+            <button type="button" class="btn btn-outline btn-sm" onclick="loadAcceptanceContractsList()" title="Làm mới danh sách hợp đồng" style="padding: 0.25rem 0.6rem;">
+              🔄
+            </button>
+          </div>
+          <div id="acceptanceContractHint" style="font-size: 0.76rem; color: #64748b; margin-top: 0.35rem;">
+            💡 Nếu có hợp đồng tương ứng, hệ thống sẽ tự động gắn biên bản nghiệm thu vào hồ sơ hợp đồng. Nếu không chọn hoặc không có, biên bản sẽ được lưu độc lập.
+          </div>
+        </div>
+
         <div class="repair-upload-actions">
           <p class="repair-upload-status" id="repairUploadStatus" role="status" aria-live="polite">Chưa chọn file biên bản sửa chữa.</p>
           <button type="button" class="btn btn-primary" id="repairProcessButton" onclick="handleProcessRepairWorkbook()" disabled>
@@ -72,6 +95,7 @@
         <div>
           <strong style="color: #166534; font-size: 1.05rem;">Đã tạo xong file nghiệm thu thực tế</strong>
           <small id="repairResultSummary" style="display: block; color: #1e293b; margin-top: 0.15rem;"></small>
+          <div id="repairResultContractBadge" style="margin-top: 0.4rem; font-size: 0.85rem; font-weight: 600; display: none;"></div>
         </div>
       </div>
       <div class="repair-result-metrics">
@@ -113,20 +137,21 @@
       </div>
     </div>
 
-    <div class="modern-table-card" style="margin: 0; border: none; box-shadow: none;">
-      <table class="modern-table">
+    <div class="modern-table-card" style="margin: 0; border: none; box-shadow: none; overflow-x: auto;">
+      <table class="modern-table" style="min-width: 1000px;">
         <thead>
           <tr>
             <th style="width: 45px; text-align: center;">STT</th>
             <th>Tên Tệp Nghiệm Thu (.xlsx)</th>
-            <th style="width: 130px; text-align: center;">Dung Lượng</th>
-            <th style="width: 170px; text-align: center;">Thời Gian Tạo</th>
-            <th style="width: 220px; text-align: center;">Thao Tác</th>
+            <th style="width: 190px; text-align: center;">Hợp Đồng Liên Kết</th>
+            <th style="width: 120px; text-align: center;">Dung Lượng</th>
+            <th style="width: 160px; text-align: center;">Thời Gian Tạo</th>
+            <th style="width: 200px; text-align: center;">Thao Tác</th>
           </tr>
         </thead>
         <tbody id="acceptanceFilesTableBody">
           <tr>
-            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
               Đang tải danh sách biên bản nghiệm thu...
             </td>
           </tr>
@@ -146,10 +171,11 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/acceptance_editor.js?v=5.0"></script>
+<script src="/static/js/acceptance_editor.js?v=5.1"></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     initRepairWorkbookUpload();
+    loadAcceptanceContractsList();
     loadAcceptanceFilesList();
   });
 </script>

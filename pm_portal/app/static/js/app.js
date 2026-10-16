@@ -225,6 +225,9 @@ async function handleAIParse() {
   }
 }
 
+// Cache tệp DOCX đã xuất gần nhất để tái sử dụng khi Lưu hợp đồng (tránh sinh 2 file trùng lặp)
+let currentGeneratedDocxInfo = null;
+
 function showAutoExportSuccess(docxResult) {
   const banner = document.getElementById("aiAutoExportBanner");
   if (!banner) return;
@@ -234,6 +237,13 @@ function showAutoExportSuccess(docxResult) {
 
   // Compute final path: file_path > folder_path + file_name > fallbackDir + file_name
   const targetPath = docxResult.file_path || (docxResult.folder_path && docxResult.file_name ? `${docxResult.folder_path.replace(/[\\\/]+$/, '')}\\${docxResult.file_name}` : (docxResult.file_name ? `${fallbackDir.replace(/[\\\/]+$/, '')}\\${docxResult.file_name}` : fallbackDir));
+
+  // Ghi nhận file đã tạo thành công
+  currentGeneratedDocxInfo = {
+    file_name: docxResult.file_name,
+    file_path: targetPath,
+    download_url: docxResult.download_url
+  };
 
   const fileNameEl = document.getElementById("autoExportFileName");
   const filePathEl = document.getElementById("autoExportFilePath");
@@ -287,6 +297,12 @@ async function handleGenerateDocx() {
     const res = await ApiClient.generateDocx(contractData);
 
     if (res.status === "success" && res.download_url) {
+      currentGeneratedDocxInfo = {
+        file_name: res.file_name,
+        file_path: res.file_path,
+        download_url: res.download_url
+      };
+
       if (res.preview_html) {
         const previewContainer = document.getElementById("contractPreviewWrapper");
         if (previewContainer) previewContainer.innerHTML = res.preview_html;
@@ -332,8 +348,15 @@ async function handleSaveContract() {
     return;
   }
 
+  // Tái sử dụng tệp DOCX đã tạo trước đó nếu có
+  if (currentGeneratedDocxInfo && currentGeneratedDocxInfo.file_path) {
+    contractData.existing_file_path = currentGeneratedDocxInfo.file_path;
+    contractData.existing_file_name = currentGeneratedDocxInfo.file_name;
+    contractData.download_url = currentGeneratedDocxInfo.download_url;
+  }
+
   try {
-    setLoading(true, "Đang tạo file DOCX và lưu hợp đồng vào cơ sở dữ liệu hồ sơ...");
+    setLoading(true, "Đang lưu hợp đồng và các đợt thanh toán vào hồ sơ hệ thống...");
     const res = await fetch("/api/v1/contracts/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

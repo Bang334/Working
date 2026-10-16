@@ -3,26 +3,30 @@
 {% block content %}
 <div class="workspace-single">
 
-  <!-- Action & Status Bar (Tiêu đề đã hiển thị trên thanh Header chính) -->
+  <!-- Action & Status Bar -->
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
     <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
-      <span class="badge-pill blue">Biểu Mẫu Pre-Sales</span>
-      <span class="badge-pill green">Sẵn Sàng Tiếp Nhận Mẫu</span>
-      <span style="font-size: 0.82rem; color: var(--text-muted);">Soạn thảo & bóc tách dữ liệu báo giá thiết bị IoT, hệ thống tiết kiệm điện EMS gửi khách hàng FDI.</span>
+      <span class="badge-pill blue">Biểu Mẫu Pre-Sales Song Ngữ</span>
+      <span class="badge-pill green">Hỗ Trợ AI & Quản Lý Phiên Bản</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Soạn thảo, bóc tách bằng Gemini AI, xuất Word/Excel và tự động sao lưu bản cũ khi lưu bản mới.</span>
     </div>
 
-    <div style="display: flex; gap: 0.65rem;">
+    <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
       <a href="/fonts" class="btn btn-outline btn-sm" style="color: #2563eb; border-color: #bfdbfe;">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
         <span>Kho 100 Kiểu Chữ (Fonts)</span>
       </a>
       <button type="button" class="btn btn-secondary btn-sm" onclick="simulateAIParseQuotation()">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>
-        <span>Điền Dữ Liệu Thử Nghiệm</span>
+        <span>Điền Mẫu Thử Nghiệm</span>
       </button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="alert('Đã lưu dữ liệu báo giá vào bộ nhớ tạm thời của dự án!')">
+      <button type="button" id="btnTopSaveQuote" class="btn btn-ai btn-sm" onclick="saveQuotation()" title="Lưu báo giá: Bản mới sẽ thay bản cũ và tự động sao lưu bản cũ vào lịch sử">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        <span>Lưu Dữ Liệu</span>
+        <span>💾 Lưu Báo Giá (Phiên Bản Mới)</span>
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="switchTab('tabQuotationList')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Danh Sách Đã Tạo (<span id="topQuotationCount">0</span>)</span>
       </button>
     </div>
   </div>
@@ -34,18 +38,30 @@
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
         <span>Bóc Tách Yêu Cầu & Bảng Thiết Bị Bằng Gemini AI</span>
       </div>
-      <span style="font-size: 0.75rem; color: var(--text-muted);">Tự động nhận diện tên thiết bị, số lượng, đơn vị tính</span>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Model:</span>
+        <select id="aiModelSelect" class="form-control form-control-sm" style="width: 170px; font-size: 0.78rem; padding: 2px 8px;">
+          {% for m in models %}
+          <option value="{{ m }}" {% if m == default_model %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
 
     <div class="form-group" style="margin-bottom: 0.85rem;">
-      <textarea id="aiPromptInput" class="form-control" rows="4" placeholder="Dán danh sách thiết bị từ email khách hàng, chat WeChat hoặc bảng tính khảo sát nhà máy vào đây..."></textarea>
+      <textarea id="aiPromptInput" class="form-control" rows="3" placeholder="Dán danh sách thiết bị từ email khách hàng, chat WeChat hoặc bảng tính khảo sát nhà máy vào đây (ví dụ: Báo giá 6 bộ Edge Gateway IoT-200, 4 cuộn cáp RS485 cho nhà máy Vonmax...)..."></textarea>
     </div>
 
-    <div style="display: flex; justify-content: flex-end; gap: 0.65rem;">
-      <button type="button" class="btn btn-ai" onclick="simulateAIParseQuotation()">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
-        <span>Gọi Gemini AI Phân Tích & Bóc Tách Vào Bảng</span>
-      </button>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.65rem;">
+      <div style="font-size: 0.78rem; color: #64748b;">
+        💡 <em>Mẹo: AI tự động nhận diện tên khách hàng (Việt - Trung), MST, tên thiết bị, số lượng và tính toán tiền.</em>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="button" id="btnCallQuotationAI" class="btn btn-ai" onclick="callQuotationAI()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+          <span id="btnAIText">Gọi Gemini AI Phân Tích & Bóc Tách Vào Bảng</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -64,14 +80,18 @@
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>
         <span>Điều Khoản Thương Mại & Bảo Hành</span>
       </button>
+      <button type="button" class="tab-btn" data-tab="tabQuotationList" onclick="loadQuotationFilesList()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>已建立報價單清單 / Danh Sách Báo Giá Đã Tạo (<span id="quotationListBadge">0</span>)</span>
+      </button>
     </div>
 
     <!-- Tab 1: Items Table (Full Width Modern Table) -->
     <div class="tab-content active" id="tabQuotationItems">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
         <div>
-          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Chi tiết danh mục chào giá</span>
-          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Phần cứng IoT, Vật tư phụ và Chi phí thi công)</span>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Chi tiết danh mục chào giá (品項明細與價格)</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Phần cứng IoT, Vật tư phụ và Chi phí thi công hiện trường)</span>
         </div>
         <button type="button" class="btn btn-outline btn-sm" onclick="addQuotationRow()">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -80,11 +100,11 @@
       </div>
 
       <div class="modern-table-card">
-        <table class="modern-table">
+        <table class="modern-table quotation-table" style="min-width: 1000px;">
           <thead>
             <tr>
               <th style="width: 50px; text-align: center;">STT</th>
-              <th style="min-width: 320px;">Tên Thiết Bị / Quy Cách / Dịch Vụ</th>
+              <th style="min-width: 320px;">Tên Thiết Bị / Quy Cách / Dịch Vụ (品名規格)</th>
               <th style="width: 110px; text-align: center;">Đơn Vị Tính</th>
               <th style="width: 100px; text-align: center;">Số Lượng</th>
               <th style="width: 180px; text-align: right;">Đơn Giá (VND)</th>
@@ -145,12 +165,12 @@
           <input type="text" id="quoteTaxCode" class="form-control" value="0301445789">
         </div>
         <div class="form-group">
-          <label class="form-label">Số Báo Giá / 報價編號</label>
+          <label class="form-label">Số Báo Giá / 報價編號 <span class="badge-req">*</span></label>
           <input type="text" id="quoteNo" class="form-control" value="HM-QT-202610-001">
         </div>
         <div class="form-group">
           <label class="form-label">Ngày Phát Hành Báo Giá</label>
-          <input type="date" id="quoteDate" class="form-control" value="2026-10-14">
+          <input type="text" id="quoteDate" class="form-control" value="16/10/2026">
         </div>
       </div>
 
@@ -196,25 +216,217 @@
       </div>
     </div>
 
+    <!-- Tab 4: Danh Sách Báo Giá Đã Tạo -->
+    <div class="tab-content" id="tabQuotationList">
+      <!-- Header Toolbar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Danh Sách Báo Giá Đã Lưu & Tệp Xuất (Word / Excel)</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Bản mới nhất hiển thị hiện hành; bản cũ tự động lưu trữ tại Ho So Du An/Bao Gia/Lich_Su)</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+          <div style="position: relative; width: 280px;">
+            <input type="text" id="quotationSearchInput" class="form-control form-control-sm" placeholder="🔍 Tìm theo số báo giá, khách hàng, file..." oninput="filterQuotationFiles(this.value)" style="border-radius: 20px; padding-left: 0.9rem;">
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="loadQuotationFilesList()" title="Làm mới danh sách">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span>↻ Làm Mới</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="switchTab('tabQuotationItems')">
+            <span>＋ Soạn Báo Giá Mới</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick KPI Mini Bar -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.75rem; margin-bottom: 1.15rem;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
+          <div style="font-size: 0.76rem; color: #64748b; font-weight: 600;">BÁO GIÁ ĐÃ LẬP (DATABASE)</div>
+          <div id="statTotalActiveQuotes" style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-top: 0.2rem;">0</div>
+        </div>
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.75rem 1rem;">
+          <div style="font-size: 0.76rem; color: #1e40af; font-weight: 600;">TỆP WORD (.DOCX) SẴN SÀNG</div>
+          <div id="statTotalWordQuotes" style="font-size: 1.25rem; font-weight: 800; color: #1d4ed8; margin-top: 0.2rem;">0 tệp</div>
+        </div>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem 1rem;">
+          <div style="font-size: 0.76rem; color: #166534; font-weight: 600;">TỆP EXCEL (.XLSX) SẴN SÀNG</div>
+          <div id="statTotalExcelQuotes" style="font-size: 1.25rem; font-weight: 800; color: #15803d; margin-top: 0.2rem;">0 tệp</div>
+        </div>
+      </div>
+
+      <!-- Bảng 1: Báo Giá Đã Lưu (Active Quotations with Versioning & History) -->
+      <div style="margin-bottom: 1.5rem;">
+        <div style="font-size: 0.88rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+          <span>📋 Danh Sách Báo Giá Hiện Hành (Phiên Bản Mới Nhất)</span>
+        </div>
+        <div class="modern-table-card">
+          <table class="modern-table" style="min-width: 1080px;">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">STT</th>
+                <th style="width: 170px;">Số Báo Giá & Phiên Bản</th>
+                <th style="min-width: 250px;">Khách Hàng (買方)</th>
+                <th style="min-width: 220px;">Dự Án</th>
+                <th style="width: 150px; text-align: right;">Tổng Tiền (VND)</th>
+                <th style="width: 140px; text-align: center;">Lịch Sử Bản Cũ</th>
+                <th style="width: 210px; text-align: center;">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody id="activeQuotationsTableBody">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bảng 2: Tất Cả Tệp Báo Giá Trên Ổ Đĩa (Physical Files) -->
+      <div>
+        <div style="font-size: 0.88rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">
+          <span>📂 Tất Cả Tệp Xuất Word & Excel Trong Thư Mục Dự Án</span>
+        </div>
+        <div class="modern-table-card">
+          <table class="modern-table" style="min-width: 1050px;">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">STT</th>
+                <th style="width: 100px; text-align: center;">Định Dạng</th>
+                <th style="min-width: 320px;">Tên Tệp Báo Giá / Tiêu Đề</th>
+                <th style="min-width: 220px;">Khách Hàng & Ghi Chú</th>
+                <th style="width: 100px; text-align: right;">Dung Lượng</th>
+                <th style="width: 160px; text-align: center;">Thời Gian Tạo</th>
+                <th style="width: 190px; text-align: center;">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody id="quotationListTableBody">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="quotationEmptyState" style="display: none; text-align: center; padding: 3rem 1rem; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 8px; margin-top: 1rem;">
+        <svg style="width: 48px; height: 48px; color: #94a3b8; margin: 0 auto 0.75rem auto;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div style="font-weight: 700; color: #475569; font-size: 0.95rem;">Chưa có tệp báo giá nào được tạo</div>
+        <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.25rem;">Hãy soạn thảo danh mục và bấm "Lưu Báo Giá" hoặc "Xuất File Word / Excel".</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Bottom Action Footer -->
   <div class="action-footer-bar">
     <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <span class="badge-pill yellow">Chế độ Form Mẫu</span>
+      <span class="badge-pill green">Bảo toàn 100% bố cục Song ngữ</span>
       <span style="font-size: 0.8rem; color: var(--text-muted);">
-        Khi bạn cung cấp file Excel/Word mẫu chính thức của công ty, hệ thống sẽ tự động liên kết dữ liệu trên để xuất file 1:1.
+        Khi lưu bản mới: Hệ thống tự động thay thế bản hiện hành và sao lưu an toàn bản cũ vào thư mục Lịch Sử (Lich_Su).
       </span>
     </div>
-    <div style="display: flex; gap: 0.75rem;">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
       <button type="button" class="btn btn-outline" onclick="window.print()">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        <span>In / Lưu PDF Trực Tiếp</span>
+        <span>In / PDF</span>
       </button>
-      <button type="button" class="btn btn-primary" onclick="alert('Đã sẵn sàng! Hãy gửi file mẫu chính thức của công ty khi bạn có nhé.')">
+      <button type="button" id="btnExportWord" class="btn btn-outline" style="border-color: #2563eb; color: #1d4ed8; font-weight: 700;" onclick="exportQuotationWord()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        <span>📄 Xuất File Word (.docx)</span>
+      </button>
+      <button type="button" id="btnExportExcel" class="btn btn-outline" style="border-color: #16a34a; color: #15803d; font-weight: 700;" onclick="exportQuotationExcel()">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-        <span>Sẵn Sàng Xuất File Excel (Chờ Biểu Mẫu)</span>
+        <span>📊 Xuất File Excel (.xlsx)</span>
       </button>
+      <button type="button" id="btnSaveQuotationBottom" class="btn btn-primary" style="font-weight: 700;" onclick="saveQuotation()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>💾 Lưu Báo Giá (Bản Mới Sẽ Thay Bản Cũ)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal 1: Lưu / Xuất Báo Giá Thành Công -->
+  <div id="quotationSuccessModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: #ffffff; border-radius: 12px; max-width: 560px; width: 90%; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); border: 1.5px solid #86efac; animation: fadeIn 0.2s ease;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 1.5rem; flex-shrink: 0; font-weight: 800;">
+          ✓
+        </div>
+        <div>
+          <h3 id="modalQuoteTitle" style="margin: 0; color: #166534; font-size: 1.15rem; font-weight: 800;">Lưu Báo Giá Thành Công!</h3>
+          <p id="modalQuoteSub" style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: #475569;">Bản mới đã được cập nhật thành bản hiện hành.</p>
+        </div>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; line-height: 1.6;">
+        <div>• <strong>Khách Hàng:</strong> <span id="modalQuoteCustomer" style="font-weight: 600; color: #0f172a;"></span></div>
+        <div>• <strong>Số Báo Giá:</strong> <span id="modalQuoteNo" style="font-family: monospace; font-weight: 700; color: #1d4ed8;"></span> <span id="modalQuoteVersionBadge" class="badge-pill blue" style="font-size:0.75rem;">v1</span></div>
+        <div>• <strong>Tổng Thanh Toán:</strong> <span id="modalQuoteTotal" style="color: #166534; font-weight: 700;"></span></div>
+        <div>• <strong>Tệp Word (.docx):</strong> <span id="modalQuoteWordFile" style="font-family: monospace; font-size: 0.8rem; color: #475569;"></span></div>
+        <div>• <strong>Tệp Excel (.xlsx):</strong> <span id="modalQuoteExcelFile" style="font-family: monospace; font-size: 0.8rem; color: #475569;"></span></div>
+        <div id="modalBackupNotice" style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #cbd5e1; color: #0369a1; font-size: 0.8rem; display: none;">
+          ℹ️ <strong>Bảo toàn dữ liệu:</strong> Bản báo giá cũ đã được sao lưu an toàn tại thư mục <code>Ho So Du An/Bao Gia/Lich_Su</code>.
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+        <button type="button" id="btnModalOpenQuoteWord" class="btn btn-outline" style="border-color: #2563eb; color: #1d4ed8;" title="Mở trực tiếp file Word trên máy">
+          📄 Mở Word
+        </button>
+        <button type="button" id="btnModalOpenQuoteExcel" class="btn btn-outline" style="border-color: #16a34a; color: #15803d;" title="Mở trực tiếp file Excel trên máy">
+          📊 Mở Excel
+        </button>
+        <a id="btnModalDownloadQuoteWord" href="#" download class="btn btn-primary" style="text-decoration: none;">
+          ⬇️ Tải Word
+        </a>
+        <a id="btnModalDownloadQuoteExcel" href="#" download class="btn btn-outline" style="text-decoration: none;">
+          ⬇️ Tải Excel
+        </a>
+        <button type="button" class="btn btn-outline" onclick="closeQuotationSuccessModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Lịch Sử Phiên Bản Báo Giá (Version History & Backups) -->
+  <div id="quotationHistoryModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 1.25rem;">
+    <div style="background: #ffffff; border-radius: 14px; max-width: 860px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); border: 1.5px solid #bfdbfe; animation: fadeIn 0.2s ease;">
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.4rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc; border-top-left-radius: 13px; border-top-right-radius: 13px;">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+          <div style="width: 38px; height: 38px; border-radius: 8px; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 1.25rem;">
+            🕒
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Lịch Sử Các Bản Báo Giá Đã Lưu (Quotation History)</h3>
+            <p style="margin: 0.15rem 0 0 0; font-size: 0.76rem; color: #64748b;">Mã báo giá: <strong id="historyModalQuoteNo" style="color: #1d4ed8;"></strong> - Bạn có thể xem lại, tải về hoặc nạp lại bản cũ phòng khi cần đối chiếu.</p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-xs" onclick="closeQuotationHistoryModal()" style="font-size: 1.2rem; padding: 2px 9px; color: #64748b; line-height: 1; border-color: #cbd5e1; background: #ffffff;">
+          ×
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable Table) -->
+      <div style="padding: 1.25rem 1.4rem; overflow-y: auto; flex: 1;">
+        <table class="modern-table" style="width: 100%; font-size: 0.85rem;">
+          <thead>
+            <tr>
+              <th style="width: 80px; text-align: center;">Phiên Bản</th>
+              <th style="width: 130px; text-align: center;">Trạng Thái</th>
+              <th style="min-width: 200px;">Dự Án / Ghi Chú</th>
+              <th style="width: 140px; text-align: right;">Tổng Tiền</th>
+              <th style="width: 150px; text-align: center;">Thời Gian Tạo</th>
+              <th style="width: 180px; text-align: center;">Tệp & Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody id="quotationHistoryTableBody">
+            <!-- Dynamically populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.65rem; padding: 0.85rem 1.4rem; border-top: 1px solid #e2e8f0; background: #f8fafc; border-bottom-left-radius: 13px; border-bottom-right-radius: 13px;">
+        <button type="button" class="btn btn-outline" onclick="closeQuotationHistoryModal()">Đóng</button>
+      </div>
     </div>
   </div>
 
@@ -230,23 +442,26 @@ let quotationItems = [
   { name: "Nhân Công Thi Công Đấu Nối Hiện Trường & Kiểm Thử", unit: "Gói", qty: 1, price: 15000000 }
 ];
 
+let allQuotationFiles = [];
+let allActiveQuotations = [];
+
 function renderQuotationTable() {
   const tbody = document.getElementById("quoteItemsTableBody");
   tbody.innerHTML = "";
   let subtotal = 0;
 
   quotationItems.forEach((item, index) => {
-    const rowTotal = item.qty * item.price;
+    const rowTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
     subtotal += rowTotal;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${index + 1}</td>
       <td>
-        <input type="text" class="table-input" value="${item.name}" placeholder="Tên sản phẩm, quy cách kỹ thuật" oninput="quotationItems[${index}].name = this.value;">
+        <input type="text" class="table-input" value="${item.name || ''}" placeholder="Tên sản phẩm, quy cách kỹ thuật" oninput="quotationItems[${index}].name = this.value;">
       </td>
       <td style="text-align: center;">
-        <input type="text" class="table-input" style="text-align: center;" value="${item.unit}" oninput="quotationItems[${index}].unit = this.value;">
+        <input type="text" class="table-input" style="text-align: center;" value="${item.unit || 'Bộ'}" oninput="quotationItems[${index}].unit = this.value;">
       </td>
       <td style="text-align: center;">
         <input type="number" class="table-input" style="text-align: center;" value="${item.qty}" min="1" oninput="quotationItems[${index}].qty = Number(this.value); updateCalculations();">
@@ -280,7 +495,7 @@ function updateCalculations() {
     }
   });
 
-  const vat = subtotal * 0.1;
+  const vat = Math.round(subtotal * 0.1);
   const grandTotal = subtotal + vat;
 
   document.getElementById("statItemCount").textContent = quotationItems.length + " Hạng mục";
@@ -303,10 +518,93 @@ function removeQuotationRow(index) {
   renderQuotationTable();
 }
 
+function collectQuotationData() {
+  return {
+    customer_name_vi: (document.getElementById("quoteCustomerName").value || "").trim(),
+    customer_name_zh: (document.getElementById("quoteCustomerNameCn").value || "").trim(),
+    tax_code: (document.getElementById("quoteTaxCode").value || "").trim(),
+    quotation_no: (document.getElementById("quoteNo").value || "").trim(),
+    quotation_date: (document.getElementById("quoteDate").value || "").trim(),
+    project_name: (document.getElementById("quoteProjectName").value || "").trim(),
+    contact_person: (document.getElementById("quoteContactPerson").value || "").trim(),
+    validity: (document.getElementById("quoteValidity").value || "").trim(),
+    lead_time: (document.getElementById("quoteLeadTime").value || "").trim(),
+    warranty: (document.getElementById("quoteWarranty").value || "").trim(),
+    payment_terms: (document.getElementById("quotePaymentTerms").value || "").trim(),
+    notes: (document.getElementById("quoteNotes").value || "").trim(),
+    items: quotationItems
+  };
+}
+
+// ----------------------------------------------------------------------------
+// 1. AI Parsing Integration (Gemini AI)
+// ----------------------------------------------------------------------------
+async function callQuotationAI() {
+  const promptText = (document.getElementById("aiPromptInput").value || "").trim();
+  if (!promptText) {
+    alert("Vui lòng nhập văn bản yêu cầu báo giá từ email, chat hoặc ghi chú khảo sát vào ô bên trên.");
+    return;
+  }
+
+  const modelSelect = document.getElementById("aiModelSelect");
+  const selectedModel = modelSelect ? modelSelect.value : null;
+
+  const btn = document.getElementById("btnCallQuotationAI");
+  const btnText = document.getElementById("btnAIText");
+  const origText = btnText.textContent;
+
+  btn.disabled = true;
+  btnText.textContent = "⏳ Gemini AI đang phân tích & bóc tách...";
+
+  try {
+    const res = await fetch("/api/v1/quotation/ai-parse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        raw_text: promptText,
+        model_name: selectedModel
+      })
+    });
+    const result = await res.json();
+
+    if (result.status === "success" && result.data) {
+      const d = result.data;
+      if (d.customer_name_vi) document.getElementById("quoteCustomerName").value = d.customer_name_vi;
+      if (d.customer_name_zh) document.getElementById("quoteCustomerNameCn").value = d.customer_name_zh;
+      if (d.tax_code) document.getElementById("quoteTaxCode").value = d.tax_code;
+      if (d.quotation_no) document.getElementById("quoteNo").value = d.quotation_no;
+      if (d.quotation_date) document.getElementById("quoteDate").value = d.quotation_date;
+      if (d.project_name) document.getElementById("quoteProjectName").value = d.project_name;
+      if (d.contact_person) document.getElementById("quoteContactPerson").value = d.contact_person;
+      if (d.validity) document.getElementById("quoteValidity").value = d.validity;
+      if (d.lead_time) document.getElementById("quoteLeadTime").value = d.lead_time;
+      if (d.warranty) document.getElementById("quoteWarranty").value = d.warranty;
+      if (d.payment_terms) document.getElementById("quotePaymentTerms").value = d.payment_terms;
+      if (d.notes) document.getElementById("quoteNotes").value = d.notes;
+
+      if (Array.isArray(d.items) && d.items.length > 0) {
+        quotationItems = d.items;
+        renderQuotationTable();
+      }
+
+      switchTab("tabQuotationItems");
+      alert(`✨ ${result.message}\nModel thực thi: ${result.executed_model}`);
+    } else {
+      alert("Lỗi AI: " + (result.message || "Không thể phân tích dữ liệu."));
+    }
+  } catch (err) {
+    alert("Lỗi kết nối khi gọi AI: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = origText;
+  }
+}
+
 function simulateAIParseQuotation() {
   document.getElementById("quoteCustomerName").value = "CÔNG TY TNHH VONMAX (VIỆT NAM)";
   document.getElementById("quoteCustomerNameCn").value = "弘聲科技(越南)有限公司";
   document.getElementById("quoteProjectName").value = "Kết Nối Mạng Máy Móc Dập Đầu SMB IoT Giai Đoạn 2";
+  document.getElementById("quoteNo").value = "HM-QT-VONMAX-002";
   quotationItems = [
     { name: "Cổng Giao Tiếp Thu Thập Dữ Liệu Edge Gateway IoT-200", unit: "Bộ", qty: 6, price: 16800000 },
     { name: "Cáp Tín Hiệu Công Nghiệp Chống Nhiễu RS485 Shielded", unit: "Cuộn", qty: 4, price: 3200000 },
@@ -315,7 +613,416 @@ function simulateAIParseQuotation() {
   renderQuotationTable();
 }
 
-// Tab Switching Logic
+// ----------------------------------------------------------------------------
+// 2. Saving Quotation with Versioning & Backup
+// ----------------------------------------------------------------------------
+async function saveQuotation() {
+  const payload = collectQuotationData();
+  if (!payload.quotation_no) {
+    alert("Vui lòng nhập Số Báo Giá trước khi lưu.");
+    return;
+  }
+
+  const btnBottom = document.getElementById("btnSaveQuotationBottom");
+  const btnTop = document.getElementById("btnTopSaveQuote");
+  if (btnBottom) btnBottom.disabled = true;
+  if (btnTop) btnTop.disabled = true;
+
+  try {
+    const res = await fetch("/api/v1/quotation/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+
+    if (result.status === "success") {
+      showQuotationSuccessModal(result);
+      loadQuotationFilesList();
+    } else {
+      alert("Lỗi lưu báo giá: " + (result.message || "Không xác định"));
+    }
+  } catch (err) {
+    alert("Lỗi kết nối khi lưu báo giá: " + err.message);
+  } finally {
+    if (btnBottom) btnBottom.disabled = false;
+    if (btnTop) btnTop.disabled = false;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// 3. Export Word & Excel
+// ----------------------------------------------------------------------------
+async function exportQuotationWord() {
+  const btn = document.getElementById("btnExportWord");
+  const origHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `⏳ Đang tạo Word...`;
+
+  try {
+    const payload = collectQuotationData();
+    const res = await fetch("/api/v1/quotation/generate-word", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+
+    if (result.status === "success") {
+      window.location.href = result.download_url;
+      loadQuotationFilesList();
+    } else {
+      alert("Lỗi tạo Báo giá Word: " + (result.message || "Không xác định"));
+    }
+  } catch (err) {
+    alert("Lỗi kết nối khi tạo Word: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+  }
+}
+
+async function exportQuotationExcel() {
+  const btn = document.getElementById("btnExportExcel");
+  const origHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `⏳ Đang tạo Excel...`;
+
+  try {
+    const payload = collectQuotationData();
+    const res = await fetch("/api/v1/quotation/generate-excel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+
+    if (result.status === "success") {
+      window.location.href = result.download_url;
+      loadQuotationFilesList();
+    } else {
+      alert("Lỗi tạo Báo giá Excel: " + (result.message || "Không xác định"));
+    }
+  } catch (err) {
+    alert("Lỗi kết nối khi tạo Excel: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// 4. Modals & History
+// ----------------------------------------------------------------------------
+function showQuotationSuccessModal(result) {
+  document.getElementById("modalQuoteTitle").textContent = `Lưu Báo Giá Thành Công (Phiên Bản v${result.version || 1})!`;
+  document.getElementById("modalQuoteCustomer").textContent = result.customer_name || "Khách hàng";
+  document.getElementById("modalQuoteNo").textContent = result.quotation_no || "N/A";
+  document.getElementById("modalQuoteVersionBadge").textContent = `Phiên Bản v${result.version || 1}`;
+  document.getElementById("modalQuoteTotal").textContent = result.total_amount_formatted || `${result.total_amount || 0} VND`;
+  document.getElementById("modalQuoteWordFile").textContent = result.docx_file_name || "N/A";
+  document.getElementById("modalQuoteExcelFile").textContent = result.xlsx_file_name || "N/A";
+
+  const backupNotice = document.getElementById("modalBackupNotice");
+  if (result.previous_backed_up) {
+    backupNotice.style.display = "block";
+  } else {
+    backupNotice.style.display = "none";
+  }
+
+  const dlWord = document.getElementById("btnModalDownloadQuoteWord");
+  dlWord.href = result.docx_download_url || "#";
+  dlWord.setAttribute("download", result.docx_file_name || "Bao_Gia.docx");
+
+  const dlExcel = document.getElementById("btnModalDownloadQuoteExcel");
+  dlExcel.href = result.xlsx_download_url || "#";
+  dlExcel.setAttribute("download", result.xlsx_file_name || "Bao_Gia.xlsx");
+
+  document.getElementById("btnModalOpenQuoteWord").onclick = () => openSystemPath(result.docx_file_name);
+  document.getElementById("btnModalOpenQuoteExcel").onclick = () => openSystemPath(result.xlsx_file_name);
+
+  document.getElementById("quotationSuccessModal").style.display = "flex";
+}
+
+function closeQuotationSuccessModal() {
+  document.getElementById("quotationSuccessModal").style.display = "none";
+}
+
+async function openQuotationHistoryModal(quoteNo) {
+  document.getElementById("historyModalQuoteNo").textContent = quoteNo;
+  const tbody = document.getElementById("quotationHistoryTableBody");
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">⏳ Đang tải lịch sử phiên bản...</td></tr>`;
+  document.getElementById("quotationHistoryModal").style.display = "flex";
+
+  try {
+    const res = await fetch(`/api/v1/quotation/history/${encodeURIComponent(quoteNo)}`);
+    const data = await res.json();
+    tbody.innerHTML = "";
+
+    if (data.status === "success" && Array.isArray(data.history) && data.history.length > 0) {
+      data.history.forEach(item => {
+        const isCurrent = item.is_current;
+        const statusBadge = isCurrent
+          ? `<span class="badge-pill green" style="font-weight:700;">★ Bản Hiện Hành (v${item.version})</span>`
+          : `<span class="badge-pill yellow" style="font-weight:600;">Bản Lưu Trữ (v${item.version})</span>`;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="text-align: center; font-weight: 700; color: #1e293b;">v${item.version}</td>
+          <td style="text-align: center;">${statusBadge}</td>
+          <td>
+            <div style="font-weight:600; color:#0f172a;">${item.project_name || 'Dự án'}</div>
+            <div style="font-size:0.75rem; color:#64748b;">${item.customer_name}</div>
+          </td>
+          <td style="text-align: right; font-weight: 700; color: #15803d;">${item.total_amount_formatted}</td>
+          <td style="text-align: center; font-size: 0.8rem; color: #64748b;">${item.created_at || ''}</td>
+          <td style="text-align: center;">
+            <div style="display: inline-flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap;">
+              ${item.docx_file_name ? `<a href="${item.docx_download_url}" download class="btn btn-outline btn-xs" title="Tải Word">Word</a>` : ''}
+              ${item.xlsx_file_name ? `<a href="${item.xlsx_download_url}" download class="btn btn-outline btn-xs" title="Tải Excel">Excel</a>` : ''}
+              <button type="button" class="btn btn-primary btn-xs" onclick="loadQuotationDetailIntoForm('${item.id}'); closeQuotationHistoryModal();" title="Nạp lại phiên bản này vào form soạn thảo">
+                Nạp Form
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } else {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">Chưa có bản lưu lịch sử cho mã báo giá này.</td></tr>`;
+    }
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#dc2626;">Lỗi tải lịch sử: ${err.message}</td></tr>`;
+  }
+}
+
+function closeQuotationHistoryModal() {
+  document.getElementById("quotationHistoryModal").style.display = "none";
+}
+
+async function loadQuotationDetailIntoForm(identifier) {
+  try {
+    const res = await fetch(`/api/v1/quotation/detail/${encodeURIComponent(identifier)}`);
+    const result = await res.json();
+    if (result.status === "success" && result.data) {
+      const d = result.data;
+      if (d.customer_name_vi) document.getElementById("quoteCustomerName").value = d.customer_name_vi;
+      if (d.customer_name_zh) document.getElementById("quoteCustomerNameCn").value = d.customer_name_zh;
+      if (d.tax_code) document.getElementById("quoteTaxCode").value = d.tax_code;
+      if (d.quotation_no) document.getElementById("quoteNo").value = d.quotation_no;
+      if (d.created_at) document.getElementById("quoteDate").value = d.created_at.split(" ")[0];
+      if (d.project_name) document.getElementById("quoteProjectName").value = d.project_name;
+      if (d.contact_person) document.getElementById("quoteContactPerson").value = d.contact_person;
+      if (d.validity) document.getElementById("quoteValidity").value = d.validity;
+      if (d.lead_time) document.getElementById("quoteLeadTime").value = d.lead_time;
+      if (d.warranty) document.getElementById("quoteWarranty").value = d.warranty;
+      if (d.payment_terms) document.getElementById("quotePaymentTerms").value = d.payment_terms;
+      if (d.notes) document.getElementById("quoteNotes").value = d.notes;
+
+      if (Array.isArray(d.items) && d.items.length > 0) {
+        quotationItems = d.items;
+        renderQuotationTable();
+      }
+
+      switchTab("tabQuotationItems");
+      alert(`Đã nạp thành công dữ liệu báo giá ${d.quotation_no} (Phiên bản v${d.version || 1}) vào form soạn thảo!`);
+    } else {
+      alert("Không thể nạp dữ liệu: " + (result.message || "Lỗi không xác định"));
+    }
+  } catch (err) {
+    alert("Lỗi gọi API nạp dữ liệu: " + err.message);
+  }
+}
+
+async function openSystemPath(filePath) {
+  if (!filePath) return;
+  try {
+    const res = await fetch("/api/v1/system/open-path", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: filePath })
+    });
+    const data = await res.json();
+    if (data.status === "error") {
+      alert(data.message || "Không thể mở tệp.");
+    }
+  } catch (err) {
+    alert("Lỗi gọi API mở tệp: " + err.message);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// 5. Load and Render Tables
+// ----------------------------------------------------------------------------
+async function loadQuotationFilesList() {
+  try {
+    const res = await fetch("/api/v1/quotation/files");
+    const data = await res.json();
+    if (data.status === "success") {
+      allQuotationFiles = data.files || [];
+      allActiveQuotations = data.active_quotations || [];
+
+      renderActiveQuotationsTable(allActiveQuotations);
+      renderQuotationFilesTable(allQuotationFiles);
+
+      const totalFiles = allQuotationFiles.length;
+      const wordCount = allQuotationFiles.filter(f => f.file_format === "docx").length;
+      const excelCount = allQuotationFiles.filter(f => f.file_format === "xlsx").length;
+
+      document.getElementById("quotationListBadge").textContent = allActiveQuotations.length || totalFiles;
+      const topBadge = document.getElementById("topQuotationCount");
+      if (topBadge) topBadge.textContent = allActiveQuotations.length || totalFiles;
+
+      document.getElementById("statTotalActiveQuotes").textContent = `${allActiveQuotations.length} báo giá`;
+      document.getElementById("statTotalWordQuotes").textContent = `${wordCount} tệp`;
+      document.getElementById("statTotalExcelQuotes").textContent = `${excelCount} tệp`;
+    }
+  } catch (err) {
+    console.error("Lỗi tải danh sách báo giá:", err);
+  }
+}
+
+function renderActiveQuotationsTable(quotes) {
+  const tbody = document.getElementById("activeQuotationsTableBody");
+  tbody.innerHTML = "";
+
+  if (!quotes || quotes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:#64748b;">Chưa có báo giá nào được lưu vào cơ sở dữ liệu. Hãy bấm "Lưu Báo Giá" để lưu trữ phiên bản.</td></tr>`;
+    return;
+  }
+
+  quotes.forEach((q, idx) => {
+    const hasHistory = q.history_count && q.history_count > 0;
+    const historyBadge = hasHistory
+      ? `<button type="button" class="btn btn-outline btn-xs" style="border-color:#0284c7; color:#0369a1;" onclick="openQuotationHistoryModal('${q.quotation_no}')">📂 ${q.history_count} bản cũ</button>`
+      : `<span style="color:#94a3b8; font-size:0.78rem;">Chưa có bản cũ</span>`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${idx + 1}</td>
+      <td>
+        <div style="font-weight: 700; color: #1d4ed8; font-family: monospace;">${q.quotation_no}</div>
+        <div style="margin-top: 2px;">
+          <span class="badge-pill green" style="font-size:0.72rem; font-weight:700;">v${q.version} Hiện Hành</span>
+        </div>
+      </td>
+      <td>
+        <div style="font-weight: 700; color: #1e293b; font-size: 0.88rem;">${q.customer_name_vi}</div>
+        <div style="font-size: 0.76rem; color: #64748b;">${q.customer_name_zh || ''}</div>
+      </td>
+      <td>
+        <div style="font-size: 0.85rem; color: #334155;">${q.project_name || 'Dự án'}</div>
+        <div style="font-size: 0.75rem; color: #64748b;">Ngày tạo: ${q.created_at || ''}</div>
+      </td>
+      <td style="text-align: right; font-weight: 700; color: #15803d; font-size: 0.9rem;">
+        ${q.total_amount_formatted}
+      </td>
+      <td style="text-align: center;">
+        ${historyBadge}
+      </td>
+      <td style="text-align: center;">
+        <div style="display: inline-flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-primary btn-xs" onclick="loadQuotationDetailIntoForm('${q.id}')" title="Nạp dữ liệu báo giá vào form để chỉnh sửa">
+            ✏️ Nạp
+          </button>
+          ${q.docx_file_name ? `<a href="${q.docx_download_url}" download class="btn btn-outline btn-xs" style="border-color:#2563eb; color:#1d4ed8;" title="Tải Word">Word</a>` : ''}
+          ${q.xlsx_file_name ? `<a href="${q.xlsx_download_url}" download class="btn btn-outline btn-xs" style="border-color:#16a34a; color:#15803d;" title="Tải Excel">Excel</a>` : ''}
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderQuotationFilesTable(files) {
+  const tbody = document.getElementById("quotationListTableBody");
+  const emptyState = document.getElementById("quotationEmptyState");
+  tbody.innerHTML = "";
+
+  if (!files || files.length === 0) {
+    emptyState.style.display = "block";
+    return;
+  }
+  emptyState.style.display = "none";
+
+  files.forEach((f, idx) => {
+    const isDocx = f.file_format === "docx";
+    const badgeHtml = isDocx
+      ? `<span class="badge-pill blue" style="font-weight:700;">Word (.docx)</span>`
+      : `<span class="badge-pill green" style="font-weight:700;">Excel (.xlsx)</span>`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${idx + 1}</td>
+      <td style="text-align: center;">${badgeHtml}</td>
+      <td>
+        <div style="font-weight: 700; color: #1e293b; font-size: 0.88rem;">${f.file_name}</div>
+        <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">${f.doc_name || f.description || 'Báo giá thiết bị'}</div>
+      </td>
+      <td>
+        <div style="font-size: 0.85rem; color: #334155;">${f.description || 'Hồ sơ báo giá'}</div>
+      </td>
+      <td style="text-align: right; font-family: monospace; font-size: 0.82rem; color: #475569;">
+        ${f.file_size_formatted || ''}
+      </td>
+      <td style="text-align: center; font-size: 0.82rem; color: #64748b;">
+        ${f.modified_time || ''}
+      </td>
+      <td style="text-align: center;">
+        <div style="display: inline-flex; gap: 0.4rem; justify-content: center;">
+          <button type="button" class="btn btn-outline btn-xs" onclick="openSystemPath('${f.file_path.replace(/\\/g, '\\\\')}')" title="Mở trực tiếp trên máy tính bằng Word/Excel">
+            📂 Mở
+          </button>
+          <a href="${f.download_url}" download="${f.file_name}" class="btn btn-primary btn-xs" title="Tải tệp về máy tính" style="text-decoration: none;">
+            ⬇️ Tải
+          </a>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterQuotationFiles(query) {
+  const q = (query || "").toLowerCase().trim();
+  if (!q) {
+    renderActiveQuotationsTable(allActiveQuotations);
+    renderQuotationFilesTable(allQuotationFiles);
+    return;
+  }
+  const filteredActive = allActiveQuotations.filter(item =>
+    (item.quotation_no || "").toLowerCase().includes(q) ||
+    (item.customer_name_vi || "").toLowerCase().includes(q) ||
+    (item.project_name || "").toLowerCase().includes(q)
+  );
+  renderActiveQuotationsTable(filteredActive);
+
+  const filteredFiles = allQuotationFiles.filter(f =>
+    (f.file_name || "").toLowerCase().includes(q) ||
+    (f.doc_name || "").toLowerCase().includes(q) ||
+    (f.description || "").toLowerCase().includes(q)
+  );
+  renderQuotationFilesTable(filteredFiles);
+}
+
+function switchTab(tabId) {
+  const parent = document.querySelector(".card .tabs-nav");
+  if (!parent) return;
+  parent.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".card .tab-content").forEach(c => c.classList.remove("active"));
+
+  const targetBtn = parent.querySelector(`[data-tab="${tabId}"]`);
+  if (targetBtn) targetBtn.classList.add("active");
+
+  const targetContent = document.getElementById(tabId);
+  if (targetContent) targetContent.classList.add("active");
+
+  if (tabId === "tabQuotationList") {
+    loadQuotationFilesList();
+  }
+}
+
+// Tab Switching Event Listeners
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const parent = btn.closest(".card");
@@ -327,6 +1034,9 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   });
 });
 
-document.addEventListener("DOMContentLoaded", renderQuotationTable);
+document.addEventListener("DOMContentLoaded", () => {
+  renderQuotationTable();
+  loadQuotationFilesList();
+});
 </script>
 {% endblock %}

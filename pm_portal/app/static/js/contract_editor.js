@@ -537,32 +537,23 @@ const ContractEditor = {
       }
 
       // Action buttons
-      let downloadBtn = "";
-      if (c.download_url) {
-        downloadBtn = `
-          <a href="${c.download_url}" download="${fileName}" class="btn btn-outline btn-xs" style="padding: 3px 8px; font-size: 0.75rem; text-decoration: none; color: #166534; border-color: #86efac; background: #f0fdf4;" title="Tải tệp Word (.docx)">
-            ⬇️ Tải
-          </a>
-        `;
-      }
+      const detailBtn = `
+        <button type="button" class="btn btn-outline btn-xs" onclick="ContractEditor.openContractDossierModal('${this.escapeHTML(c.contract_code || c.id)}')" style="padding: 4px 10px; font-size: 0.78rem; font-weight: 700; color: #1d4ed8; border-color: #93c5fd; background: #eff6ff; display: inline-flex; align-items: center; gap: 4px;" title="Xem chi tiết toàn bộ hồ sơ (Hợp đồng, Đề nghị TT, Nghiệm thu...)">
+          <span>👁️ Chi Tiết</span>
+        </button>
+      `;
 
       let openFolderBtn = "";
       if (filePath) {
         openFolderBtn = `
-          <button type="button" class="btn btn-outline btn-xs" onclick="handleOpenSystemPath('${filePath.replace(/\\/g, "\\\\")}')" style="padding: 3px 8px; font-size: 0.75rem; color: #0369a1; border-color: #7dd3fc; background: #f0f9ff;" title="Mở thư mục chứa file trong Explorer">
+          <button type="button" class="btn btn-outline btn-xs" onclick="handleOpenSystemPath('${filePath.replace(/\\/g, "\\\\")}')" style="padding: 4px 8px; font-size: 0.75rem; color: #0369a1; border-color: #7dd3fc; background: #f0f9ff;" title="Mở thư mục chứa file trong Explorer">
             📂 Mở
           </button>
         `;
       }
 
-      const loadFormBtn = `
-        <button type="button" class="btn btn-outline btn-xs" onclick="ContractEditor.loadContractToForm('${this.escapeHTML(c.id || c.contract_code)}')" style="padding: 3px 8px; font-size: 0.75rem; color: #1d4ed8; border-color: #93c5fd; background: #eff6ff;" title="Nạp vào form soạn thảo">
-          👁️ Nạp
-        </button>
-      `;
-
       const deleteBtn = `
-        <button type="button" class="btn btn-outline btn-xs" onclick="ContractEditor.deleteContract('${this.escapeHTML(c.id || '')}', '${this.escapeHTML(c.contract_code || fileName)}')" style="padding: 3px 8px; font-size: 0.75rem; color: #dc2626; border-color: #fca5a5; background: #fff;" title="Xóa hợp đồng">
+        <button type="button" class="btn btn-outline btn-xs" onclick="ContractEditor.deleteContract('${this.escapeHTML(c.id || '')}', '${this.escapeHTML(c.contract_code || fileName)}')" style="padding: 4px 8px; font-size: 0.75rem; color: #dc2626; border-color: #fca5a5; background: #fff;" title="Xóa hợp đồng">
           🗑️
         </button>
       `;
@@ -601,9 +592,8 @@ const ContractEditor = {
             <span class="badge-pill ${statusBadgeClass}" style="font-size: 0.72rem; padding: 2px 7px;">${statusText}</span>
           </td>
           <td style="text-align: center;">
-            <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: center; flex-wrap: wrap;">
-              ${downloadBtn}
-              ${loadFormBtn}
+            <div style="display: inline-flex; align-items: center; gap: 6px; justify-content: center; flex-wrap: nowrap;">
+              ${detailBtn}
               ${openFolderBtn}
               ${deleteBtn}
             </div>
@@ -719,5 +709,256 @@ const ContractEditor = {
     } finally {
       if (window.hideLoading) window.hideLoading();
     }
+  },
+
+  /**
+   * Mở Modal Hồ Sơ Chi Tiết Hợp Đồng (Hợp đồng, Đề nghị thanh toán, Nghiệm thu...)
+   */
+  async openContractDossierModal(contractCodeOrId) {
+    if (!contractCodeOrId) return;
+    const modal = document.getElementById("contractDossierModal");
+    if (!modal) return;
+
+    modal.style.display = "flex";
+    const bodyContainer = document.getElementById("contractDossierModalBody");
+    if (bodyContainer) {
+      bodyContainer.innerHTML = `
+        <div style="text-align: center; padding: 3rem 1rem; color: #64748b;">
+          <div class="spinner" style="margin: 0 auto 1rem; width: 36px; height: 36px; border-width: 3px;"></div>
+          <div style="font-weight: 600;">Đang kết nối cơ sở dữ liệu và tải hồ sơ hợp đồng ${this.escapeHTML(contractCodeOrId)}...</div>
+        </div>
+      `;
+    }
+
+    try {
+      const res = await fetch(`/api/v1/contracts/${encodeURIComponent(contractCodeOrId)}/dossier`);
+      const data = await res.json();
+
+      if (data.status === "success" && data.contract) {
+        this.renderDossierModalContent(data);
+      } else {
+        if (bodyContainer) {
+          bodyContainer.innerHTML = `
+            <div style="text-align: center; padding: 2.5rem; color: #dc2626;">
+              <div style="font-weight: 700; font-size: 1rem;">Không tìm thấy hồ sơ hợp đồng</div>
+              <div style="font-size: 0.85rem; margin-top: 0.5rem; color: #64748b;">${this.escapeHTML(data.message || "Lỗi không xác định")}</div>
+            </div>
+          `;
+        }
+      }
+    } catch (err) {
+      if (bodyContainer) {
+        bodyContainer.innerHTML = `
+          <div style="text-align: center; padding: 2.5rem; color: #dc2626;">
+            <div style="font-weight: 700;">Lỗi kết nối máy chủ</div>
+            <div style="font-size: 0.85rem; margin-top: 0.5rem; color: #64748b;">${this.escapeHTML(err.message)}</div>
+          </div>
+        `;
+      }
+    }
+  },
+
+  closeContractDossierModal() {
+    const modal = document.getElementById("contractDossierModal");
+    if (modal) modal.style.display = "none";
+  },
+
+  renderDossierModalContent(data) {
+    const bodyContainer = document.getElementById("contractDossierModalBody");
+    if (!bodyContainer) return;
+
+    const c = data.contract;
+    const ms = data.milestones || [];
+    const docs = data.documents || {};
+    const contractDocs = docs.contract_docs || [];
+    const paymentDocs = docs.payment_docs || [];
+    const acceptanceDocs = docs.acceptance_docs || [];
+    const otherDocs = docs.other_docs || [];
+
+    const custName = `${this.escapeHTML(c.customer_name_vi)}${c.customer_name_zh ? ` · <span style="font-weight:400;color:#64748b;">${this.escapeHTML(c.customer_name_zh)}</span>` : ""}`;
+    const projName = `${this.escapeHTML(c.project_name_vi)}${c.project_name_zh ? ` · <span style="color:#64748b;">${this.escapeHTML(c.project_name_zh)}</span>` : ""}`;
+
+    // Render payment milestones rows
+    let milestonesHtml = "";
+    if (ms.length > 0) {
+      milestonesHtml = `
+        <table class="modern-table" style="min-width: 100%; font-size: 0.82rem; margin-top: 0.5rem;">
+          <thead>
+            <tr>
+              <th style="width: 70px; text-align: center;">Đợt</th>
+              <th style="width: 70px; text-align: center;">Tỷ Lệ</th>
+              <th style="width: 140px; text-align: right;">Số Tiền (VND)</th>
+              <th>Điều Kiện Thanh Toán (Trigger Condition)</th>
+              <th style="width: 90px; text-align: center;">Hạn T/T</th>
+              <th style="width: 110px; text-align: center;">Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ms.map((m, idx) => `
+              <tr>
+                <td style="text-align: center; font-weight: 700; color: #1d4ed8;">${this.escapeHTML(m.milestone_name || `Đợt ${idx + 1}`)}</td>
+                <td style="text-align: center; font-weight: 700;">${m.percentage}%</td>
+                <td style="text-align: right; font-weight: 700; color: #15803d;">${Number(m.amount || 0).toLocaleString("vi-VN")} VND</td>
+                <td style="font-size: 0.8rem; color: #334155;">${this.escapeHTML(m.trigger_condition || "Thanh toán theo hợp đồng")}</td>
+                <td style="text-align: center; font-size: 0.78rem;">${m.payment_term_days ? `${m.payment_term_days} ngày` : "Tức thì"}</td>
+                <td style="text-align: center;">
+                  <span class="badge-pill ${m.status === 'PAID' ? 'green' : (m.triggered ? 'yellow' : 'gray')}" style="font-size: 0.7rem; padding: 2px 6px;">
+                    ${this.escapeHTML(m.status_label || (m.status === 'PAID' ? 'Đã thu tiền' : (m.triggered ? 'Chờ thanh toán' : 'Chờ điều kiện')))}
+                  </span>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    } else {
+      milestonesHtml = `<div style="font-size: 0.82rem; color: #94a3b8; font-style: italic; padding: 0.5rem 0;">Chưa thiết lập tiến độ thanh toán chi tiết.</div>`;
+    }
+
+    // Helper to render file card
+    const renderFileCard = (doc, icon = "📄", color = "#2563eb") => {
+      const escapedPath = (doc.file_path || "").replace(/\\/g, "\\\\");
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 0.45rem; gap: 0.75rem; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1;">
+            <span style="font-size: 1.25rem;">${icon}</span>
+            <div style="min-width: 0;">
+              <div style="font-weight: 750; font-size: 0.85rem; color: #0f172a; word-break: break-all;" title="${this.escapeHTML(doc.file_name)}">
+                ${this.escapeHTML(doc.file_name)}
+              </div>
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">
+                ${doc.file_size_formatted ? `<span>${doc.file_size_formatted}</span> · ` : ""}${doc.created_at ? `<span>${doc.created_at}</span>` : ""}
+                ${doc.exists ? `<span class="badge-pill green" style="font-size: 0.65rem; padding: 1px 5px; margin-left: 6px;">✓ Tệp sẵn sàng</span>` : `<span class="badge-pill gray" style="font-size: 0.65rem; padding: 1px 5px; margin-left: 6px;">Không tìm thấy tệp</span>`}
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0;">
+            ${doc.download_url ? `
+              <a href="${doc.download_url}" download="${this.escapeHTML(doc.file_name)}" class="btn btn-outline btn-xs" style="padding: 4px 10px; font-size: 0.75rem; font-weight: 600; text-decoration: none; color: #166534; border-color: #86efac; background: #f0fdf4;" title="Tải tệp về máy tính">
+                ⬇️ Tải Về
+              </a>
+            ` : ""}
+            ${doc.file_path ? `
+              <button type="button" class="btn btn-outline btn-xs" onclick="handleOpenSystemPath('${escapedPath}')" style="padding: 4px 10px; font-size: 0.75rem; font-weight: 600; color: #0369a1; border-color: #7dd3fc; background: #f0f9ff;" title="Mở trực tiếp trên máy tính">
+                📂 Mở
+              </button>
+            ` : ""}
+          </div>
+        </div>
+      `;
+    };
+
+    bodyContainer.innerHTML = `
+      <!-- Thẻ Thông Tin Tổng Quan Hợp Đồng -->
+      <div style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1px solid #bfdbfe; border-radius: 10px; padding: 1.1rem 1.25rem; margin-bottom: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+              <span style="font-family: monospace; font-size: 1.15rem; font-weight: 800; color: #1d4ed8; background: #dbeafe; padding: 3px 12px; border-radius: 6px; letter-spacing: 0.03em;">
+                ${this.escapeHTML(c.contract_code)}
+              </span>
+              <span class="badge-pill blue" style="font-size: 0.78rem;">${this.escapeHTML(c.status)}</span>
+              ${c.signed_date ? `<span style="font-size: 0.8rem; color: #64748b;">📅 Ký ngày: <strong>${this.escapeHTML(c.signed_date)}</strong></span>` : ""}
+            </div>
+            <div style="margin-top: 0.55rem; font-size: 0.98rem; font-weight: 750; color: #0f172a;">
+              🏢 Khách Hàng: ${custName}
+            </div>
+            <div style="margin-top: 0.25rem; font-size: 0.86rem; color: #334155;">
+              📦 Dự Án: ${projName}
+            </div>
+          </div>
+
+          <div style="text-align: right;">
+            <div style="font-size: 0.76rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Tổng Giá Trị Hợp Đồng</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #15803d; margin-top: 0.15rem;">
+              ${this.escapeHTML(c.total_amount_formatted)}
+            </div>
+            <div style="font-size: 0.76rem; color: #64748b; margin-top: 0.25rem;">
+              Kỹ sư phụ trách: <strong>${this.escapeHTML(c.lead_engineer)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick actions inside dossier -->
+        <div style="display: flex; gap: 0.65rem; margin-top: 0.95rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1; flex-wrap: wrap; align-items: center;">
+          <button type="button" class="btn btn-primary btn-sm" onclick="ContractEditor.loadContractToForm('${this.escapeHTML(c.contract_code)}'); ContractEditor.closeContractDossierModal(); switchTab('tabProducts');" style="font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+            <span>👁️ Nạp Lại Vào Form Soạn Thảo</span>
+          </button>
+          <a href="/reminders" class="btn btn-outline btn-sm" style="font-size: 0.8rem; font-weight: 600; text-decoration: none; color: #1e40af; border-color: #93c5fd; background: #ffffff; display: inline-flex; align-items: center; gap: 4px;">
+            <span>👉 Sang Quản Lý Đề Nghị TT & Nhắc Nợ</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Section 1: Tệp Hợp Đồng Word (.docx) -->
+      <div style="margin-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+          <h4 style="margin: 0; font-size: 0.92rem; font-weight: 750; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>📄</span> Hợp Đồng Mua Bán Chính Thức (Word .docx)
+          </h4>
+          <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">${contractDocs.length} tệp</span>
+        </div>
+        ${contractDocs.length > 0 ? contractDocs.map(d => renderFileCard(d, "📄", "#2563eb")).join("") : `
+          <div style="font-size: 0.82rem; color: #94a3b8; font-style: italic; padding: 0.75rem; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
+            Chưa có tệp Word hợp đồng nào được lưu.
+          </div>
+        `}
+      </div>
+
+      <!-- Section 2: Tiến Độ & Phiếu Đề Nghị Thanh Toán (Payment Requests) -->
+      <div style="margin-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+          <h4 style="margin: 0; font-size: 0.92rem; font-weight: 750; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>💰</span> Tiến Độ Thanh Toán & Phiếu Đề Nghị TT
+          </h4>
+          <span style="font-size: 0.75rem; color: #166534; font-weight: 700;">${paymentDocs.length} chứng từ đã tạo</span>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem; margin-bottom: 0.65rem;">
+          <div style="font-weight: 700; font-size: 0.82rem; color: #334155;">Tiến Độ Các Đợt Theo Hợp Đồng:</div>
+          ${milestonesHtml}
+        </div>
+
+        ${paymentDocs.length > 0 ? paymentDocs.map(d => renderFileCard(d, d.file_name.endsWith(".xlsx") ? "📊" : "📄", "#16a34a")).join("") : `
+          <div style="font-size: 0.82rem; color: #94a3b8; font-style: italic; padding: 0.75rem; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
+            Chưa có file Đề Nghị Thanh Toán cho hợp đồng này.
+          </div>
+        `}
+      </div>
+
+      <!-- Section 3: Hồ Sơ Biên Bản Nghiệm Thu (Acceptance Handover) -->
+      <div style="margin-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+          <h4 style="margin: 0; font-size: 0.92rem; font-weight: 750; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>📝</span> Biên Bản Nghiệm Thu & Bàn Giao Thiết Bị (Acceptance)
+          </h4>
+          <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">${acceptanceDocs.length} biên bản</span>
+        </div>
+        ${acceptanceDocs.length > 0 ? acceptanceDocs.map(d => renderFileCard(d, "📝", "#0284c7")).join("") : `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="font-size: 0.82rem; color: #64748b;">
+              Chưa có biên bản nghiệm thu nào khớp mã <strong>${this.escapeHTML(c.contract_code)}</strong>.
+            </div>
+            <a href="/acceptance" class="btn btn-outline btn-xs" style="text-decoration: none; font-size: 0.75rem; font-weight: 600; color: #0284c7; border-color: #7dd3fc; background: #ffffff;">
+              ＋ Lập Biên Bản Nghiệm Thu
+            </a>
+          </div>
+        `}
+      </div>
+
+      <!-- Section 4: Các Tài Liệu & Hồ Sơ Khác (nếu có) -->
+      ${otherDocs.length > 0 ? `
+        <div style="margin-bottom: 1.25rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <h4 style="margin: 0; font-size: 0.92rem; font-weight: 750; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+              <span>📁</span> Chứng Từ & Tài Liệu Liên Quan Khác
+            </h4>
+            <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">${otherDocs.length} tệp</span>
+          </div>
+          ${otherDocs.map(d => renderFileCard(d, "📎", "#64748b")).join("")}
+        </div>
+      ` : ""}
+    `;
   }
 };
+

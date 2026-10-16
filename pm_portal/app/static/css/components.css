@@ -948,16 +948,69 @@ textarea.form-control {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin-bottom: 1.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom styled horizontal scrollbar for all data tables */
+.modern-table-card::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar,
+.projects-table-wrap::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.modern-table-card::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track,
+.projects-table-wrap::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.modern-table-card::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb,
+.projects-table-wrap::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  border: 1.5px solid #f1f5f9;
+}
+
+.modern-table-card::-webkit-scrollbar-thumb:hover,
+.table-responsive::-webkit-scrollbar-thumb:hover,
+.projects-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.modern-table-card,
+.table-responsive,
+.projects-table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
 .modern-table {
   width: 100%;
+  min-width: 900px;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.85rem;
   background: #ffffff;
+}
+
+.modern-table.contracts-table {
+  min-width: 1250px;
+}
+
+.modern-table.quotation-table,
+.modern-table.po-table,
+.modern-table.delivery-table {
+  min-width: 980px;
+}
+
+.modern-table.reminders-table {
+  min-width: 1050px;
 }
 
 .modern-table thead th {

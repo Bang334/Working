@@ -157,6 +157,20 @@ def get_contract_detail_controller(identifier: str) -> Dict[str, Any]:
         }
 
 
+def get_contract_dossier_controller(identifier: str) -> Dict[str, Any]:
+    """Controller to retrieve full dossier (milestones, linked files) for contract modal."""
+    try:
+        from app.services.contract_service import get_contract_dossier_detail
+        return get_contract_dossier_detail(identifier)
+    except Exception as exc:
+        logger.exception("Error fetching contract dossier for %s: %s", identifier, exc)
+        return {
+            "status": "error",
+            "message": str(exc),
+            "data": None
+        }
+
+
 def delete_contract_controller(identifier: str) -> Dict[str, Any]:
     """Controller to remove a contract record from the system."""
     try:

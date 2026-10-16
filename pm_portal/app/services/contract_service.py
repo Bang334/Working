@@ -5,7 +5,7 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.config import BASE_DIR, OUTPUTS_DIR, TEMPLATE_DOCX, WORKING_DIR
 from app.services.preview_service import generate_contract_preview_html
@@ -230,10 +230,41 @@ def save_contract_to_database(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     
     svc_logger = logging.getLogger(__name__)
 
-    # 1. Generate official Word DOCX (placed directly into Ho So Du An/Hop Dong/)
-    docx_result = generate_contract_docx(raw_data)
-    sanitized = docx_result["contract_data"]
-    saved_docx_path = Path(docx_result["file_path"])
+    # 1. Tận dụng file Word đã tạo trước đó (nếu có), không sinh thêm file mới tránh trùng lặp
+    existing_path_str = raw_data.get("existing_file_path") or raw_data.get("file_path")
+    sanitized = prepare_contract_data(raw_data)
+
+    saved_docx_path = None
+    download_url = ""
+
+    # Kiểm tra đường dẫn client gửi lên
+    if existing_path_str:
+        p = Path(existing_path_str)
+        if p.is_file():
+            saved_docx_path = p
+            download_url = raw_data.get("download_url") or f"/api/v1/contracts/download/{p.name}"
+
+    # Nếu client không gửi, tìm file khớp số hợp đồng trong thư mục Ho So Du An/Hop Dong
+    if not saved_docx_path or not saved_docx_path.is_file():
+        so_hd = sanitized.get("so_hop_dong", "").strip()
+        hop_dong_dir = WORKING_DIR / "Ho So Du An" / "Hop Dong"
+        if so_hd and hop_dong_dir.exists():
+            clean_so_hd = sanitize_filename(so_hd)
+            matched_files = sorted(
+                [f for f in hop_dong_dir.glob(f"*{clean_so_hd}*.docx") if not f.name.startswith("~$")],
+                key=lambda x: x.stat().st_mtime,
+                reverse=True
+            )
+            if matched_files:
+                saved_docx_path = matched_files[0]
+                download_url = f"/api/v1/contracts/download/{saved_docx_path.name}"
+
+    # Chỉ khi hoàn toàn chưa có file Word nào, mới gọi sinh file DOCX mới
+    if not saved_docx_path or not saved_docx_path.is_file():
+        docx_result = generate_contract_docx(raw_data)
+        sanitized = docx_result["contract_data"]
+        saved_docx_path = Path(docx_result["file_path"])
+        download_url = docx_result["download_url"]
 
     # 3. Extract contract details
     contract_code = sanitized.get("so_hop_dong", "").strip()
@@ -334,7 +365,7 @@ def save_contract_to_database(raw_data: Dict[str, Any]) -> Dict[str, Any]:
 
     # 6. Index Word DOCX into documents table
     file_size = saved_docx_path.stat().st_size if saved_docx_path.exists() else 0
-    cursor.execute("DELETE FROM documents WHERE contract_id = ? AND file_name = ?", (contract_id, saved_docx_path.name))
+    cursor.execute("DELETE FROM documents WHERE (contract_id = ? OR contract_code = ?) AND doc_type = 'HOP_DONG'", (contract_id, contract_code))
     cursor.execute("""
         INSERT INTO documents (
             contract_id, contract_code, doc_type, doc_name, file_name,
@@ -373,7 +404,7 @@ def save_contract_to_database(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         "file_name": saved_docx_path.name,
         "file_path": str(saved_docx_path),
         "folder_path": str(saved_docx_path.parent),
-        "download_url": docx_result["download_url"],
+        "download_url": download_url or f"/api/v1/contracts/download/{saved_docx_path.name}",
         "total_amount": total_amount,
         "customer_name": cust_vi,
         "reminders_url": "/reminders"
@@ -381,14 +412,13 @@ def save_contract_to_database(raw_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def get_all_contracts_list() -> List[Dict[str, Any]]:
-    """Retrieve full list of created contracts combining SQLite database and exported DOCX files."""
+    """Retrieve full list of created contracts strictly based on SQLite database."""
     from app.database import get_db_connection
 
     results = []
-    seen_file_names = set()
     seen_contract_codes = set()
 
-    # 1. Fetch contracts saved in SQLite
+    # 1. Fetch contracts saved in SQLite (strictly 1 row per contract, linking newest DOCX)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -397,14 +427,28 @@ def get_all_contracts_list() -> List[Dict[str, Any]]:
             SELECT c.*, 
                    d.file_name, d.file_path, d.file_size, d.file_format, d.created_at as doc_created_at
             FROM contracts c
-            LEFT JOIN documents d ON (d.contract_id = c.id OR d.contract_code = c.contract_code) AND d.doc_type = 'HOP_DONG'
+            LEFT JOIN (
+                SELECT contract_id, contract_code, file_name, file_path, file_size, file_format, created_at,
+                       ROW_NUMBER() OVER (PARTITION BY COALESCE(contract_id, contract_code) ORDER BY id DESC) as rn
+                FROM documents
+                WHERE doc_type = 'HOP_DONG'
+            ) d ON (d.contract_id = c.id OR d.contract_code = c.contract_code) AND d.rn = 1
             ORDER BY c.id DESC
         """)
         rows = cursor.fetchall()
 
         for r in rows:
             row_dict = dict(r)
-            c_code = row_dict.get("contract_code") or ""
+            c_code = (row_dict.get("contract_code") or "").strip()
+            if not c_code:
+                c_code = f"HMV-{row_dict.get('id')}"
+
+            # Deduplicate by contract_code
+            clean_code_key = c_code.lower()
+            if clean_code_key in seen_contract_codes:
+                continue
+            seen_contract_codes.add(clean_code_key)
+
             f_name = row_dict.get("file_name") or ""
             f_path_str = row_dict.get("file_path") or ""
 
@@ -423,11 +467,6 @@ def get_all_contracts_list() -> List[Dict[str, Any]]:
 
             file_size_bytes = actual_path.stat().st_size if actual_path and actual_path.exists() else (row_dict.get("file_size") or 0)
             file_mtime = datetime.fromtimestamp(actual_path.stat().st_mtime).strftime("%d/%m/%Y %H:%M") if actual_path and actual_path.exists() else ""
-
-            if f_name:
-                seen_file_names.add(f_name.lower())
-            if c_code:
-                seen_contract_codes.add(c_code.lower())
 
             results.append({
                 "id": row_dict.get("id"),
@@ -456,71 +495,6 @@ def get_all_contracts_list() -> List[Dict[str, Any]]:
     except Exception as exc:
         logging.getLogger(__name__).warning("Error querying contracts table: %s", exc)
 
-    # 2. Scan official project folder for exported DOCX files not yet in the DB list
-    scan_dirs = [
-        WORKING_DIR / "Ho So Du An" / "Hop Dong"
-    ]
-
-    for s_dir in scan_dirs:
-        if not s_dir.exists():
-            continue
-
-        for p in s_dir.glob("*.docx"):
-            if p.name.startswith("~$") or p.name.lower().startswith("test_") or "test" in p.name.lower() or "bien_ban" in p.name.lower():
-                continue
-
-            clean_lower = p.name.lower()
-            if clean_lower in seen_file_names:
-                continue
-
-            seen_file_names.add(clean_lower)
-
-            # Heuristic parse: Hop_Dong_{CUSTOMER}_{CONTRACT_CODE}_{TIMESTAMP}.docx
-            extracted_code = ""
-            extracted_customer = ""
-            match = re.search(r"Hop_Dong_(.+?)_((?:HD|HMV)[\w\-]+)_(\d{8}_\d{6})", p.name, re.IGNORECASE)
-            if match:
-                raw_cust = match.group(1).replace("_", " ")
-                extracted_customer = raw_cust
-                extracted_code = match.group(2)
-            else:
-                match2 = re.search(r"Hop_Dong_(.+?)_(\d{8}_\d{6})", p.name, re.IGNORECASE)
-                if match2:
-                    extracted_customer = match2.group(1).replace("_", " ")
-                else:
-                    extracted_customer = p.stem.replace("Hop_Dong_", "").replace("_", " ")
-
-            mtime_dt = datetime.fromtimestamp(p.stat().st_mtime)
-            mtime_str = mtime_dt.strftime("%d/%m/%Y %H:%M")
-
-            results.append({
-                "id": None,
-                "contract_code": extracted_code or "HỢP ĐỒNG WORD",
-                "customer_name_vi": extracted_customer,
-                "customer_name_zh": "",
-                "project_name_vi": "Hợp đồng mua bán thiết bị & dịch vụ",
-                "project_name_zh": "",
-                "lead_engineer": "Hong Ming Global",
-                "signed_date": mtime_dt.strftime("%d/%m/%Y"),
-                "total_amount": 0,
-                "paid_amount": 0,
-                "currency": "VND",
-                "status": "Đã xuất file Word",
-                "notes": f"Tệp tạo ngày {mtime_str}",
-                "created_at": mtime_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                "file_name": p.name,
-                "file_path": str(p),
-                "file_size": p.stat().st_size,
-                "file_mtime": mtime_str,
-                "download_url": f"/api/v1/contracts/download/{p.name}",
-                "source": "file_scan"
-            })
-
-    # Sort descending: newest created_at / file_mtime first
-    def get_sort_key(item):
-        return item.get("created_at") or item.get("file_mtime") or ""
-
-    results.sort(key=get_sort_key, reverse=True)
     return results
 
 
@@ -650,6 +624,175 @@ def get_contract_detail_by_id_or_code(identifier: str) -> Dict[str, Any]:
     }
 
 
+def get_contract_dossier_detail(identifier: str) -> Dict[str, Any]:
+    """Retrieve comprehensive contract dossier including linked documents across all folders."""
+    from app.database import get_db_connection
+    from app.config import WORKING_DIR
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    row = None
+    if str(identifier).isdigit():
+        cursor.execute("SELECT * FROM contracts WHERE id = ?", (int(identifier),))
+        row = cursor.fetchone()
+
+    if not row:
+        cursor.execute("SELECT * FROM contracts WHERE contract_code = ?", (str(identifier).strip(),))
+        row = cursor.fetchone()
+
+    if not row:
+        cursor.execute("""
+            SELECT c.* FROM contracts c
+            JOIN documents d ON d.contract_id = c.id OR d.contract_code = c.contract_code
+            WHERE d.file_name = ?
+            LIMIT 1
+        """, (str(identifier).strip(),))
+        row = cursor.fetchone()
+
+    if not row:
+        conn.close()
+        raise ValueError(f"Không tìm thấy hợp đồng với mã hoặc ID '{identifier}'")
+
+    c = dict(row)
+    c_id = c["id"]
+    c_code = c["contract_code"]
+
+    # 1. Fetch milestones
+    cursor.execute("""
+        SELECT * FROM payment_milestones 
+        WHERE contract_id = ? OR contract_code = ? 
+        ORDER BY id ASC
+    """, (c_id, c_code))
+    milestones = [dict(m) for m in cursor.fetchall()]
+
+    # 2. Fetch all indexed documents from database
+    cursor.execute("""
+        SELECT * FROM documents 
+        WHERE contract_id = ? OR contract_code = ? 
+        ORDER BY id DESC
+    """, (c_id, c_code))
+    db_docs = [dict(d) for d in cursor.fetchall()]
+
+    seen_file_names = set(d["file_name"].lower() for d in db_docs if d.get("file_name"))
+
+    # 3. Scan physical folders in Ho So Du An for any files matching contract_code
+    project_subdirs = [
+        ("HOP_DONG", "Hợp đồng mua bán", WORKING_DIR / "Ho So Du An" / "Hop Dong"),
+        ("YEU_CAU_THANH_TOAN", "Đề nghị thanh toán", WORKING_DIR / "Ho So Du An" / "Yeu Cau Thanh Toan"),
+        ("NGHIEM_THU", "Biên bản nghiệm thu", WORKING_DIR / "Ho So Du An" / "Nghiem Thu"),
+        ("XUAT_KHO", "Phiếu xuất kho bàn giao", WORKING_DIR / "Ho So Du An" / "Xuat Kho"),
+        ("BAO_GIA", "Báo giá thiết bị", WORKING_DIR / "Ho So Du An" / "Bao Gia"),
+    ]
+
+    clean_code = c_code.strip()
+    for dtype, dname, pdir in project_subdirs:
+        if not pdir.exists():
+            continue
+        for p in pdir.glob("*.*"):
+            if p.is_file() and not p.name.startswith("~$") and clean_code.lower() in p.name.lower():
+                if p.name.lower() not in seen_file_names:
+                    seen_file_names.add(p.name.lower())
+                    try:
+                        cursor.execute("""
+                            INSERT INTO documents (
+                                contract_id, contract_code, doc_type, doc_name,
+                                file_name, file_path, file_size, file_format, description
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            c_id, c_code, dtype, f"{dname} {clean_code}",
+                            p.name, str(p), p.stat().st_size, p.suffix.lstrip(".").lower(),
+                            f"Tự động liên kết từ thư mục {pdir.name}"
+                        ))
+                        conn.commit()
+                        doc_id = cursor.lastrowid
+                    except Exception:
+                        doc_id = None
+
+                    db_docs.append({
+                        "id": doc_id,
+                        "contract_id": c_id,
+                        "contract_code": c_code,
+                        "doc_type": dtype,
+                        "doc_name": f"{dname} {clean_code}",
+                        "file_name": p.name,
+                        "file_path": str(p),
+                        "file_size": p.stat().st_size,
+                        "file_format": p.suffix.lstrip(".").lower(),
+                        "created_at": datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+                        "description": f"Tự động liên kết từ thư mục {pdir.name}"
+                    })
+
+    conn.close()
+
+    # Classify documents
+    contract_docs = []
+    payment_docs = []
+    acceptance_docs = []
+    other_docs = []
+
+    for d in db_docs:
+        fpath = Path(d.get("file_path") or "")
+        exists = fpath.is_file()
+        fsize = d.get("file_size") or (fpath.stat().st_size if exists else 0)
+        size_str = f"{round(fsize / 1024, 1)} KB" if fsize else ""
+        
+        doc_item = {
+            "id": d.get("id"),
+            "doc_type": d.get("doc_type"),
+            "doc_name": d.get("doc_name") or d.get("file_name"),
+            "file_name": d.get("file_name"),
+            "file_path": str(fpath),
+            "file_size": fsize,
+            "file_size_formatted": size_str,
+            "file_format": d.get("file_format") or fpath.suffix.lstrip(".").lower(),
+            "created_at": d.get("created_at") or "",
+            "download_url": f"/api/v1/dossier/documents/{d.get('id')}/download" if d.get("id") else f"/api/v1/contracts/download/{d.get('file_name')}",
+            "exists": exists
+        }
+
+        dtype = (d.get("doc_type") or "").upper()
+        if dtype == "HOP_DONG":
+            contract_docs.append(doc_item)
+        elif dtype == "YEU_CAU_THANH_TOAN":
+            payment_docs.append(doc_item)
+        elif dtype == "NGHIEM_THU":
+            acceptance_docs.append(doc_item)
+        else:
+            other_docs.append(doc_item)
+
+    tot_amt = int(c.get("total_amount") or 0)
+    formatted_total = f"{tot_amt:,}".replace(",", ".") + " VND" if tot_amt > 0 else "0 VND"
+
+    return {
+        "status": "success",
+        "contract": {
+            "id": c["id"],
+            "contract_code": c["contract_code"],
+            "customer_name_vi": c.get("customer_name_vi") or "",
+            "customer_name_zh": c.get("customer_name_zh") or "",
+            "project_name_vi": c.get("project_name_vi") or "",
+            "project_name_zh": c.get("project_name_zh") or "",
+            "lead_engineer": c.get("lead_engineer") or "Jenson Chang (張永吉)",
+            "signed_date": c.get("signed_date") or "",
+            "total_amount": tot_amt,
+            "total_amount_formatted": formatted_total,
+            "paid_amount": c.get("paid_amount") or 0,
+            "status": c.get("status") or "Đang thực hiện",
+            "notes": c.get("notes") or "",
+            "created_at": c.get("created_at") or ""
+        },
+        "milestones": milestones,
+        "documents": {
+            "contract_docs": contract_docs,
+            "payment_docs": payment_docs,
+            "acceptance_docs": acceptance_docs,
+            "other_docs": other_docs,
+            "all_docs": contract_docs + payment_docs + acceptance_docs + other_docs
+        }
+    }
+
+
 def delete_contract_service(identifier: str) -> Dict[str, Any]:
     """Delete a contract and its associated milestones and document references."""
     from app.database import get_db_connection
@@ -688,4 +831,76 @@ def delete_contract_service(identifier: str) -> Dict[str, Any]:
         "status": "success",
         "message": f"Đã xóa thông tin hợp đồng '{identifier}' khỏi danh sách."
     }
+
+
+def find_matching_contract(raw_code: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Check if raw_code corresponds to an existing contract in SQLite database.
+    
+    Returns the contract record as a dictionary if a match is found, or None if:
+    - raw_code is None or empty.
+    - no matching contract exists in the database.
+    
+    Supports:
+    1. Exact match by contract_code.
+    2. Case-insensitive and trimmed match.
+    3. Numeric ID match.
+    4. Substring containment match (e.g. HD-20261013-001 vs 20261013-001).
+    """
+    if not raw_code:
+        return None
+    code = str(raw_code).strip()
+    if not code:
+        return None
+
+    import re
+    from app.database import get_db_connection
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 1. Exact match
+    cursor.execute("""
+        SELECT id, contract_code, customer_name_vi, customer_name_zh, 
+               project_name_vi, project_name_zh, total_amount, status
+        FROM contracts WHERE contract_code = ?
+    """, (code,))
+    row = cursor.fetchone()
+
+    # 2. Case-insensitive & trimmed match
+    if not row:
+        cursor.execute("""
+            SELECT id, contract_code, customer_name_vi, customer_name_zh, 
+                   project_name_vi, project_name_zh, total_amount, status
+            FROM contracts WHERE UPPER(TRIM(contract_code)) = UPPER(TRIM(?))
+        """, (code,))
+        row = cursor.fetchone()
+
+    # 3. Numeric ID match
+    if not row and code.isdigit():
+        cursor.execute("""
+            SELECT id, contract_code, customer_name_vi, customer_name_zh, 
+                   project_name_vi, project_name_zh, total_amount, status
+            FROM contracts WHERE id = ?
+        """, (int(code),))
+        row = cursor.fetchone()
+
+    # 4. Normalized alphanumeric match / substring match
+    if not row:
+        cursor.execute("""
+            SELECT id, contract_code, customer_name_vi, customer_name_zh, 
+                   project_name_vi, project_name_zh, total_amount, status
+            FROM contracts
+        """)
+        all_contracts = cursor.fetchall()
+        clean_target = re.sub(r"[^A-Za-z0-9]", "", code).upper()
+        if len(clean_target) >= 4:
+            for c in all_contracts:
+                c_code = (c["contract_code"] or "").strip()
+                clean_c = re.sub(r"[^A-Za-z0-9]", "", c_code).upper()
+                if clean_c and (clean_c == clean_target or clean_c in clean_target or clean_target in clean_c):
+                    row = c
+                    break
+
+    conn.close()
+    return dict(row) if row else None
 

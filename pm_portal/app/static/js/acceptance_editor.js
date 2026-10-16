@@ -461,6 +461,14 @@ async function handleProcessRepairWorkbook() {
 
   const formData = new FormData();
   formData.append("file", file, file.name);
+
+  // Thêm mã hợp đồng liên kết (nếu người dùng chọn)
+  const contractSelect = document.getElementById("acceptanceContractSelect");
+  const selectedContract = contractSelect ? contractSelect.value.trim() : "";
+  if (selectedContract) {
+    formData.append("contract_code", selectedContract);
+  }
+
   if (processButton) {
     processButton.disabled = true;
     processButton.setAttribute("aria-busy", "true");
@@ -485,6 +493,7 @@ async function handleProcessRepairWorkbook() {
     const ignored = document.getElementById("repairIgnoredCount");
     const model = document.getElementById("repairGeminiModel");
     const download = document.getElementById("repairDownloadButton");
+    const contractBadge = document.getElementById("repairResultContractBadge");
 
     if (summary) summary.textContent = `${result.source_file_name} đã được xử lý và giữ nguyên bố cục mẫu nghiệm thu.`;
     if (recordCount) recordCount.textContent = String(result.record_count || 0);
@@ -495,6 +504,28 @@ async function handleProcessRepairWorkbook() {
       download.href = result.download_url;
       download.download = result.file_name || "Bien_Ban_Nghiem_Thu.xlsx";
     }
+
+    // Hiển thị trạng thái liên kết hợp đồng
+    if (contractBadge) {
+      if (result.is_linked_contract && result.contract_code) {
+        contractBadge.style.display = "block";
+        contractBadge.innerHTML = `
+          <span style="color: #1d4ed8; background: #dbeafe; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>📋 Đã liên kết với Hợp đồng:</span>
+            <strong style="font-family: monospace;">${escapeHtml(result.contract_code)}</strong>
+            ${result.customer_name ? `<span>(${escapeHtml(result.customer_name)})</span>` : ""}
+          </span>
+        `;
+      } else {
+        contractBadge.style.display = "block";
+        contractBadge.innerHTML = `
+          <span style="color: #475569; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>ℹ️ Biên bản nghiệm thu độc lập (Không liên kết hợp đồng)</span>
+          </span>
+        `;
+      }
+    }
+
     if (panel) panel.hidden = false;
 
     setRepairUploadStatus("Xử lý hoàn tất. File nghiệm thu đã sẵn sàng để tải xuống.");
@@ -512,6 +543,54 @@ async function handleProcessRepairWorkbook() {
       processButton.disabled = !RepairWorkbookUpload.file;
       processButton.removeAttribute("aria-busy");
     }
+  }
+}
+
+// ==========================================
+// CONTRACT LINKING DROPDOWN
+// ==========================================
+
+async function loadAcceptanceContractsList() {
+  const select = document.getElementById("acceptanceContractSelect");
+  if (!select) return;
+
+  try {
+    const res = await fetch("/api/v1/contracts/list");
+    const json = await res.json();
+    if (!res.ok || json.status !== "success") return;
+
+    const contracts = json.data || [];
+    const urlParams = new URLSearchParams(window.location.search);
+    const qCode = (urlParams.get("contract_code") || "").trim();
+
+    select.innerHTML = '<option value="">-- Không liên kết (Tạo biên bản nghiệm thu độc lập) --</option>';
+
+    contracts.forEach(c => {
+      const code = c.contract_code || "";
+      if (!code) return;
+      const cust = c.customer_name_vi || c.project_name_vi || "";
+      const opt = document.createElement("option");
+      opt.value = code;
+      opt.textContent = `${code} — ${cust}`.trim();
+      if (qCode && (code.toLowerCase() === qCode.toLowerCase())) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    });
+
+    onAcceptanceContractSelectChange(select.value);
+  } catch (err) {
+    console.warn("Could not load contracts list for acceptance:", err);
+  }
+}
+
+function onAcceptanceContractSelectChange(val) {
+  const hint = document.getElementById("acceptanceContractHint");
+  if (!hint) return;
+  if (val) {
+    hint.innerHTML = `<span style="color: #1d4ed8; font-weight: 600;">✅ Sẽ liên kết biên bản nghiệm thu vào hồ sơ Hợp đồng <strong>${escapeHtml(val)}</strong>.</span>`;
+  } else {
+    hint.innerHTML = `💡 Nếu có hợp đồng tương ứng, hệ thống sẽ tự động gắn biên bản nghiệm thu vào hồ sơ hợp đồng. Nếu không chọn hoặc không có, biên bản sẽ được lưu độc lập.`;
   }
 }
 
@@ -925,6 +1004,18 @@ async function loadAcceptanceFilesList() {
             </div>
           </div>
         </td>
+        <td style="text-align: center;">
+          ${file.contract_code ? `
+            <a href="/contracts" title="Xem hợp đồng ${escapeHtml(file.contract_code)} ${escapeHtml(file.customer_name ? '— ' + file.customer_name : '')}" style="text-decoration: none;">
+              <span class="badge-pill blue" style="font-family: monospace; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px;">
+                📋 ${escapeHtml(file.contract_code)}
+              </span>
+            </a>
+            ${file.customer_name ? `<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(file.customer_name)}</div>` : ""}
+          ` : `
+            <span class="badge-pill" style="background: #f1f5f9; color: #64748b; font-weight: 500;">Độc lập</span>
+          `}
+        </td>
         <td style="text-align: center; font-size: 0.82rem; color: #475569;">
           <span class="badge-pill" style="background: #f1f5f9; color: #334155;">${file.file_size_formatted}</span>
         </td>
@@ -947,7 +1038,7 @@ async function loadAcceptanceFilesList() {
     `).join("");
   } catch (err) {
     console.error("Lỗi nạp danh sách file nghiệm thu:", err);
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #dc2626; padding: 1.5rem;">Lỗi tải danh sách: ${escapeHtml(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #dc2626; padding: 1.5rem;">Lỗi tải danh sách: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
