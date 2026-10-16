@@ -1,0 +1,430 @@
+/**
+ * Sidebar Tab Customizer Styles for Hong Ming PM Portal.
+ * Allows user to temporarily hide/unhide specific menu tabs according to their workflow.
+ */
+
+.sidebar-customizer-section {
+  padding: 0.5rem 0.8rem 0.65rem;
+  border-top: 1px solid #edf1f6;
+  margin-top: auto;
+}
+
+.sidebar-customizer-btn {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md, 10px);
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-customizer-btn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.customizer-btn-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.customizer-btn-left .icon {
+  color: #64748b;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-customizer-btn:hover .customizer-btn-left .icon {
+  color: #2563eb;
+  transform: rotate(35deg);
+}
+
+.sidebar-hidden-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 2px 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  letter-spacing: -0.01em;
+}
+
+/* Modal Backdrop & Dialog */
+.sc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.sc-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sc-modal-card {
+  width: 100%;
+  max-width: 620px;
+  max-height: 88vh;
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  border-radius: 16px;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.95) translateY(8px);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sc-modal-overlay.active .sc-modal-card {
+  transform: scale(1) translateY(0);
+}
+
+.sc-modal-header {
+  padding: 1.15rem 1.4rem;
+  border-bottom: 1px solid #edf1f6;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sc-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sc-header-subtitle {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.sc-close-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.sc-close-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  transform: rotate(90deg);
+}
+
+.sc-quick-bar {
+  padding: 0.75rem 1.4rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #edf1f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sc-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sc-quick-btn {
+  padding: 0.32rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sc-quick-btn:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.sc-modal-body {
+  padding: 1.2rem 1.4rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.sc-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.sc-group-title {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  padding-left: 0.25rem;
+  margin-bottom: 0.15rem;
+}
+
+.sc-tab-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.sc-tab-row:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.sc-tab-row.is-hidden {
+  background: #fcfcfd;
+  border-color: #e2e8f0;
+  opacity: 0.78;
+}
+
+.sc-tab-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.sc-tab-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.sc-tab-row:not(.is-hidden) .sc-tab-icon {
+  background: #eff6ff;
+}
+
+.sc-tab-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sc-tab-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sc-tab-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sc-tab-badge {
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.sc-tab-desc {
+  font-size: 0.74rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+/* Modern Toggle Switch (iOS-style) */
+.sc-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sc-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  display: inline-block;
+}
+
+.sc-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.sc-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #cbd5e1;
+  transition: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 24px;
+}
+
+.sc-slider::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.sc-switch input:checked + .sc-slider {
+  background-color: #2563eb;
+}
+
+.sc-switch input:focus + .sc-slider {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.sc-switch input:checked + .sc-slider::before {
+  transform: translateX(20px);
+}
+
+.sc-toggle-status {
+  font-size: 0.74rem;
+  font-weight: 700;
+  min-width: 58px;
+}
+
+.sc-toggle-status.status-shown {
+  color: #059669;
+}
+
+.sc-toggle-status.status-hidden {
+  color: #94a3b8;
+}
+
+.sc-modal-footer {
+  padding: 1rem 1.4rem;
+  border-top: 1px solid #edf1f6;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sc-footer-stats {
+  font-size: 0.78rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.sc-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Page Banner when browsing a currently-hidden tab */
+.sc-hidden-page-banner {
+  background: linear-gradient(90deg, #fef3c7 0%, #fffbeb 100%);
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  color: #92400e;
+  animation: fadeIn 200ms ease-out;
+}
+
+.sc-hidden-banner-btn {
+  background: #ffffff;
+  border: 1px solid #f59e0b;
+  color: #b45309;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sc-hidden-banner-btn:hover {
+  background: #f59e0b;
+  color: #ffffff;
+}

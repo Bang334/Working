@@ -215,3 +215,19 @@ def test_vietnam_timezone_enforcement():
     assert res_yest[4] is True  # is_overdue
     assert "Quá hạn 1 ngày" in res_yest[1]
 
+
+def test_sidebar_customizer_markup():
+    """Verify that sidebar customizer markup, CSS, JS, and data-nav-id attributes are present."""
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.text
+    assert "sidebar_customizer.css" in html
+    assert "sidebar_customizer.js" in html
+    assert 'data-nav-id="quotations"' in html
+    assert 'data-nav-id="contracts"' in html
+    assert 'data-nav-id="dashboard"' in html
+    assert 'data-section-id="project_flow"' in html
+    assert "scModalOverlay" in html
+    assert "btnOpenSidebarCustomizer" in html
+
+

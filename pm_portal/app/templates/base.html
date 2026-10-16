@@ -17,6 +17,24 @@
   <link rel="stylesheet" href="/static/css/components.css?v=4.0">
   <link rel="stylesheet" href="/static/css/contract_preview.css?v=4.0">
   <link rel="stylesheet" href="/static/css/reminder_preview.css?v=4.0">
+  <link rel="stylesheet" href="/static/css/sidebar_customizer.css?v=1.0">
+
+  <!-- Khóa ẩn các tab sidebar tức thì chống giật giao diện (zero-flicker) -->
+  <script>
+    (function() {
+      try {
+        var hidden = JSON.parse(localStorage.getItem('hm_hidden_sidebar_tabs') || '[]');
+        if (Array.isArray(hidden) && hidden.length > 0) {
+          var style = document.createElement('style');
+          style.id = 'hm-sidebar-hidden-css';
+          style.textContent = hidden.map(function(id) {
+            return '.nav-item[data-nav-id="' + id + '"] { display: none !important; }';
+          }).join('\n');
+          document.head.appendChild(style);
+        }
+      } catch(e) {}
+    })();
+  </script>
 
   <!-- Dynamic Font Engine: Áp dụng font tức thì không cần reload hay sửa code -->
   <script>
@@ -102,6 +120,7 @@
   <script src="/static/js/api_client.js?v=4.0"></script>
   <script src="/static/js/contract_editor.js?v=4.0"></script>
   <script src="/static/js/app.js?v=4.0"></script>
+  <script src="/static/js/sidebar_customizer.js?v=1.0"></script>
   <script>
     // Global sidebar unread reminders alert check
     async function refreshSidebarRemindersAlert() {
