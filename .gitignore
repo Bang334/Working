@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pm_portal/outputs/
+*.tmp

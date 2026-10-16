@@ -9,7 +9,7 @@ from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from starlette.concurrency import run_in_threadpool
 
-from app.config import OUTPUTS_DIR
+from app.config import OUTPUTS_DIR, WORKING_DIR
 from app.models.acceptance_models import AcceptanceAIParseRequest
 from app.services.acceptance_ai_service import parse_acceptance_text
 from app.services.acceptance_excel_service import (
@@ -155,7 +155,15 @@ def parse_raw_acceptance_text_controller(request: AcceptanceAIParseRequest) -> D
 def download_acceptance_file_controller(file_name: str) -> FileResponse:
     """Stream generated Excel or Word file for browser download."""
     clean_name = os.path.basename(file_name)
-    file_path = OUTPUTS_DIR / clean_name
+    
+    # Ưu tiên tìm trong thư mục chính thức Ho So Du An/Nghiem Thu
+    nghiem_thu_dir = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
+    candidate_path = nghiem_thu_dir / clean_name
+    
+    if candidate_path.is_file():
+        file_path = candidate_path
+    else:
+        file_path = OUTPUTS_DIR / clean_name
 
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail="Không tìm thấy tệp nghiệm thu đã tạo.")
@@ -172,3 +180,30 @@ def download_acceptance_file_controller(file_name: str) -> FileResponse:
         filename=clean_name,
         media_type=media_type
     )
+
+
+def list_acceptance_files_controller() -> Dict[str, Any]:
+    """List all created acceptance workbooks in Ho So Du An/Nghiem Thu."""
+    from datetime import datetime
+    nghiem_thu_dir = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
+    if not nghiem_thu_dir.exists():
+        return {"status": "success", "files": []}
+
+    files = []
+    for f in nghiem_thu_dir.glob("*.xlsx"):
+        if f.is_file() and not f.name.startswith("~$"):
+            stat = f.stat()
+            mtime_str = datetime.fromtimestamp(stat.st_mtime).strftime("%d/%m/%Y %H:%M:%S")
+            files.append({
+                "file_name": f.name,
+                "file_path": str(f.resolve()),
+                "file_size": stat.st_size,
+                "file_size_formatted": f"{stat.st_size / 1024:.1f} KB",
+                "modified_time": mtime_str,
+                "mtime_ts": stat.st_mtime,
+                "download_url": f"/api/v1/acceptance/download/{f.name}"
+            })
+
+    files.sort(key=lambda x: x["mtime_ts"], reverse=True)
+    return {"status": "success", "files": files}
+

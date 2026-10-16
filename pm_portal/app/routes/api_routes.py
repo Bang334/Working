@@ -12,6 +12,7 @@ from app.controllers.acceptance_controller import (
     generate_acceptance_excel_controller,
     generate_acceptance_word_controller,
     parse_raw_acceptance_text_controller,
+    list_acceptance_files_controller,
     process_repair_workbook_upload_controller,
     render_acceptance_preview_controller,
 )
@@ -198,6 +199,13 @@ async def process_repair_workbook_upload(
 async def download_acceptance_file(file_name: str) -> FileResponse:
     """Download generated acceptance Excel or Word file."""
     return download_acceptance_file_controller(file_name)
+
+
+@router.get("/acceptance/files")
+async def list_acceptance_files():
+    """List all created acceptance files in Ho So Du An/Nghiem Thu."""
+    return list_acceptance_files_controller()
+
 
 
 # ==========================================

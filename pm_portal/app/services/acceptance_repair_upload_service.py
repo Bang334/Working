@@ -61,13 +61,16 @@ def process_uploaded_repair_file(file_name: str, content: bytes) -> Dict[str, An
             f"Không tìm thấy mẫu biên bản nghiệm thu: {REPAIR_ACCEPTANCE_TEMPLATE}"
         )
 
-    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    target_dir = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    
+    clean_stem = "".join(c for c in Path(file_name).stem if c.isalnum() or c in (" ", "-", "_", "(", ")", ",")).strip()
+    clean_stem = clean_stem[:50] if clean_stem else "Tu_Sua_Chua"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    token = uuid.uuid4().hex[:8]
-    output_name = f"Bien_Ban_Nghiem_Thu_Tu_Sua_Chua_{timestamp}_{token}.xlsx"
-    output_path = OUTPUTS_DIR / output_name
+    output_name = f"Bien_Ban_Nghiem_Thu_{clean_stem}_{timestamp}.xlsx"
+    output_path = target_dir / output_name
 
-    with tempfile.TemporaryDirectory(prefix="repair_upload_", dir=str(OUTPUTS_DIR)) as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="repair_upload_", dir=str(target_dir)) as temp_dir:
         source_path = Path(temp_dir) / "bien_ban_sua_chua.xlsx"
         source_path.write_bytes(content)
         shutil.copy2(REPAIR_ACCEPTANCE_TEMPLATE, output_path)
@@ -89,8 +92,25 @@ def process_uploaded_repair_file(file_name: str, content: bytes) -> Dict[str, An
     note_line_count = len([line for line in note_text.splitlines() if line.strip()])
     ignored_note_count = max(0, note_line_count - len(assignments))
 
+    # Ghi nhận tài liệu vào hệ thống
+    try:
+        from app.database import index_single_document
+        index_single_document(
+            contract_code="",
+            doc_type="NGHIEM_THU",
+            doc_name=f"Biên Bản Nghiệm Thu - {Path(file_name).name}",
+            file_name=saved_path.name,
+            file_path=str(saved_path),
+            file_size=saved_path.stat().st_size,
+            file_format="xlsx",
+            description=f"Biên bản nghiệm thu thiết bị sửa chữa: {Path(file_name).name}"
+        )
+    except Exception:
+        pass
+
     return {
         "file_name": saved_path.name,
+        "file_path": str(saved_path),
         "download_url": f"/api/v1/acceptance/download/{saved_path.name}",
         "source_file_name": Path(file_name).name,
         "gemini_model": result.get("gemini_model") or "Gemini",
@@ -101,3 +121,4 @@ def process_uploaded_repair_file(file_name: str, content: bytes) -> Dict[str, An
         "assigned_products": sorted(assignments),
         "blank_products": sorted(blank_sheets),
     }
+

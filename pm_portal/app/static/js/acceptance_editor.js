@@ -499,6 +499,9 @@ async function handleProcessRepairWorkbook() {
 
     setRepairUploadStatus("Xử lý hoàn tất. File nghiệm thu đã sẵn sàng để tải xuống.");
     showToast(result.message || "Đã tạo file nghiệm thu thành công.", "success");
+    if (typeof loadAcceptanceFilesList === "function") {
+      loadAcceptanceFilesList();
+    }
   } catch (error) {
     resetRepairUploadResult();
     setRepairUploadStatus(error.message || "Không thể xử lý file tải lên.", true);
@@ -880,3 +883,119 @@ function copyFallback(text) {
   document.body.removeChild(ta);
   showToast("Đã sao chép văn bản vào Clipboard!", "success");
 }
+
+// ==========================================
+// ACCEPTANCE FILES LIST MANAGEMENT
+// ==========================================
+
+async function loadAcceptanceFilesList() {
+  const tbody = document.getElementById("acceptanceFilesTableBody");
+  const emptyState = document.getElementById("acceptanceFilesEmptyState");
+  const badge = document.getElementById("acceptanceFilesCountBadge");
+  if (!tbody) return;
+
+  try {
+    const res = await fetch("/api/v1/acceptance/files");
+    const json = await res.json();
+    if (!res.ok || json.status !== "success") {
+      throw new Error(json.message || "Không thể tải danh sách tệp nghiệm thu.");
+    }
+
+    const files = json.files || [];
+    if (badge) badge.textContent = `${files.length} tệp`;
+
+    if (files.length === 0) {
+      tbody.innerHTML = "";
+      if (emptyState) emptyState.style.display = "block";
+      return;
+    }
+
+    if (emptyState) emptyState.style.display = "none";
+    tbody.innerHTML = files.map((file, idx) => `
+      <tr>
+        <td style="text-align: center; font-weight: 600; color: var(--text-muted);">${idx + 1}</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <svg style="width: 18px; height: 18px; color: #16a34a; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <div>
+              <div style="font-weight: 600; color: #0f172a; word-break: break-all;">${escapeHtml(file.file_name)}</div>
+              <div style="font-size: 0.72rem; color: #64748b; font-family: monospace;">${escapeHtml(file.file_path)}</div>
+            </div>
+          </div>
+        </td>
+        <td style="text-align: center; font-size: 0.82rem; color: #475569;">
+          <span class="badge-pill" style="background: #f1f5f9; color: #334155;">${file.file_size_formatted}</span>
+        </td>
+        <td style="text-align: center; font-size: 0.82rem; color: #64748b;">
+          ${file.modified_time}
+        </td>
+        <td style="text-align: center;">
+          <div style="display: flex; gap: 0.4rem; justify-content: center; align-items: center;">
+            <a href="${file.download_url}" download="${file.file_name}" class="btn btn-sm btn-success" title="Tải file Excel về máy">
+              <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+              <span>Tải Xuống</span>
+            </a>
+            <button type="button" class="btn btn-sm btn-outline" onclick="handleOpenAcceptanceFile('${escapeAttr(file.file_path)}')" title="Mở trực tiếp trên máy tính bằng Excel">
+              <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              <span>Mở File</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+  } catch (err) {
+    console.error("Lỗi nạp danh sách file nghiệm thu:", err);
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #dc2626; padding: 1.5rem;">Lỗi tải danh sách: ${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+async function handleOpenAcceptanceFolder() {
+  try {
+    const res = await fetch("/api/v1/system/open-path", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: "Ho So Du An/Nghiem Thu" })
+    });
+    const json = await res.json();
+    if (json.status === "success") {
+      showToast("Đã mở thư mục Hồ Sơ Nghiệm Thu trên máy tính!", "success");
+    } else {
+      showToast(json.message || "Không thể mở thư mục.", "warning");
+    }
+  } catch (err) {
+    showToast("Lỗi mở thư mục: " + err.message, "error");
+  }
+}
+
+async function handleOpenAcceptanceFile(filePath) {
+  if (!filePath) return;
+  try {
+    const res = await fetch("/api/v1/system/open-path", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: filePath })
+    });
+    const json = await res.json();
+    if (json.status === "success") {
+      showToast("Đang mở tệp nghiệm thu trên máy tính...", "success");
+    } else {
+      showToast(json.message || "Không thể mở tệp.", "warning");
+    }
+  } catch (err) {
+    showToast("Lỗi mở tệp: " + err.message, "error");
+  }
+}
+
+function escapeHtml(text) {
+  if (!text) return "";
+  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
+  return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
+function escapeAttr(text) {
+  if (!text) return "";
+  return String(text).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
