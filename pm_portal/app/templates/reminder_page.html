@@ -1,0 +1,811 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="workspace-single">
+
+  <!-- Action & Status Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <span class="badge-pill blue" style="font-weight: 700; font-size: 0.85rem;">Quy Trình 2 Bước: Chọn Đợt Hợp Đồng ➔ Soạn Thư & Gửi Mail (Kèm File Excel/Word)</span>
+      <span class="badge-pill green">Sẵn Sàng Gửi Thử</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Tự động tạo file phiếu yêu cầu thanh toán (Excel sheet 712TR & Word), đính kèm vào email và nhắc thanh toán đúng hạn.</span>
+    </div>
+
+    <!-- Quick Actions on Header -->
+    <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="handleCopyReminderRichText()" title="Sao chép nội dung định dạng cao để dán vào Outlook, Word, WeChat">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Sao Chép Rich Text</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="handlePrintDocument()" title="In hoặc lưu PDF">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>In / PDF</span>
+      </button>
+
+      <button type="button" class="btn btn-ai btn-sm" onclick="handleCreateGmailDraft()" title="Tạo thư nháp trong hòm thư Gmail">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Lưu Nháp Gmail</span>
+      </button>
+
+      <button type="button" class="btn btn-primary btn-sm" onclick="handleSendGmailConfirm()" title="Gửi thư chính thức qua Gmail">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span>Gửi Thư Qua Gmail</span>
+      </button>
+    </div>
+  </div>
+
+  <style>
+    .step-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.9rem 1.25rem;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      background: #2563eb;
+      color: #ffffff;
+      border-radius: 50%;
+      font-weight: 800;
+      font-size: 0.85rem;
+      margin-right: 0.5rem;
+    }
+    .dossier-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 1.15rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .dossier-card:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.08);
+    }
+    .dossier-card.urgent {
+      border-left: 4px solid #f59e0b;
+      background: linear-gradient(90deg, #fffdfa 0%, #ffffff 15%);
+    }
+    .dossier-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+    .contract-code-tag {
+      font-family: monospace;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 2px 8px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      border-radius: 4px;
+    }
+    .milestone-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.75rem 0;
+    }
+    .milestone-badge-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 0.8rem;
+    }
+    .milestone-badge-card.overdue {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #991b1b;
+      font-weight: 700;
+    }
+    .milestone-badge-card.urgent {
+      background: #fffbeb;
+      border-color: #fcd34d;
+      color: #92400e;
+      font-weight: 600;
+    }
+    .milestone-badge-card.paid {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+    .milestone-badge-card.running {
+      background: #faf5ff;
+      border-color: #e9d5ff;
+      color: #6b21a8;
+    }
+    .files-badge-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.65rem;
+      padding-top: 0.65rem;
+      border-top: 1px dashed #e2e8f0;
+    }
+    .file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 3px 8px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 0.74rem;
+      color: #334155;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .file-chip:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .file-chip.xlsx { border-color: #86efac; background: #f0fdf4; color: #166534; }
+    .file-chip.docx { border-color: #93c5fd; background: #eff6ff; color: #1e40af; }
+
+    @keyframes highlightSection {
+      0% { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.45); }
+      50% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.2); }
+      100% { box-shadow: 0 4px 20px rgba(22, 101, 52, 0.06); }
+    }
+    .section-highlight {
+      animation: highlightSection 1.8s ease-out;
+    }
+    
+    .sheet-preview-empty-box {
+      text-align: center;
+      padding: 3.5rem 1.5rem;
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+      color: #64748b;
+    }
+    .sheet-preview-empty-box svg {
+      width: 48px;
+      height: 48px;
+      color: #94a3b8;
+      margin-bottom: 0.75rem;
+    }
+  </style>
+
+  <!-- ============================================================== -->
+  <!-- BƯỚC 1: QUẢN LÝ HỒ SƠ HỢP ĐỒNG & CHỌN ĐỢT THANH TOÁN (SQLITE) -->
+  <!-- ============================================================== -->
+  <div class="card contract-dossier-panel" style="border: 1.5px solid #bfdbfe; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 80px); box-shadow: 0 4px 18px rgba(30, 58, 138, 0.05); margin-bottom: 1.5rem;">
+    <div class="step-section-header">
+      <div>
+        <div class="card-title" style="color: #1e3a8a; font-size: 1.05rem; display: flex; align-items: center;">
+          <span class="step-badge">1</span>
+          <span>Danh Mục Hợp Đồng Đang Lưu & Chọn Đợt Thanh Toán</span>
+          <span class="badge-pill blue" style="font-size: 0.72rem; padding: 2px 8px; margin-left: 0.5rem;">SQLite Lập Chỉ Mục</span>
+        </div>
+        <p style="font-size: 0.82rem; color: #475569; margin: 0.3rem 0 0 0;">
+          Chọn bất kỳ đợt thanh toán nào dưới đây để hệ thống tự động sinh <strong>Phiếu yêu cầu thanh toán Excel theo sheet 712TR và bản Word song ngữ</strong> mà không cần mở file thủ công!
+        </p>
+      </div>
+
+      <!-- Quick Search & Filter Controls -->
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <div style="position: relative; width: 220px;">
+          <input type="text" id="dossierSearchInput" class="form-control" placeholder="Tìm mã HĐ, khách hàng..." style="font-size: 0.8rem; padding: 0.35rem 0.65rem 0.35rem 2rem; border-radius: 20px;" oninput="ReminderEditor.onDossierSearch(this.value)">
+          <svg class="icon" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: #64748b;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+
+        <div class="filter-tabs" style="display: flex; gap: 0.3rem;">
+          <button type="button" class="btn btn-outline btn-sm filter-pill active" id="filterBtnAll" onclick="ReminderEditor.onDossierFilter('all', this)">Tất cả (<span id="countAllContracts">0</span>)</button>
+          <button type="button" class="btn btn-outline btn-sm filter-pill" id="filterBtnUrgent" onclick="ReminderEditor.onDossierFilter('urgent', this)" style="border-color: #f59e0b; color: #b45309; background: #fffbeb;">🔥 Sắp đến hạn (<span id="countUrgentContracts">0</span>)</button>
+          <button type="button" class="btn btn-outline btn-sm filter-pill" id="filterBtnRunning" onclick="ReminderEditor.onDossierFilter('running', this)">Đang thi công (<span id="countRunningContracts">0</span>)</button>
+        </div>
+
+        <div style="display: flex; gap: 0.4rem; align-items: center; margin-left: auto; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <label for="paymentRequestTemplateSource" style="font-size: 0.78rem; font-weight: 700; color: #475569;">Mẫu xuất:</label>
+            <select id="paymentRequestTemplateSource" class="form-control" style="width: auto; height: 32px; padding: 0.15rem 0.5rem; font-size: 0.78rem; border-radius: 6px;">
+              <option value="excel">Excel – sheet 712TR (Chuẩn Gốc)</option>
+              <option value="word">Word – đơn yêu cầu TT.docx</option>
+            </select>
+          </div>
+          <a href="/contracts" class="btn btn-outline btn-sm" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem; border-color: #2563eb; color: #1d4ed8; background: #eff6ff; font-weight: 600;" title="Chuyển sang trang tạo hợp đồng mua bán mới và lưu vào hồ sơ">
+            <svg class="icon" style="width: 13px; height: 13px;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>➕ Tạo Hợp Đồng Mới</span>
+          </a>
+          <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.onClearAllDummyContracts()" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem; border-color: #fca5a5; color: #b91c1c; background: #fff5f5; font-weight: 600;" title="Xóa bỏ toàn bộ hợp đồng mẫu/thử nghiệm để theo dõi hợp đồng thật">
+            <svg class="icon" style="width: 13px; height: 13px;" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>🧹 Dọn Dẹp Dữ Liệu Rác</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contract Cards Container -->
+    <div id="dossierCardsList" style="display: flex; flex-direction: column; gap: 0.85rem; padding: 1.15rem;">
+      <div style="text-align: center; padding: 2rem; color: #64748b;">
+        <span>Đang nạp danh mục hợp đồng và hồ sơ từ cơ sở dữ liệu SQLite...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- BƯỚC 2: SOẠN & GỬI EMAIL NHẮC NHỞ THANH TOÁN (KÈM EXCEL + WORD) -->
+  <!-- ============================================================== -->
+  <div id="step3EmailSection" class="card" style="border: 1.5px solid #cbd5e1; margin-bottom: 1.5rem;">
+    <div class="step-section-header">
+      <div>
+        <div class="card-title" style="color: #1e3a8a; font-size: 1.05rem; display: flex; align-items: center;">
+          <span class="step-badge">2</span>
+          <span>Soạn Thư & Gửi Email Nhắc Nhở Thanh Toán (Tự Động Kèm File Excel / Word)</span>
+        </div>
+        <p style="font-size: 0.82rem; color: #475569; margin: 0.3rem 0 0 0;">
+          Thư gửi trực tiếp qua Gmail kết nối, tự động đính kèm file Excel (sheet 712TR) hoặc Word vừa tạo cùng các chứng từ nghiệm thu liên quan.
+        </p>
+      </div>
+
+      <!-- Preview Mode Switcher (Email / Văn bản) -->
+      <div style="display: flex; gap: 0.3rem;">
+        <button type="button" id="btnViewEmail" class="btn btn-sm btn-primary" onclick="ReminderEditor.switchView('email')">
+          <span>Xem Trước Email</span>
+        </button>
+        <button type="button" id="btnViewDxyctt" class="btn btn-sm btn-ghost" onclick="ReminderEditor.switchView('dxyctt')">
+          <span>Xem Bản In A4</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- KHỐI TRỢ LÝ AI GEMINI TRÍCH XUẤT EMAIL & ĐỐI CHIẾU HỢP ĐỒNG -->
+    <!-- ============================================================== -->
+    <div style="margin: 0.85rem 1.25rem 0.5rem 1.25rem; border: 1.5px solid #c4b5fd; border-radius: 8px; background: linear-gradient(180deg, #faf5ff 0%, #ffffff 50px); box-shadow: 0 2px 10px rgba(124, 58, 237, 0.05); overflow: hidden;">
+      <div style="padding: 0.65rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3e8ff; background: #f5f3ff; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; background: #7c3aed; color: #fff; font-size: 0.82rem; font-weight: 700;">✨</span>
+          <div>
+            <strong style="color: #6b21a8; font-size: 0.9rem;">Trợ Lý AI Gemini · Trích Xuất & Điền Thông Minh Email Nhắc Nợ</strong>
+            <span style="font-size: 0.74rem; color: #64748b; margin-left: 0.4rem;">Tách email To, CC, danh xưng và đối chiếu dữ liệu hợp đồng</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: #4b5563; cursor: pointer; font-weight: 600;" title="Khi bật, Gemini sẽ đối chiếu văn bản nhập vào với dữ liệu hợp đồng và đợt thanh toán đang chọn">
+            <input type="checkbox" id="aiMatchContractCheckbox" checked style="accent-color: #7c3aed; width: 14px; height: 14px;">
+            <span>Đối chiếu HĐ: <strong id="aiActiveContractBadge" style="color: #6b21a8; background: #ede9fe; padding: 1px 6px; border-radius: 4px;">Chưa chọn</strong></span>
+          </label>
+          <button type="button" class="btn btn-sm" id="btnToggleAiBox" onclick="ReminderEditor.toggleAiBox()" style="padding: 2px 8px; background: #ffffff; color: #6b21a8; border: 1px solid #ddd6fe; font-size: 0.72rem; font-weight: 600;">
+            <span id="aiToggleText">Thu gọn ▲</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="aiPromptBoxWrapper" style="padding: 0.85rem 1rem;">
+        <div style="display: flex; gap: 0.6rem; flex-direction: column;">
+          <textarea id="aiRawInputText" class="form-control" rows="2" placeholder="Dán email người nhận, danh bạ hoặc chỉ thị tự do... (Ví dụ: Gửi cho chị Mai kế toán mai.nt@cxtechnology.com, cc ông Chen chen.gm@cxtechnology.com. Nhắc nợ đợt 2 theo hợp đồng, kèm hóa đơn VAT...)" style="font-size: 0.82rem; line-height: 1.45; border-radius: 6px; border-color: #d8b4fe; background: #ffffff;"></textarea>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; gap: 0.3rem; align-items: center; flex-wrap: wrap;">
+              <span style="font-size: 0.72rem; color: #6b21a8; font-weight: 700;">Gợi ý mẫu:</span>
+              <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.fillAiSample('sampleCX')" style="font-size: 0.7rem; padding: 1px 6px; border-radius: 10px; background: #faf5ff; color: #6b21a8; border-color: #e9d5ff;">Mẫu CX Tech (Đợt 2)</button>
+              <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.fillAiSample('sampleJinXun')" style="font-size: 0.7rem; padding: 1px 6px; border-radius: 10px; background: #faf5ff; color: #6b21a8; border-color: #e9d5ff;">Mẫu JinXun (Đợt 2 - 55%)</button>
+              <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.fillAiSample('sampleContactsOnly')" style="font-size: 0.7rem; padding: 1px 6px; border-radius: 10px; background: #faf5ff; color: #6b21a8; border-color: #e9d5ff;">Chỉ danh bạ To/CC</button>
+            </div>
+
+            <button type="button" class="btn btn-ai" id="btnExecuteAiParse" onclick="ReminderEditor.executeAiParse()" style="padding: 0.35rem 1rem; font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem; background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: none; box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);">
+              <span>✨ Gemini Phân Tích & Điền Form</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Tabs -->
+    <div class="tabs-nav">
+      <button type="button" class="tab-btn active" data-tab="tabCustomer">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Khách Hàng & Người Nhận (Email)</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabReminderLevel">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span>Cấp Độ Nhắc & Tài Khoản Ngân Hàng</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabAttachments">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        <span>Tệp Đính Kèm (Phiếu Excel/Word & Hồ Sơ)</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabPayments">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Bảng Dữ Liệu Tính Toán</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Customer & Email Info -->
+    <div class="tab-content active" id="tabCustomer">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Tên Khách Hàng (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="custNameVi" class="form-control" value="CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)" oninput="ReminderEditor.onItemChanged()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tên Khách Hàng (Tiếng Trung)</label>
+          <input type="text" id="custNameZh" class="form-control" value="越南CX科技股份有限公司" oninput="ReminderEditor.onItemChanged()">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Email Người Nhận (To:) <span class="badge-req">*</span></label>
+          <input type="email" id="emailToInput" class="form-control" value="nguyensykimbang321@gmail.com" style="font-weight: 700; color: #1d4ed8;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Đồng Kính Gửi (Cc:)</label>
+          <input type="text" id="emailCcInput" class="form-control" value="pm02@hongming-global.com, sales@hongming-global.com">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Email Người Gửi (From:)</label>
+          <input type="text" id="emailSenderInput" class="form-control" value="pm02@hongming-global.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tiêu Đề Thư Điện Tử (Subject) <span class="badge-req">*</span></label>
+          <input type="text" id="emailSubjectInput" class="form-control" value="【宏明環球】合約編號 HMV151020250001 Đợt 2款項到期提醒 / Yêu cầu hỗ trợ thanh toán Đợt 2 HĐ HMV151020250001 (CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN))">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Reminder Level & Bank Info -->
+    <div class="tab-content" id="tabReminderLevel">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Cấp Độ Nhắc Nợ & Giọng Văn (Tone) <span class="badge-req">*</span></label>
+          <select id="reminderLevelSelect" class="form-control" onchange="ReminderEditor.onLevelChange()">
+            <option value="1">Cấp độ 1: Nhắc nhở lịch sự / Trước hạn 3-5 ngày (Yêu cầu hỗ trợ thanh toán)</option>
+            <option value="2">Cấp độ 2: Đến hạn thanh toán / Quá hạn 1-7 ngày (Đôn đốc thu hồi)</option>
+            <option value="3">Cấp độ 3: Thư nhắc nợ chính thức (催款函) quá hạn > 14 ngày</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số Công Văn Đề Nghị Thanh Toán</label>
+          <input type="text" id="docCodeInput" class="form-control" value="HM-PR-20261013-001">
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Tên Tài Khoản Thụ Hưởng</label>
+          <input type="text" id="bankOwnerInput" class="form-control" value="CÔNG TY TNHH TOÀN CẦU HONG MING">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số Tài Khoản (STK) Ngân Hàng</label>
+          <input type="text" id="bankAccInput" class="form-control" value="604080006546(VND)" style="font-weight: 700; color: #b91c1c;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngân Hàng & Chi Nhánh</label>
+          <input type="text" id="bankNameInput" class="form-control" value="CATHAY UNITED BANK – HO CHI MINH CITY BRANCH">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Attachments (Auto-attached generated Excel + drive & upload) -->
+    <div class="tab-content" id="tabAttachments">
+      <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <strong style="color: #166534; font-size: 0.95rem;">✓ File Excel Phiếu Yêu Cầu Luôn Tự Động Tạo Chuẩn 1:1 & Đính Kèm</strong>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Khi bạn bấm Lưu Nháp hoặc Gửi Mail, hệ thống tự động sinh file Excel mới nhất từ hợp đồng và đính kèm đầy đủ tên tiếng Việt/Hoa không bị lỗi <em>noname</em>.</div>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="handleGenerateCurrentSheet()" title="Tự động tạo hoặc làm mới file Excel Phiếu Yêu Cầu Thanh Toán từ hợp đồng hiện tại">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span>⚡ Tạo / Làm Mới Phiếu Excel</span>
+            </button>
+            <input type="file" id="localFileInput" multiple style="display: none;" onchange="handleLocalFileUpload(event)">
+            <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('localFileInput').click()">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              <span>Thêm File Từ Máy Tính</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.3rem;">
+            <label class="form-label" style="margin: 0; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 0.4rem;">
+              <span>Danh Sách Tệp Đính Kèm Thực Tế:</span>
+              <span class="badge-pill blue" style="font-size: 0.72rem; padding: 1px 7px;" id="attachmentsCountBadge">2 tệp</span>
+            </label>
+            <span style="font-size: 0.76rem; color: #166534; font-weight: 600;">✓ Đồng bộ trực tiếp 1:1 với bản xem trước email bên dưới</span>
+          </div>
+
+          <!-- Visual Attachment Cards Container: hiển thị đầy đủ hình từng tệp đính kèm -->
+          <div id="visualAttachmentsList" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <!-- Rendered dynamically by ReminderEditor.renderVisualAttachmentsList() -->
+          </div>
+
+          <details style="font-size: 0.8rem; color: #64748b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
+            <summary style="cursor: pointer; user-select: none; font-weight: 600; color: #2563eb;">
+              ⚙️ Chỉnh sửa chuỗi tên tệp thủ công (Dành cho PM nâng cao)
+            </summary>
+            <div style="margin-top: 0.5rem;">
+              <input type="text" id="attachmentsInput" class="form-control" value="đơn yêu cầu thanh toán - CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN) - HMV151020250001.xlsx, 001_BIEN_BAN_NGHIEM_THU_BAN_GIAO_CX_.docx" style="font-weight: 600; color: #1e3a8a; font-size: 0.82rem;" oninput="ReminderEditor.onAttachmentsInputChanged()">
+              <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px;">Nhập các tên tệp cách nhau bởi dấu phẩy. Các thẻ tệp phía trên và phần xem trước email sẽ tự động đồng bộ ngay lập tức.</div>
+            </div>
+          </details>
+        </div>
+
+        <!-- Google Drive Search Box -->
+        <div style="border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
+          <label class="form-label">Tìm Kiếm Thêm Tài Liệu Trên Google Drive</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="driveSearchQuery" class="form-control" placeholder="Nhập tên tệp (ví dụ: CX Technology, Hợp đồng, Nghiệm thu...)" value="CX Technology">
+            <button type="button" class="btn btn-outline" onclick="handleSearchDrive()">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <span>Tìm Drive</span>
+            </button>
+          </div>
+
+          <!-- Drive Search Results Box -->
+          <div id="driveResultsContainer" style="display: none; margin-top: 0.85rem; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+            <div id="driveResultsList" style="padding: 0.5rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Payments Table -->
+    <div class="tab-content" id="tabPayments">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Bảng dữ liệu các đợt thanh toán</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.addRow()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm Dòng</span>
+        </button>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th style="width: 45px; text-align: center;">STT</th>
+              <th style="width: 170px;">Số Hợp Đồng</th>
+              <th style="min-width: 250px;">Dự Án / Hạng Mục</th>
+              <th style="width: 140px;">Nội Dung Đợt TT</th>
+              <th style="width: 170px; text-align: right;">Số Tiền (VND)</th>
+              <th style="width: 120px; text-align: center;">Thuế VAT</th>
+              <th style="width: 130px; text-align: center;">Hạn TT</th>
+              <th style="width: 45px; text-align: center;">Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="paymentTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KPI Summary Cards Grid -->
+      <div class="summary-cards-grid">
+        <div class="summary-stat-card">
+          <span class="stat-label">Tổng Số Hợp Đồng</span>
+          <span class="stat-value" id="summaryContractCount">1 Hợp đồng</span>
+          <span class="stat-subtext">Danh mục đôn đốc</span>
+        </div>
+
+        <div class="summary-stat-card primary">
+          <span class="stat-label">Tổng Tiền Cần Thanh Toán</span>
+          <span class="stat-value" id="summaryTotalAmount" style="color: #1d4ed8;">93.600.000 VND</span>
+          <span class="stat-subtext">Đã tính theo đợt thanh toán</span>
+        </div>
+
+        <div class="summary-stat-card warning">
+          <span class="stat-label">Hạn Thanh Toán Gần Nhất</span>
+          <span class="stat-value" style="font-size: 1.25rem; color: #b45309;" id="summaryDueDate">25/10/2026</span>
+          <span class="stat-subtext">Chuẩn T/T theo hợp đồng</span>
+        </div>
+
+        <div class="summary-stat-card success">
+          <span class="stat-label">Cấp Độ Nhắc Nợ</span>
+          <span class="stat-value" style="font-size: 1.15rem; color: #047857;" id="summaryLevelLabel">Cấp 1: Lịch Sự</span>
+          <span class="stat-subtext">Yêu cầu hỗ trợ thanh toán</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Email Body Preview Wrapper -->
+    <div style="padding: 1.25rem; border-top: 1px solid #e2e8f0; background: #fafafa;">
+      <div style="font-weight: 700; font-size: 0.92rem; color: #1e3a8a; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+        <svg class="icon" viewBox="0 0 24 24" style="color: #2563eb;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Bản Xem Trước Thư Điện Tử Gửi Khách Hàng (Email Preview):</span>
+      </div>
+      <div id="reminderPreviewWrapper">
+        <div class="preview-empty-state">Đang nạp bản xem trước email...</div>
+      </div>
+    </div>
+
+    <!-- Bottom Action Footer -->
+    <div class="action-footer-bar">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span class="badge-pill green">Email Thử Nghiệm</span>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">
+          Thư sẽ được gửi tới: <strong style="color: #1d4ed8;" id="footerToDisplay">nguyensykimbang321@gmail.com</strong> kèm file Excel vừa tạo ở Bước 2.
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <button type="button" class="btn btn-outline" onclick="handleCopyReminderRichText()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Sao Chép Rich Text</span>
+        </button>
+
+        <button type="button" class="btn btn-ai" onclick="handleCreateGmailDraft()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>Lưu Nháp Gmail (Draft)</span>
+        </button>
+
+        <button type="button" class="btn btn-primary" onclick="handleSendGmailConfirm()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <span>Gửi Thư Qua Gmail</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Modal Confirmation for Direct Sending -->
+<div id="sendConfirmModal" class="loading-overlay" style="display: none; background: rgba(0,0,0,0.6);" role="dialog">
+  <div class="card" style="max-width: 520px; width: 92%; padding: 1.5rem; text-align: left; box-shadow: var(--shadow-lg);">
+    <h3 style="margin-top: 0; color: #1e3a8a; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Xác Nhận Gửi Email Đề Nghị Thanh Toán
+    </h3>
+    <p style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.75rem;">
+      Bạn sắp gửi thư trực tiếp từ tài khoản Gmail đã kết nối tới:
+    </p>
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 0.85rem; border-radius: var(--radius-sm); font-size: 0.82rem; line-height: 1.6; margin-bottom: 1.25rem;">
+      <div>• <strong>To (Người nhận):</strong> <span id="modalToAddress" style="font-weight: 700; color: #1d4ed8;"></span></div>
+      <div>• <strong>Cc:</strong> <span id="modalCcAddress"></span></div>
+      <div style="margin-top: 0.25rem;">• <strong>Tiêu đề:</strong> <span id="modalSubject" style="font-weight: 600;"></span></div>
+      <div style="margin-top: 0.25rem;">• <strong>File đính kèm:</strong> <span id="modalAttachments" style="color: #166534; font-weight: 600;"></span></div>
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+      <button type="button" class="btn btn-secondary" onclick="closeSendModal()">Hủy Bỏ</button>
+      <button type="button" class="btn btn-primary" onclick="executeSendGmail()">Xác Nhận Gửi Ngay</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Chi Tiết Toàn Bộ Hồ Sơ & Mốc Thời Hạn (SQLite) -->
+<div id="contractDossierModal" class="loading-overlay" style="display: none; background: rgba(0,0,0,0.65); z-index: 1050;" role="dialog">
+  <div class="card" style="max-width: 860px; width: 94%; max-height: 90vh; overflow-y: auto; padding: 1.5rem; text-align: left; box-shadow: var(--shadow-lg); border-radius: var(--radius-lg);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.85rem;">
+      <div>
+        <h3 style="margin: 0; color: #1e3a8a; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+          <svg class="icon" viewBox="0 0 24 24" style="color: #2563eb;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span id="modalContractCode"></span> · <span id="modalCustomerName"></span>
+        </h3>
+        <p id="modalProjectName" style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #475569;"></p>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.closeDossierModal()" style="border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; font-weight: 700;">✕</button>
+    </div>
+
+    <!-- Modal Content Grid -->
+    <div id="modalDossierBody">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem; border-top: 1px solid #e2e8f0; padding-top: 0.85rem;">
+      <button type="button" class="btn btn-secondary" onclick="ReminderEditor.closeDossierModal()">Đóng Cửa Sổ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Đánh Dấu Hoàn Thành Điều Kiện & Tính Hạn Thanh Toán (T/T) -->
+<div id="milestoneTriggerModal" class="loading-overlay" style="display: none; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 1060;" role="dialog">
+  <div class="card" style="max-width: 520px; width: 92%; padding: 1.5rem; text-align: left; box-shadow: var(--shadow-lg); border-radius: 12px; border: 1.5px solid #93c5fd; animation: fadeIn 0.18s ease;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #2563eb; font-weight: 800; font-size: 1.1rem;">
+          ✓
+        </div>
+        <div>
+          <h3 style="margin: 0; color: #1e3a8a; font-size: 1.1rem; font-weight: 800;">
+            Kích Hoạt Hạn Thanh Toán - <span id="tmMilestoneName">Đợt 1</span>
+          </h3>
+          <p style="margin: 0.15rem 0 0 0; font-size: 0.78rem; color: #64748b;">
+            Hợp đồng: <strong id="tmContractCode" style="color: #2563eb; font-family: monospace;"></strong>
+          </p>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.closeTriggerModal()" style="border-radius: 50%; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-weight: 700;">✕</button>
+    </div>
+
+    <!-- Info Box -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; font-size: 0.82rem; line-height: 1.6;">
+      <div>• <strong>Điều kiện kích hoạt:</strong> <span id="tmCondition" style="color: #0f172a; font-weight: 600;"></span></div>
+      <div>• <strong>Tỷ lệ & Số tiền:</strong> <span id="tmAmountInfo" style="color: #166534; font-weight: 700;"></span></div>
+      <div>• <strong>Thời hạn T/T:</strong> <span id="tmTermDays" style="font-weight: 700; color: #b45309;">30 ngày</span></div>
+    </div>
+
+    <!-- Input Form -->
+    <div class="form-group" style="margin-bottom: 1rem;">
+      <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+        📅 Ngày Hoàn Thành Điều Kiện / Ngày Bắt Đầu Tính Hạn:
+      </label>
+      <input type="text" id="tmTriggerDateInput" class="form-control" placeholder="DD/MM/YYYY (Ví dụ: 15/10/2026)" style="font-size: 0.95rem; font-weight: 600; padding: 0.5rem 0.75rem;" oninput="ReminderEditor.onTriggerDateInputChanged()">
+      <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 0.25rem;">
+        Mặc định là ngày hôm nay. Nếu hợp đồng đã ký hoặc điều kiện đạt vào ngày khác, hãy chỉnh sửa ngày tại đây.
+      </small>
+    </div>
+
+    <!-- Live Calculation Result Box -->
+    <div id="tmCalculationBox" style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 8px; padding: 0.85rem; margin-bottom: 1.25rem; font-size: 0.85rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+        <span style="color: #1e40af; font-weight: 600;">Hạn Chót Thanh Toán Dự Kiến:</span>
+        <strong id="tmCalculatedDueDate" style="font-size: 1.05rem; color: #1e3a8a; font-family: monospace;">-</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #64748b;">Trạng Thái Đối Chiếu:</span>
+        <span id="tmCalculatedStatusBadge" class="badge-pill blue" style="font-weight: 700;">-</span>
+      </div>
+    </div>
+
+    <input type="hidden" id="tmActiveMilestoneId">
+
+    <!-- Actions -->
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+      <button type="button" id="tmBtnReset" class="btn btn-outline btn-sm" onclick="ReminderEditor.submitResetMilestone()" style="color: #dc2626; border-color: #fca5a5; display: none;">
+        ↺ Hủy Kích Hoạt
+      </button>
+      <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+        <button type="button" class="btn btn-secondary" onclick="ReminderEditor.closeTriggerModal()">Hủy Bỏ</button>
+        <button type="button" class="btn btn-primary" onclick="ReminderEditor.submitTriggerMilestone()" style="font-weight: 700;">
+          ✓ Xác Nhận Kích Hoạt
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Xác Nhận Đã Thu Tiền Đợt Thanh Toán -->
+<div id="markPaidModal" class="loading-overlay" style="display: none; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 1060;" role="dialog">
+  <div class="card" style="max-width: 500px; width: 92%; padding: 1.5rem; text-align: left; box-shadow: var(--shadow-lg); border-radius: 12px; border: 1.5px solid #86efac; animation: fadeIn 0.18s ease;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: #ecfdf5; display: flex; align-items: center; justify-content: center; color: #059669; font-weight: 800; font-size: 1.1rem;">
+          💰
+        </div>
+        <div>
+          <h3 style="margin: 0; color: #065f46; font-size: 1.1rem; font-weight: 800;">
+            Xác Nhận Đã Thu Tiền - <span id="mpMilestoneName">Đợt 1</span>
+          </h3>
+          <p style="margin: 0.15rem 0 0 0; font-size: 0.78rem; color: #64748b;">
+            Hợp đồng: <strong id="mpContractCode" style="color: #2563eb; font-family: monospace;"></strong>
+          </p>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.closeMarkPaidModal()" style="border-radius: 50%; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-weight: 700;">✕</button>
+    </div>
+
+    <!-- Info Box -->
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; font-size: 0.82rem; line-height: 1.6;">
+      <div>• <strong>Số tiền theo kế hoạch:</strong> <span id="mpExpectedAmount" style="color: #166534; font-weight: 700;"></span></div>
+      <div>• Hệ thống sẽ tự động cập nhật số tiền đã thu, giảm trừ công nợ và cập nhật trạng thái hợp đồng.</div>
+    </div>
+
+    <!-- Inputs -->
+    <div class="form-group" style="margin-bottom: 0.85rem;">
+      <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+        📅 Ngày Thực Thu Tiền:
+      </label>
+      <input type="text" id="mpPaidDateInput" class="form-control" placeholder="DD/MM/YYYY" style="font-size: 0.95rem; font-weight: 600; padding: 0.5rem 0.75rem;">
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0.85rem;">
+      <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+        💵 Số Tiền Thực Nhận (VND):
+      </label>
+      <input type="number" id="mpActualAmountInput" class="form-control" style="font-size: 0.95rem; font-weight: 700; color: #166534; padding: 0.5rem 0.75rem;">
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.15rem;">
+      <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+        🧾 Số Hóa Đơn VAT (nếu có):
+      </label>
+      <input type="text" id="mpInvoiceInput" class="form-control" placeholder="Ví dụ: HD-00192" style="font-size: 0.88rem; padding: 0.5rem 0.75rem;">
+    </div>
+
+    <input type="hidden" id="mpActiveMilestoneId">
+
+    <!-- Actions -->
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+      <button type="button" class="btn btn-secondary" onclick="ReminderEditor.closeMarkPaidModal()">Hủy Bỏ</button>
+      <button type="button" class="btn btn-success" onclick="ReminderEditor.submitMarkPaid()" style="font-weight: 700; background: #059669; color: #ffffff; border-color: #047857;">
+        ✓ Xác Nhận Thu Đủ
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Đổi Trạng Thái Hợp Đồng / Dự Án -->
+<div id="changeContractStatusModal" class="loading-overlay" style="display: none; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 1060;" role="dialog">
+  <div class="card" style="max-width: 500px; width: 92%; padding: 1.5rem; text-align: left; box-shadow: var(--shadow-lg); border-radius: 12px; border: 1.5px solid #c7d2fe; animation: fadeIn 0.18s ease;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: #eef2ff; display: flex; align-items: center; justify-content: center; color: #4f46e5; font-weight: 800; font-size: 1.1rem;">
+          ⚙️
+        </div>
+        <div>
+          <h3 style="margin: 0; color: #1e1b4b; font-size: 1.1rem; font-weight: 800;">
+            Cập Nhật Trạng Thái Dự Án
+          </h3>
+          <p style="margin: 0.15rem 0 0 0; font-size: 0.78rem; color: #64748b;">
+            Hợp đồng: <strong id="csContractCode" style="color: #2563eb; font-family: monospace;"></strong>
+          </p>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.closeChangeStatusModal()" style="border-radius: 50%; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-weight: 700;">✕</button>
+    </div>
+
+    <!-- Inputs -->
+    <div class="form-group" style="margin-bottom: 1rem;">
+      <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+        📌 Chọn Trạng Thái Vận Hành:
+      </label>
+      <select id="csStatusSelect" class="form-control" style="font-size: 0.88rem; padding: 0.5rem 0.75rem; font-weight: 600;">
+        <option value="Mới ký kết - Chờ thu đợt 1">Mới ký kết - Chờ thu đợt 1</option>
+        <option value="Đang chuẩn bị vật tư thi công kéo cáp quang">Đang chuẩn bị vật tư thi công kéo cáp quang</option>
+        <option value="Đang thi công hạ tầng mạng / lắp đặt">Đang thi công hạ tầng mạng / lắp đặt</option>
+        <option value="Đang đặt hàng NCC nước ngoài (Lead time 60 ngày)">Đang đặt hàng NCC nước ngoài (Lead time 60 ngày)</option>
+        <option value="Đang chạy thử nghiệm thu (Testing 7 ngày)">Đang chạy thử nghiệm thu (Testing 7 ngày)</option>
+        <option value="Đang nghiệm thu đưa vào sử dụng (Đợt 2 - 40%)">Đang nghiệm thu đưa vào sử dụng (Đợt 2 - 40%)</option>
+        <option value="Chờ nghiệm thu đợt cuối (FAC)">Chờ nghiệm thu đợt cuối (FAC)</option>
+        <option value="Chờ đôn đốc thu công nợ">Chờ đôn đốc thu công nợ</option>
+        <option value="Đã hoàn tất / tất toán 100%">Đã hoàn tất / tất toán 100%</option>
+        <option value="Đã thanh lý hợp đồng">Đã thanh lý hợp đồng</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.15rem;">
+      <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; display: block;">
+        📝 Ghi Chú & Hành Động Kế Tiếp:
+      </label>
+      <textarea id="csNotesInput" class="form-control" rows="3" placeholder="Nhập ghi chú theo dõi..." style="font-size: 0.85rem; padding: 0.5rem 0.75rem;"></textarea>
+    </div>
+
+    <input type="hidden" id="csActiveContractCode">
+
+    <!-- Actions -->
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+      <button type="button" class="btn btn-secondary" onclick="ReminderEditor.closeChangeStatusModal()">Hủy Bỏ</button>
+      <button type="button" class="btn btn-primary" onclick="ReminderEditor.submitChangeStatus()" style="font-weight: 700;">
+        ✓ Cập Nhật Trạng Thái
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/reminder_editor.js?v=4.4"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    ReminderEditor.init();
+  });
+</script>
+{% endblock %}

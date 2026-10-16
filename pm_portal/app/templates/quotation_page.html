@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="workspace-single">
+
+  <!-- Action & Status Bar (Tiêu đề đã hiển thị trên thanh Header chính) -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <span class="badge-pill blue">Biểu Mẫu Pre-Sales</span>
+      <span class="badge-pill green">Sẵn Sàng Tiếp Nhận Mẫu</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Soạn thảo & bóc tách dữ liệu báo giá thiết bị IoT, hệ thống tiết kiệm điện EMS gửi khách hàng FDI.</span>
+    </div>
+
+    <div style="display: flex; gap: 0.65rem;">
+      <a href="/fonts" class="btn btn-outline btn-sm" style="color: #2563eb; border-color: #bfdbfe;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        <span>Kho 100 Kiểu Chữ (Fonts)</span>
+      </a>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="simulateAIParseQuotation()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Điền Dữ Liệu Thử Nghiệm</span>
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="alert('Đã lưu dữ liệu báo giá vào bộ nhớ tạm thời của dự án!')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>Lưu Dữ Liệu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 1: AI Prompt Input (Full Width & Clean) -->
+  <div class="card ai-prompt-box">
+    <div class="card-header">
+      <div class="card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <span>Bóc Tách Yêu Cầu & Bảng Thiết Bị Bằng Gemini AI</span>
+      </div>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">Tự động nhận diện tên thiết bị, số lượng, đơn vị tính</span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0.85rem;">
+      <textarea id="aiPromptInput" class="form-control" rows="4" placeholder="Dán danh sách thiết bị từ email khách hàng, chat WeChat hoặc bảng tính khảo sát nhà máy vào đây..."></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.65rem;">
+      <button type="button" class="btn btn-ai" onclick="simulateAIParseQuotation()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>Gọi Gemini AI Phân Tích & Bóc Tách Vào Bảng</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 2: Form Editor with Tabs (Full Width) -->
+  <div class="card">
+    <div class="tabs-nav">
+      <button type="button" class="tab-btn active" data-tab="tabQuotationItems">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-9 5-9-5 9-5 9 5z"/><path d="m3 8 9 5 9-5M3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
+        <span>Bảng Danh Mục Thiết Bị & Giá</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabQuotationGeneral">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        <span>Thông Tin Khách Hàng & Dự Án</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabQuotationTerms">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>
+        <span>Điều Khoản Thương Mại & Bảo Hành</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Items Table (Full Width Modern Table) -->
+    <div class="tab-content active" id="tabQuotationItems">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Chi tiết danh mục chào giá</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Phần cứng IoT, Vật tư phụ và Chi phí thi công)</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addQuotationRow()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm Hạng Mục Thiết Bị</span>
+        </button>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th style="width: 50px; text-align: center;">STT</th>
+              <th style="min-width: 320px;">Tên Thiết Bị / Quy Cách / Dịch Vụ</th>
+              <th style="width: 110px; text-align: center;">Đơn Vị Tính</th>
+              <th style="width: 100px; text-align: center;">Số Lượng</th>
+              <th style="width: 180px; text-align: right;">Đơn Giá (VND)</th>
+              <th style="width: 200px; text-align: right;">Thành Tiền (VND)</th>
+              <th style="width: 60px; text-align: center;">Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="quoteItemsTableBody">
+            <!-- Dynamically populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KPI Summary Cards Grid -->
+      <div class="summary-cards-grid">
+        <div class="summary-stat-card">
+          <span class="stat-label">Tổng Hạng Mục</span>
+          <span class="stat-value" id="statItemCount">4 Thiết bị</span>
+          <span class="stat-subtext">Đã bóc tách đủ danh mục</span>
+        </div>
+
+        <div class="summary-stat-card">
+          <span class="stat-label">Tổng Tiền Chưa Thuế</span>
+          <span class="stat-value" id="statSubtotal">0 VND</span>
+          <span class="stat-subtext">Chưa bao gồm thuế VAT</span>
+        </div>
+
+        <div class="summary-stat-card warning">
+          <span class="stat-label">Thuế Suất VAT (10%)</span>
+          <span class="stat-value" id="statVat">0 VND</span>
+          <span class="stat-subtext">Thuế giá trị gia tăng</span>
+        </div>
+
+        <div class="summary-stat-card success">
+          <span class="stat-label">TỔNG CỘNG THANH TOÁN</span>
+          <span class="stat-value" id="statGrandTotal" style="color: #047857;">0 VND</span>
+          <span class="stat-subtext">Đã bao gồm VAT 10%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: General Info -->
+    <div class="tab-content" id="tabQuotationGeneral">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Tên Pháp Nhân Khách Hàng (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="quoteCustomerName" class="form-control" value="CÔNG TY TNHH CX TECHNOLOGY (VIỆT NAM)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tên Pháp Nhân Khách Hàng (Tiếng Trung) <span class="badge-req">*</span></label>
+          <input type="text" id="quoteCustomerNameCn" class="form-control" value="台灣精星科技(越南)有限公司">
+        </div>
+      </div>
+
+      <div class="form-grid-3" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Mã Số Thuế (MST)</label>
+          <input type="text" id="quoteTaxCode" class="form-control" value="0301445789">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số Báo Giá / 報價編號</label>
+          <input type="text" id="quoteNo" class="form-control" value="HM-QT-202610-001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày Phát Hành Báo Giá</label>
+          <input type="date" id="quoteDate" class="form-control" value="2026-10-14">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Tên Dự Án Triển Khai</label>
+          <input type="text" id="quoteProjectName" class="form-control" value="Hệ Thống Tiết Kiệm Năng Lượng EMS & Giám Sát Điện Năng Giai Đoạn 2">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Người Tiếp Nhận / Phòng Ban</label>
+          <input type="text" id="quoteContactPerson" class="form-control" value="Phòng Cơ Điện & Bảo Trì / 採購處">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Commercial Terms -->
+    <div class="tab-content" id="tabQuotationTerms">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Thời Hạn Hiệu Lực Báo Giá</label>
+          <input type="text" id="quoteValidity" class="form-control" value="30 ngày kể từ ngày phát hành">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Thời Gian Giao Hàng (Lead Time)</label>
+          <input type="text" id="quoteLeadTime" class="form-control" value="60 - 80 ngày sau khi nhận đủ tiền đặt cọc">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Thời Hạn Bảo Hành Phần Cứng</label>
+          <input type="text" id="quoteWarranty" class="form-control" value="12 tháng chính hãng kể từ ngày nghiệm thu">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Điều Kiện Thanh Toán Đề Xuất</label>
+          <input type="text" id="quotePaymentTerms" class="form-control" value="Tạm ứng 50%, Giao hàng 40%, Nghiệm thu 10%">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ghi Chú Kỹ Thuật Bổ Sung</label>
+        <textarea id="quoteNotes" class="form-control" rows="3">Báo giá đã bao gồm tài liệu hướng dẫn sử dụng, biên bản kiểm thử xuất xưởng từ nhà sản xuất. Không bao gồm chi phí cải tạo lưới điện tổng của nhà máy.</textarea>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Action Footer -->
+  <div class="action-footer-bar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span class="badge-pill yellow">Chế độ Form Mẫu</span>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">
+        Khi bạn cung cấp file Excel/Word mẫu chính thức của công ty, hệ thống sẽ tự động liên kết dữ liệu trên để xuất file 1:1.
+      </span>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <button type="button" class="btn btn-outline" onclick="window.print()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>In / Lưu PDF Trực Tiếp</span>
+      </button>
+      <button type="button" class="btn btn-primary" onclick="alert('Đã sẵn sàng! Hãy gửi file mẫu chính thức của công ty khi bạn có nhé.')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Sẵn Sàng Xuất File Excel (Chờ Biểu Mẫu)</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let quotationItems = [
+  { name: "Đồng Hồ Đo Điện Đa Mạch Tử Ngoại PM2100-3-B", unit: "Bộ", qty: 4, price: 18500000 },
+  { name: "Biến Dòng Cảm Ứng Đo Dòng CT Split-core 200A/5A", unit: "Cái", qty: 12, price: 1200000 },
+  { name: "Tủ Lá Chắn Điện Xanh EMS Thông Minh & Cáp Kết Nối", unit: "Hệ", qty: 1, price: 35000000 },
+  { name: "Nhân Công Thi Công Đấu Nối Hiện Trường & Kiểm Thử", unit: "Gói", qty: 1, price: 15000000 }
+];
+
+function renderQuotationTable() {
+  const tbody = document.getElementById("quoteItemsTableBody");
+  tbody.innerHTML = "";
+  let subtotal = 0;
+
+  quotationItems.forEach((item, index) => {
+    const rowTotal = item.qty * item.price;
+    subtotal += rowTotal;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${index + 1}</td>
+      <td>
+        <input type="text" class="table-input" value="${item.name}" placeholder="Tên sản phẩm, quy cách kỹ thuật" oninput="quotationItems[${index}].name = this.value;">
+      </td>
+      <td style="text-align: center;">
+        <input type="text" class="table-input" style="text-align: center;" value="${item.unit}" oninput="quotationItems[${index}].unit = this.value;">
+      </td>
+      <td style="text-align: center;">
+        <input type="number" class="table-input" style="text-align: center;" value="${item.qty}" min="1" oninput="quotationItems[${index}].qty = Number(this.value); updateCalculations();">
+      </td>
+      <td style="text-align: right;">
+        <input type="number" class="table-input" style="text-align: right;" value="${item.price}" oninput="quotationItems[${index}].price = Number(this.value); updateCalculations();">
+      </td>
+      <td style="text-align: right; font-weight: 700; color: #1e293b; font-size: 0.9rem;" id="rowTotal_${index}">
+        ${rowTotal.toLocaleString("vi-VN")} VND
+      </td>
+      <td style="text-align: center;">
+        <button type="button" class="btn-delete-row" title="Xóa dòng" onclick="removeQuotationRow(${index})">
+          <svg class="icon" style="width: 15px; height: 15px;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateCalculations();
+}
+
+function updateCalculations() {
+  let subtotal = 0;
+  quotationItems.forEach((item, index) => {
+    const rowTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
+    subtotal += rowTotal;
+    const rowTotalEl = document.getElementById(`rowTotal_${index}`);
+    if (rowTotalEl) {
+      rowTotalEl.textContent = rowTotal.toLocaleString("vi-VN") + " VND";
+    }
+  });
+
+  const vat = subtotal * 0.1;
+  const grandTotal = subtotal + vat;
+
+  document.getElementById("statItemCount").textContent = quotationItems.length + " Hạng mục";
+  document.getElementById("statSubtotal").textContent = subtotal.toLocaleString("vi-VN") + " VND";
+  document.getElementById("statVat").textContent = vat.toLocaleString("vi-VN") + " VND";
+  document.getElementById("statGrandTotal").textContent = grandTotal.toLocaleString("vi-VN") + " VND";
+}
+
+function addQuotationRow() {
+  quotationItems.push({ name: "Hạng mục thiết bị mới", unit: "Bộ", qty: 1, price: 0 });
+  renderQuotationTable();
+}
+
+function removeQuotationRow(index) {
+  if (quotationItems.length <= 1) {
+    alert("Cần giữ ít nhất 1 dòng trong bảng chào giá!");
+    return;
+  }
+  quotationItems.splice(index, 1);
+  renderQuotationTable();
+}
+
+function simulateAIParseQuotation() {
+  document.getElementById("quoteCustomerName").value = "CÔNG TY TNHH VONMAX (VIỆT NAM)";
+  document.getElementById("quoteCustomerNameCn").value = "弘聲科技(越南)有限公司";
+  document.getElementById("quoteProjectName").value = "Kết Nối Mạng Máy Móc Dập Đầu SMB IoT Giai Đoạn 2";
+  quotationItems = [
+    { name: "Cổng Giao Tiếp Thu Thập Dữ Liệu Edge Gateway IoT-200", unit: "Bộ", qty: 6, price: 16800000 },
+    { name: "Cáp Tín Hiệu Công Nghiệp Chống Nhiễu RS485 Shielded", unit: "Cuộn", qty: 4, price: 3200000 },
+    { name: "Chi Phí Khảo Sát, Lắp Đặt Hiện Trường & Tích Hợp Hệ Thống", unit: "Gói", qty: 1, price: 22000000 }
+  ];
+  renderQuotationTable();
+}
+
+// Tab Switching Logic
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const parent = btn.closest(".card");
+    parent.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    parent.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    btn.classList.add("active");
+    const target = parent.querySelector(`#${btn.dataset.tab}`);
+    if (target) target.classList.add("active");
+  });
+});
+
+document.addEventListener("DOMContentLoaded", renderQuotationTable);
+</script>
+{% endblock %}

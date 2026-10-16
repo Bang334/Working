@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page_title }} - Hong Ming Global</title>
+  <meta name="description" content="Hệ thống Quản lý Dự án & Soạn thảo Văn bản Thông minh Hong Ming Global PM Portal.">
+
+  <!-- Google Fonts: Merriweather (Default App Font) & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700&family=Merriweather+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Core Styles -->
+  <link rel="stylesheet" href="/static/css/theme.css?v=4.2">
+  <link rel="stylesheet" href="/static/css/layout.css?v=4.1">
+  <link rel="stylesheet" href="/static/css/components.css?v=4.0">
+  <link rel="stylesheet" href="/static/css/contract_preview.css?v=4.0">
+  <link rel="stylesheet" href="/static/css/reminder_preview.css?v=4.0">
+
+  <!-- Dynamic Font Engine: Áp dụng font tức thì không cần reload hay sửa code -->
+  <script>
+    (function() {
+      window.ensureGoogleFontLoaded = function(fontName) {
+        if (!fontName) return;
+        var fontSlug = fontName.replace(/\s+/g, '+');
+        var linkId = 'gfont-dynamic-' + fontName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        if (!document.getElementById(linkId)) {
+          var link = document.createElement('link');
+          link.id = linkId;
+          link.rel = 'stylesheet';
+          link.href = 'https://fonts.googleapis.com/css2?family=' + fontSlug + ':ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap';
+          document.head.appendChild(link);
+        }
+      };
+
+      window.applyFontGlobally = function(fontObj, persist) {
+        if (!fontObj || !fontObj.name) return;
+        window.ensureGoogleFontLoaded(fontObj.name);
+        var familyStr = "'" + fontObj.name + "', 'Microsoft JhengHei', '微軟正黑體', -apple-system, BlinkMacSystemFont, sans-serif, serif";
+        document.documentElement.style.setProperty('--font-sans', familyStr);
+        document.documentElement.style.setProperty('--font-serif', familyStr);
+        document.body && (document.body.style.fontFamily = familyStr);
+
+        if (persist !== false) {
+          try {
+            localStorage.setItem('hm_portal_active_font', JSON.stringify(fontObj));
+            // Gửi lưu về backend server
+            fetch('/api/v1/fonts/active', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(fontObj)
+            }).catch(function(e) { console.warn('Could not persist font to server:', e); });
+          } catch(e) {}
+        }
+      };
+
+      // Tự động kích hoạt ngay khi mở trang
+      try {
+        var rawSaved = localStorage.getItem('hm_portal_active_font');
+        if (rawSaved) {
+          var parsed = JSON.parse(rawSaved);
+          if (parsed && parsed.name) {
+            window.ensureGoogleFontLoaded(parsed.name);
+            var familyStr = "'" + parsed.name + "', 'Microsoft JhengHei', '微軟正黑體', -apple-system, BlinkMacSystemFont, sans-serif, serif";
+            document.documentElement.style.setProperty('--font-sans', familyStr);
+            document.documentElement.style.setProperty('--font-serif', familyStr);
+          }
+        }
+      } catch(e) {}
+    })();
+  </script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <a class="skip-link" href="#main-content">Chuyển đến nội dung chính</a>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    {% include "components/sidebar.html" %}
+
+    <!-- Main Workspace -->
+    <main class="app-main" id="main-content" tabindex="-1">
+      {% include "components/header.html" %}
+
+      <!-- Content Injection -->
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Global Toast Notifications -->
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Global Loading Overlay -->
+  <div class="loading-overlay" id="globalLoadingOverlay" role="status" aria-live="polite" aria-hidden="true" style="display: none;">
+    <div class="spinner" style="width: 42px; height: 42px; border-width: 3px;"></div>
+    <div class="loading-text" id="loadingOverlayText">Đang xử lý dữ liệu...</div>
+  </div>
+
+  <!-- Client Scripts -->
+  <script src="/static/js/api_client.js?v=4.0"></script>
+  <script src="/static/js/contract_editor.js?v=4.0"></script>
+  <script src="/static/js/app.js?v=4.0"></script>
+  {% block scripts %}{% endblock %}
+
+</body>
+</html>

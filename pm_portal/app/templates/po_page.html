@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="workspace-single">
+
+  <!-- Action & Status Bar (Tiêu đề đã hiển thị trên thanh Header chính) -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <span class="badge-pill blue">Mua Hàng & Cung Ứng</span>
+      <span class="badge-pill purple">Vendor Management</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Lập đơn đặt hàng linh kiện ngoại tệ từ Đài Loan/Trung Quốc, kiểm soát Lead time 60-80 ngày.</span>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="simulateAIParsePo()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Điền Dữ Liệu PO Mẫu</span>
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="alert('Đã lưu đơn đặt hàng PO vào hệ thống!')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>Lưu Dữ Liệu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 1: AI Prompt Input -->
+  <div class="card ai-prompt-box">
+    <div class="card-header">
+      <div class="card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <span>Bóc Tách Báo Giá Nhà Cung Cấp Bằng Gemini AI</span>
+      </div>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">Trích xuất Part Number, Đơn giá USD/TWD, Điều kiện Incoterms</span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0.85rem;">
+      <textarea id="aiPoInput" class="form-control" rows="4" placeholder="Dán bảng chào giá (Proforma Invoice / Quotation) từ nhà cung cấp Đài Loan / Trung Quốc / VN vào đây..."></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.65rem;">
+      <button type="button" class="btn btn-ai" onclick="simulateAIParsePo()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>Trích Xuất & Điền Vào Đơn PO</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 2: Interactive Editor with Tabs -->
+  <div class="card">
+    <div class="tabs-nav">
+      <button type="button" class="tab-btn active" data-tab="tabPoItems">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-9 5-9-5 9-5 9 5z"/><path d="m3 8 9 5 9-5M3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
+        <span>Bảng Danh Mục Linh Kiện Đặt Hàng</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabPoVendor">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Thông Tin Nhà Cung Cấp (Vendor)</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabPoCommercial">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>
+        <span>Tiến Độ, Lead Time & Điều Kiện Giao Hàng</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Items Table -->
+    <div class="tab-content active" id="tabPoItems">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Danh mục linh kiện & quy cách đặt mua</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Hạch toán theo đơn vị tiền tệ ngoại tệ USD / TWD)</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addPoRow()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm Dòng Đặt Hàng</span>
+        </button>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th style="width: 50px; text-align: center;">STT</th>
+              <th style="min-width: 320px;">Part Number & Mô Tả Chi Tiết Thiết Bị</th>
+              <th style="width: 110px; text-align: center;">ĐVT (Unit)</th>
+              <th style="width: 100px; text-align: center;">Số Lượng</th>
+              <th style="width: 180px; text-align: right;">Đơn Giá (USD)</th>
+              <th style="width: 200px; text-align: right;">Thành Tiền (USD)</th>
+              <th style="width: 60px; text-align: center;">Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="poItemsTableBody">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KPI Stats -->
+      <div class="summary-cards-grid">
+        <div class="summary-stat-card">
+          <span class="stat-label">Tổng Hạng Mục Linh Kiện</span>
+          <span class="stat-value" id="statPoItemCount">3 Hạng mục</span>
+          <span class="stat-subtext">Danh mục đặt mua</span>
+        </div>
+
+        <div class="summary-stat-card primary">
+          <span class="stat-label">Tổng Giá Trị Đơn PO</span>
+          <span class="stat-value" id="statPoTotal" style="color: #1d4ed8;">$0 USD</span>
+          <span class="stat-subtext">Chưa bao gồm thuế NK</span>
+        </div>
+
+        <div class="summary-stat-card warning">
+          <span class="stat-label">Thời Hạn Giao Hàng (Lead Time)</span>
+          <span class="stat-value" style="font-size: 1.25rem; color: #b45309;">60 - 80 Ngày</span>
+          <span class="stat-subtext">Kể từ ngày xác nhận thanh toán cọc</span>
+        </div>
+
+        <div class="summary-stat-card success">
+          <span class="stat-label">Điều Kiện Phát Hành</span>
+          <span class="stat-value" style="font-size: 1.15rem; color: #047857;">Khách Hàng Đã Cọc</span>
+          <span class="stat-subtext">Đảm bảo an toàn dòng tiền</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Vendor Info -->
+    <div class="tab-content" id="tabPoVendor">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Tên Nhà Cung Cấp (Vendor Name) <span class="badge-req">*</span></label>
+          <input type="text" id="poVendorName" class="form-control" value="ADVANTECH TAIWAN CO., LTD.">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mã Số Đơn PO / 採購單號 <span class="badge-req">*</span></label>
+          <input type="text" id="poNumber" class="form-control" value="HM-PO-202610-01">
+        </div>
+      </div>
+
+      <div class="form-grid-3" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Người Phụ Trách Bán Hàng (Contact)</label>
+          <input type="text" id="poVendorContact" class="form-control" value="Ms. Kelly Lin (Sales Representative)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email / Điện Thoại NCC</label>
+          <input type="text" id="poVendorEmail" class="form-control" value="kelly.lin@advantech.tw | +886 2 2792 7818">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày Phát Hành Đơn PO</label>
+          <input type="date" id="poDate" class="form-control" value="2026-10-14">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Căn Cứ Hợp Đồng Dự Án Khách Hàng Cuối (End-Customer Project)</label>
+        <input type="text" id="poProjectRef" class="form-control" value="Dự án CX Technology Giai đoạn 2 (HĐ: 001/HĐMB/HM-CX/2026)">
+      </div>
+    </div>
+
+    <!-- Tab 3: Commercial Terms -->
+    <div class="tab-content" id="tabPoCommercial">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Thời Hạn Giao Hàng (Lead Time) <span class="badge-req">*</span></label>
+          <input type="text" id="poLeadTime" class="form-control" value="60 - 80 ngày kể từ ngày nhận đủ tiền cọc">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Điều Kiện Thương Mại Quốc Tế (Incoterms)</label>
+          <input type="text" id="poIncoterm" class="form-control" value="CIF Cảng Cát Lái / Sân Bay Tân Sơn Nhất TP.HCM">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Phương Thức Thanh Toán (Payment Terms)</label>
+          <input type="text" id="poPayment" class="form-control" value="T/T 50% đặt cọc khi xác nhận PO, 50% trước khi giao hàng (Shipment)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Yêu Cầu Bộ Chứng Từ Xuất Nhập Khẩu</label>
+          <input type="text" id="poDocs" class="form-control" value="Commercial Invoice, Packing List, CO/CQ bản gốc từ nhà sản xuất">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Action Footer -->
+  <div class="action-footer-bar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span class="badge-pill yellow">Chế độ Form Mẫu</span>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">
+        Khi bạn có file Word/Excel mẫu PO chính thức của Hong Ming, hệ thống sẽ tự động ghép dữ liệu để xuất file 1:1.
+      </span>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <button type="button" class="btn btn-outline" onclick="window.print()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>In / Lưu PDF Trực Tiếp</span>
+      </button>
+      <button type="button" class="btn btn-primary" onclick="alert('Đã sẵn sàng! Hãy gửi file mẫu PO của công ty khi bạn có nhé.')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Sẵn Sàng Xuất File PO (.docx)</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let poItems = [
+  { desc: "Edge Gateway IoT-200 (Modbus RTU / MQTT Gateway)", unit: "PCS", qty: 6, price: 420 },
+  { desc: "Industrial Temperature & Vibration Sensor Trio-Node", unit: "SET", qty: 12, price: 180 },
+  { desc: "Industrial DIN-Rail Power Supply 24VDC 5A", unit: "PCS", qty: 6, price: 65 }
+];
+
+function renderPoTable() {
+  const tbody = document.getElementById("poItemsTableBody");
+  tbody.innerHTML = "";
+  let subtotal = 0;
+
+  poItems.forEach((item, index) => {
+    const rowTotal = item.qty * item.price;
+    subtotal += rowTotal;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${index + 1}</td>
+      <td>
+        <input type="text" class="table-input" value="${item.desc}" placeholder="Part Number và mô tả" oninput="poItems[${index}].desc = this.value;">
+      </td>
+      <td style="text-align: center;">
+        <input type="text" class="table-input" style="text-align: center;" value="${item.unit}" oninput="poItems[${index}].unit = this.value;">
+      </td>
+      <td style="text-align: center;">
+        <input type="number" class="table-input" style="text-align: center;" value="${item.qty}" min="1" oninput="poItems[${index}].qty = Number(this.value); updatePoCalculations();">
+      </td>
+      <td style="text-align: right;">
+        <input type="number" class="table-input" style="text-align: right;" value="${item.price}" oninput="poItems[${index}].price = Number(this.value); updatePoCalculations();">
+      </td>
+      <td style="text-align: right; font-weight: 700; color: #1e293b; font-size: 0.9rem;" id="poRowTotal_${index}">
+        $${rowTotal.toLocaleString("en-US")}
+      </td>
+      <td style="text-align: center;">
+        <button type="button" class="btn-delete-row" title="Xóa dòng" onclick="removePoRow(${index})">
+          <svg class="icon" style="width: 15px; height: 15px;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updatePoCalculations();
+}
+
+function updatePoCalculations() {
+  let subtotal = 0;
+  poItems.forEach((item, index) => {
+    const rowTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
+    subtotal += rowTotal;
+    const rowTotalEl = document.getElementById(`poRowTotal_${index}`);
+    if (rowTotalEl) {
+      rowTotalEl.textContent = "$" + rowTotal.toLocaleString("en-US");
+    }
+  });
+
+  document.getElementById("statPoItemCount").textContent = poItems.length + " Hạng mục";
+  document.getElementById("statPoTotal").textContent = "$" + subtotal.toLocaleString("en-US") + " USD";
+}
+
+function addPoRow() {
+  poItems.push({ desc: "New hardware component Part-No", unit: "PCS", qty: 1, price: 0 });
+  renderPoTable();
+}
+
+function removePoRow(index) {
+  if (poItems.length <= 1) {
+    alert("Cần giữ ít nhất 1 dòng đặt hàng!");
+    return;
+  }
+  poItems.splice(index, 1);
+  renderPoTable();
+}
+
+function simulateAIParsePo() {
+  document.getElementById("poVendorName").value = "MOXA INC. (TAIWAN HQ)";
+  document.getElementById("poVendorContact").value = "Mr. David Chen (david@moxa.com)";
+  poItems = [
+    { desc: "Moxa NPort 5150 Serial Device Server 1-port RS-232/422/485", unit: "PCS", qty: 10, price: 165 },
+    { desc: "Moxa EDS-208 Industrial Unmanaged Ethernet Switch 8-port", unit: "PCS", qty: 4, price: 195 }
+  ];
+  renderPoTable();
+}
+
+// Tab Switching Logic
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const parent = btn.closest(".card");
+    parent.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    parent.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    btn.classList.add("active");
+    const target = parent.querySelector(`#${btn.dataset.tab}`);
+    if (target) target.classList.add("active");
+  });
+});
+
+document.addEventListener("DOMContentLoaded", renderPoTable);
+</script>
+{% endblock %}

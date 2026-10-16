@@ -1,0 +1,25 @@
+{
+  "source_path": "E:\\Working\\Bieu Mau\\Biên bản sữa chữa.xlsx",
+  "source_sheet": "CX Technology (VN)",
+  "source_label_cell": "A19",
+  "target_path": "E:\\Working\\Bieu Mau\\Biên Bản Nghiệm Thu.xlsx",
+  "saved_path": "E:\\Working\\Bieu Mau\\Biên Bản Nghiệm Thu_v2.xlsx",
+  "gemini_model": "gemini-3.8-flash",
+  "note_text": "1. RFR900NA55RSVHBA036 (BF606-1677) – Không có pin trước khi nhận sửa chữa / 送修前無電池\n2. EF550RA4LAWBI666 (BF606-1677) – Không có pin trước khi nhận sửa chữa / 送修前無電池\n3. EF550RA4LAWBI678 (BF606-1677) – Không có pin trước khi nhận sửa chữa / 送修前無電池",
+  "assignments": {
+    "RFR900NA55RSVHBA036": "Không có pin trước khi nhận sửa chữa / 送修前無電池",
+    "EF550RA4LAWBI666": "Không có pin trước khi nhận sửa chữa / 送修前無電池",
+    "EF550RA4LAWBI678": "Không có pin trước khi nhận sửa chữa / 送修前無電池"
+  },
+  "blank_detail_sheets": [
+    "EF550R4ALAWBH109",
+    "EF550R4ALAWBH111",
+    "EF550R4ALAWBI641",
+    "EF550R4ALAWBI654",
+    "EF550R4ALAWBI661",
+    "EF550R4ALAWBI670",
+    "EF550R4ALAWBI677",
+    "EF550RA4LAWBI657",
+    "EF550RA4LAWBI686"
+  ]
+}

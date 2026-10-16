@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="workspace-single">
+
+  <!-- Action & Status Bar (Tiêu đề đã hiển thị trên thanh Header chính) -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <span class="badge-pill blue">Giao Nhận Hiện Trường</span>
+      <span class="badge-pill green">Chứng Từ Xuất Kho</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Quản lý danh mục bàn giao phần cứng, kiểm soát Serial Number (S/N) và ký nhận 4 bên.</span>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="simulateAIParseDelivery()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Điền Dữ Liệu Bàn Giao Mẫu</span>
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="alert('Đã lưu thông tin phiếu xuất kho!')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>Lưu Dữ Liệu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 1: AI Prompt Input -->
+  <div class="card ai-prompt-box">
+    <div class="card-header">
+      <div class="card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <span>Bóc Tách Danh Sách Xuất Kho & Serial Bằng Gemini AI</span>
+      </div>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">Quét tự động Serial Number, Model, Part Number</span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0.85rem;">
+      <textarea id="aiDeliveryInput" class="form-control" rows="4" placeholder="Dán danh sách thiết bị xuất kho, danh sách quét mã vạch Serial Number (S/N) từ kho vào đây..."></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.65rem;">
+      <button type="button" class="btn btn-ai" onclick="simulateAIParseDelivery()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>Bóc Tách & Điền Vào Bảng Bàn Giao</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 2: Interactive Editor with Tabs -->
+  <div class="card">
+    <div class="tabs-nav">
+      <button type="button" class="tab-btn active" data-tab="tabDeliveryItems">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-9 5-9-5 9-5 9 5z"/><path d="m3 8 9 5 9-5M3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
+        <span>Danh Mục Thiết Bị & Serial Number</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabDeliveryGeneral">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        <span>Căn Cứ Hợp Đồng & Đơn Vị Nhận</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabDeliveryParties">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Đại Diện Ký Nhận 4 Bên</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Equipment & Serial Numbers -->
+    <div class="tab-content active" id="tabDeliveryItems">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Bảng kê chi tiết thiết bị bàn giao</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Bắt buộc kiểm tra trùng khớp số Serial Number trước khi ký nhận)</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addDeliveryRow()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm Thiết Bị Giao Hàng</span>
+        </button>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th style="width: 50px; text-align: center;">STT</th>
+              <th style="min-width: 280px;">Tên Thiết Bị Phần Cứng</th>
+              <th style="width: 160px; text-align: center;">Model / Part No</th>
+              <th style="width: 200px; text-align: center;">Serial Number (S/N)</th>
+              <th style="width: 90px; text-align: center;">ĐVT</th>
+              <th style="width: 90px; text-align: center;">SL</th>
+              <th style="width: 200px;">Tình Trạng Ngoại Quan</th>
+              <th style="width: 60px; text-align: center;">Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="deliveryItemsTableBody">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KPI Stats -->
+      <div class="summary-cards-grid">
+        <div class="summary-stat-card">
+          <span class="stat-label">Tổng Chủng Loại</span>
+          <span class="stat-value" id="statDelKinds">4 Loại</span>
+          <span class="stat-subtext">Danh mục thiết bị xuất kho</span>
+        </div>
+
+        <div class="summary-stat-card primary">
+          <span class="stat-label">Tổng Số Lượng Thiết Bị</span>
+          <span class="stat-value" id="statDelTotalQty">19 Cái / Bộ</span>
+          <span class="stat-subtext">Đã kiểm đếm thực tế</span>
+        </div>
+
+        <div class="summary-stat-card success">
+          <span class="stat-label">Tình Trạng Niêm Phong</span>
+          <span class="stat-value" style="color: #047857;">Mới 100%</span>
+          <span class="stat-subtext">Nguyên seal nhà sản xuất</span>
+        </div>
+
+        <div class="summary-stat-card">
+          <span class="stat-label">Chứng Từ Kích Hoạt</span>
+          <span class="stat-value" style="font-size: 1.15rem; color: #2563eb;">Thanh Toán Đợt 2</span>
+          <span class="stat-subtext">Căn cứ chuyển tiền giao hàng</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: General Info -->
+    <div class="tab-content" id="tabDeliveryGeneral">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Căn Cứ Hợp Đồng Mua Bán Số <span class="badge-req">*</span></label>
+          <input type="text" id="delContractNo" class="form-control" value="001/HĐMB/HM-CX/2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày Xuất Kho Bàn Giao</label>
+          <input type="date" id="delDate" class="form-control" value="2026-10-14">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Đơn Vị Nhận Hàng (Bên Mua) <span class="badge-req">*</span></label>
+          <input type="text" id="delReceiverCompany" class="form-control" value="CÔNG TY TNHH CX TECHNOLOGY (VIỆT NAM)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Người Tiếp Nhận Trực Tiếp Tại Nhà Máy</label>
+          <input type="text" id="delReceiverName" class="form-control" value="Ông Lê Văn Hoàng (Trưởng phòng Cơ Điện)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Địa Điểm Bàn Giao & Lắp Đặt</label>
+        <input type="text" id="delAddress" class="form-control" value="Đường số 18, Khu Chế Xuất Tân Thuận, Phường Tân Thuận Đông, Quận 7, TP.HCM">
+      </div>
+    </div>
+
+    <!-- Tab 3: Signatures -->
+    <div class="tab-content" id="tabDeliveryParties">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Người Lập Phiếu (PM Hong Ming)</label>
+          <input type="text" id="delSignerPm" class="form-control" value="Quản lý dự án Hong Ming">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Thủ Kho Xuất Hàng</label>
+          <input type="text" id="delSignerWarehouse" class="form-control" value="Thủ kho Hong Ming">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Kỹ Thuật Giao Hàng & Bàn Giao</label>
+          <input type="text" id="delSignerTech" class="form-control" value="Kỹ sư hiện trường Hong Ming">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Đại Diện Khách Hàng Nhận Hàng</label>
+          <input type="text" id="delSignerCustomer" class="form-control" value="Đại diện tiếp nhận CX Technology">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Action Footer -->
+  <div class="action-footer-bar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span class="badge-pill yellow">Chế độ Form Mẫu</span>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">
+        Khi bạn có file Word/Excel mẫu bàn giao chính thức, hệ thống sẽ tự động ghép dữ liệu để xuất file 1:1.
+      </span>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <button type="button" class="btn btn-outline" onclick="window.print()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>In / Lưu PDF Trực Tiếp</span>
+      </button>
+      <button type="button" class="btn btn-primary" onclick="alert('Đã sẵn sàng! Hãy gửi file mẫu Word/Excel của công ty khi bạn có nhé.')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Sẵn Sàng Xuất File Word (.docx)</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let deliveryItems = [
+  { name: "Đồng Hồ Đo Điện Đa Mạch Tử Ngoại PM2100-3-B", model: "PM2100-3-B", sn: "SN-2026-PM001", unit: "Bộ", qty: 2, condition: "Mới 100% nguyên seal" },
+  { name: "Đồng Hồ Đo Điện Đa Mạch Tử Ngoại PM2100-3-B", model: "PM2100-3-B", sn: "SN-2026-PM002", unit: "Bộ", qty: 2, condition: "Mới 100% nguyên seal" },
+  { name: "Biến Dòng Split-core CT 200A/5A", model: "CT-200/5A", sn: "Lô CT-2610-A", unit: "Cái", qty: 12, condition: "Mới 100% đạt chuẩn" },
+  { name: "Tủ Lá Chắn Điện Xanh EMS Đấu Nối Sẵn", model: "HM-EMS-SHIELD", sn: "HM-EMS-202601", unit: "Hệ", qty: 1, condition: "Mới 100% kèm phụ kiện" }
+];
+
+function renderDeliveryTable() {
+  const tbody = document.getElementById("deliveryItemsTableBody");
+  tbody.innerHTML = "";
+
+  deliveryItems.forEach((item, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${index + 1}</td>
+      <td><input type="text" class="table-input" value="${item.name}" placeholder="Tên thiết bị" oninput="deliveryItems[${index}].name = this.value;"></td>
+      <td><input type="text" class="table-input" style="text-align: center;" value="${item.model}" oninput="deliveryItems[${index}].model = this.value;"></td>
+      <td><input type="text" class="table-input" style="text-align: center; font-family: monospace; font-weight: 600;" value="${item.sn}" oninput="deliveryItems[${index}].sn = this.value;"></td>
+      <td style="text-align: center;"><input type="text" class="table-input" style="text-align: center;" value="${item.unit}" oninput="deliveryItems[${index}].unit = this.value;"></td>
+      <td style="text-align: center;"><input type="number" class="table-input" style="text-align: center;" value="${item.qty}" min="1" oninput="deliveryItems[${index}].qty = Number(this.value); updateDeliveryStats();"></td>
+      <td><input type="text" class="table-input" value="${item.condition}" oninput="deliveryItems[${index}].condition = this.value;"></td>
+      <td style="text-align: center;">
+        <button type="button" class="btn-delete-row" title="Xóa dòng" onclick="removeDeliveryRow(${index})">
+          <svg class="icon" style="width: 15px; height: 15px;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateDeliveryStats();
+}
+
+function updateDeliveryStats() {
+  let totalQty = 0;
+  deliveryItems.forEach(item => {
+    totalQty += Number(item.qty) || 0;
+  });
+
+  document.getElementById("statDelKinds").textContent = deliveryItems.length + " Loại";
+  document.getElementById("statDelTotalQty").textContent = totalQty + " Cái / Bộ";
+}
+
+function addDeliveryRow() {
+  deliveryItems.push({ name: "Thiết bị mới", model: "Part-No", sn: "SN-...", unit: "Bộ", qty: 1, condition: "Mới 100%" });
+  renderDeliveryTable();
+}
+
+function removeDeliveryRow(index) {
+  if (deliveryItems.length <= 1) {
+    alert("Cần giữ ít nhất 1 dòng thiết bị bàn giao!");
+    return;
+  }
+  deliveryItems.splice(index, 1);
+  renderDeliveryTable();
+}
+
+function simulateAIParseDelivery() {
+  document.getElementById("delContractNo").value = "002/HĐMB/HM-VONMAX/2026";
+  document.getElementById("delReceiverCompany").value = "CÔNG TY TNHH VONMAX (VIỆT NAM)";
+  document.getElementById("delAddress").value = "KCN Quế Võ, Tỉnh Bắc Ninh";
+  deliveryItems = [
+    { name: "Cổng Giao Tiếp Edge Gateway IoT-200", model: "EG-200", sn: "EG200-260901", unit: "Bộ", qty: 3, condition: "Mới 100% nguyên seal" },
+    { name: "Cổng Giao Tiếp Edge Gateway IoT-200", model: "EG-200", sn: "EG200-260902", unit: "Bộ", qty: 3, condition: "Mới 100% nguyên seal" },
+    { name: "Cáp Tín Hiệu Chống Nhiễu RS485 Shielded", model: "RS485-2P", sn: "Lô Cáp 2026-09", unit: "Cuộn", qty: 4, condition: "Mới 100% 500m/cuộn" }
+  ];
+  renderDeliveryTable();
+}
+
+// Tab Switching Logic
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const parent = btn.closest(".card");
+    parent.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    parent.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    btn.classList.add("active");
+    const target = parent.querySelector(`#${btn.dataset.tab}`);
+    if (target) target.classList.add("active");
+  });
+});
+
+document.addEventListener("DOMContentLoaded", renderDeliveryTable);
+</script>
+{% endblock %}

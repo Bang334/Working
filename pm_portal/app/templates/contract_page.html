@@ -1,0 +1,511 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="workspace-single">
+
+  <!-- Action & Status Bar (Tiêu đề đã hiển thị trên thanh Header chính) -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <span class="badge-pill blue">Hợp Đồng Mua Bán</span>
+      <span class="badge-pill green">Bảo Toàn Bố Cục 100%</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Soạn thảo hợp đồng song ngữ Việt - Đài Loan, tự động tính tổng tiền bằng chữ và xuất file Word chuẩn 1:1.</span>
+    </div>
+
+    <!-- Quick Actions on Header -->
+    <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="switchTab('tabContractList'); ContractEditor.loadContractsList();" title="Xem danh sách hợp đồng đã tạo trong hệ thống">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>📋 Danh Sách Hợp Đồng (<span id="headerContractCount">0</span>)</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="handleCopyRichText()" title="Sao chép văn bản để dán trực tiếp vào Word hoặc Email">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Sao Chép Rich Text</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="handlePrint()" title="In hoặc lưu thành PDF">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>In / PDF</span>
+      </button>
+
+      <button type="button" class="btn btn-primary btn-sm" onclick="handleGenerateDocx()" title="Xuất file DOCX chính thức bảo toàn 100% layout">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        <span>Tải File Word (.docx)</span>
+      </button>
+
+      <button type="button" class="btn btn-ai btn-sm" onclick="handleSaveContract()" title="Lưu hợp đồng vào hệ thống để tự động chuyển sang trang Thanh Toán & Nhắc Nợ">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>💾 Lưu Hợp Đồng</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 1: AI Prompt Input (Full Width - Multimodal: Text + Excel + Image + Paste) -->
+  <div class="card ai-prompt-box" id="aiDropZone">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+      <div class="card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <span>Bóc Tách Dữ Liệu Hợp Đồng Đa Phương Thức Bằng Gemini AI</span>
+        <span class="badge-pill blue" style="font-size: 0.7rem; padding: 2px 7px;">Text · File Excel · Ảnh · Screenshot</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted);">
+        💡 Hỗ trợ: Nhập văn bản, <strong>tải file Excel</strong>, <strong>ảnh chụp bảng giá</strong> hoặc nhấn <strong>Ctrl+V</strong> để dán ảnh trực tiếp từ clipboard!
+      </div>
+    </div>
+
+    <!-- Hidden native file input -->
+    <input type="file" id="aiFileInput" accept=".xlsx,.xls,.xlsm,.png,.jpg,.jpeg,.webp,.docx,.txt" style="display: none;" onchange="handleAiFileSelected(this)">
+
+    <div class="form-group" style="margin-bottom: 0.75rem; position: relative;">
+      <textarea id="aiPromptInput" class="form-control" rows="4" placeholder="Dán văn bản bảng giá, tin nhắn WeChat/Zalo, hoặc nhấn Ctrl+V để dán ảnh chụp màn hình vào đây..."></textarea>
+      <div id="aiDragOverlay" style="display: none; position: absolute; inset: 0; background: rgba(239, 246, 255, 0.94); border: 2px dashed #2563eb; border-radius: var(--radius-sm); align-items: center; justify-content: center; z-index: 10; pointer-events: none;">
+        <span style="font-weight: 700; color: #1d4ed8; font-size: 0.95rem;">📥 Thả tệp Excel hoặc Ảnh báo giá vào đây để AI phân tích</span>
+      </div>
+    </div>
+
+    <!-- File Attachment Preview Bar (Shown when a file or pasted image is attached) -->
+    <div id="attachedFileContainer" style="display: none; margin-bottom: 0.85rem; padding: 0.65rem 0.85rem; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: var(--radius-sm); align-items: center; justify-content: space-between; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+        <div id="attachedFilePreviewThumb" style="width: 44px; height: 44px; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #cbd5e1; flex-shrink: 0;">
+          <!-- Image preview or file icon -->
+        </div>
+        <div style="min-width: 0;">
+          <div style="font-weight: 700; font-size: 0.85rem; color: #166534; display: flex; align-items: center; gap: 0.4rem;">
+            <span id="attachedFileName" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px;"></span>
+            <span id="attachedFileTypeBadge" class="badge-pill green" style="font-size: 0.68rem; padding: 1px 6px;"></span>
+          </div>
+          <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">
+            <span id="attachedFileSize"></span> · Sẵn sàng để AI phân tích bóc tách vào bảng hợp đồng
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="clearAttachedAiFile()" style="font-size: 0.75rem; color: #dc2626; border-color: #fca5a5; background: #ffffff; flex-shrink: 0;" title="Xóa tệp đính kèm này">
+        × Bỏ tệp
+      </button>
+    </div>
+
+    <!-- Cấu Hình Tự Động Xuất File Word & Thư Mục Lưu -->
+    <div style="margin-top: 0.75rem; margin-bottom: 0.85rem; padding: 0.65rem 0.85rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <label style="display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; font-size: 0.84rem; font-weight: 700; color: #1e293b; user-select: none;">
+          <input type="checkbox" id="chkAutoExportWord" checked style="width: 16px; height: 16px; cursor: pointer; accent-color: #2563eb;">
+          <span>☑ Tự động xuất file Word sau khi AI phân tích</span>
+        </label>
+        <span class="badge-pill blue" style="font-size: 0.68rem; padding: 1px 6px;">Mặc định</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 290px; max-width: 480px;">
+        <span style="font-size: 0.78rem; font-weight: 600; color: #475569; white-space: nowrap;">Thư mục lưu:</span>
+        <input type="text" id="txtExportDirectory" class="form-control form-control-sm" value="E:\Working\Ho So Du An\Hop Dong\" placeholder="E:\Working\Ho So Du An\Hop Dong\" style="font-family: monospace; font-size: 0.78rem; background: #ffffff;" title="Đường dẫn thư mục lưu file Word trên máy tính">
+      </div>
+    </div>
+
+    <!-- Action Toolbar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.65rem;">
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('aiFileInput').click()" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; background: #ffffff;" title="Tải file Excel hoặc Ảnh từ máy tính">
+          <svg class="icon" viewBox="0 0 24 24" style="width: 15px; height: 15px; color: #2563eb;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>📁 Tải Tệp Lên (Excel / Ảnh Báo Giá)</span>
+        </button>
+
+        <button type="button" class="btn btn-outline btn-sm" onclick="loadSampleJinxunText()" style="font-size: 0.8rem; color: #475569;" title="Nạp nhanh ví dụ thực tế khách hàng Jinxun Việt Nam">
+          <span>⚡ Mẫu Báo Giá Jinxun</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn-ai" onclick="handleAIParse()" style="font-weight: 700; padding: 0.5rem 1.15rem;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span id="aiParseBtnText">Gọi Gemini AI Phân Tích & Điền Vào Bảng</span>
+      </button>
+    </div>
+
+    <!-- Banner Kết Quả Tự Động Xuất File Word -->
+    <div id="aiAutoExportBanner" style="display: none; margin-top: 0.95rem; padding: 0.85rem 1rem; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; animation: fadeIn 0.25s ease;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; color: #16a34a; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;">✓</div>
+          <div style="min-width: 0;">
+            <div style="font-weight: 700; font-size: 0.88rem; color: #166534;">
+              Đã phân tích & tự động xuất file Word thành công!
+            </div>
+            <div style="font-size: 0.78rem; color: #334155; margin-top: 0.15rem; word-break: break-all;">
+              • <strong>Tệp:</strong> <span id="autoExportFileName" style="font-family: monospace; font-weight: 600;"></span><br>
+              • <strong>Vị trí:</strong> <span id="autoExportFilePath" style="font-family: monospace; color: #0284c7;"></span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
+          <button type="button" id="btnAutoExportOpenFolder" class="btn btn-outline btn-sm" style="background: #ffffff; border-color: #0284c7; color: #0369a1; font-weight: 600;" title="Mở trực tiếp thư mục chứa file trong Windows Explorer">
+            📂 Mở thư mục trên máy tính
+          </button>
+          <a id="btnAutoExportDownload" href="#" download class="btn btn-outline btn-sm" style="background: #ffffff; border-color: #16a34a; color: #15803d; font-weight: 600; text-decoration: none;" title="Tải file Word .docx về máy tính">
+            ⬇️ Tải Word (.docx)
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Full Width Interactive Editor with Tabs -->
+  <div class="card">
+    <div class="tabs-nav">
+      <button type="button" class="tab-btn active" data-tab="tabProducts">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-9 5-9-5 9-5 9 5z"/><path d="m3 8 9 5 9-5M3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
+        <span>產品清單 / Bảng Danh Mục Sản Phẩm</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabParties">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M6 21V5l6-3 6 3v16M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>
+        <span>買方 (甲方) / Bên A (Khách Hàng)</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabGeneral">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.6 11 23l-9-9V2h12l6.6 6.6a3.5 3.5 0 0 1 0 5z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+        <span>合約與專案 / Số HĐ & Dự Án</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabTerms">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>
+        <span>付款進度 / Tiến Độ Thanh Toán</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabContractList" onclick="ContractEditor.loadContractsList()" title="Xem danh sách các hợp đồng đã tạo trong hệ thống">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>已建立合約清單 / Danh Sách Hợp Đồng (<span id="contractListBadge">0</span>)</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Products Table (Full Width Modern Table) -->
+    <div class="tab-content active" id="tabProducts">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">產品清單與服務 / Danh mục sản phẩm, bản quyền phần mềm và dịch vụ</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(自動計算金額 / Tự động tính thành tiền và làm tròn chuẩn)</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="ContractEditor.addRow()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>＋ 新增品項 / Thêm Dòng Sản Phẩm</span>
+        </button>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th style="width: 50px; text-align: center;">序號<br>STT</th>
+              <th style="min-width: 380px;">產品名稱 / Tên Sản Phẩm (中越雙語)</th>
+              <th style="width: 170px; text-align: right;">單價 / Đơn Giá (VND)</th>
+              <th style="width: 110px; text-align: center;">數量 / Số Lượng</th>
+              <th style="width: 200px; text-align: right;">總價 / Thành Tiền (VND)</th>
+              <th style="width: 60px; text-align: center;">操作<br>Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="itemsTableBody">
+            <!-- Dynamically populated via ContractEditor.addRow() -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KPI Summary Cards Grid -->
+      <div class="summary-cards-grid">
+        <div class="summary-stat-card">
+          <span class="stat-label">總數量 / Tổng Số Lượng</span>
+          <span class="stat-value" id="summaryQtyDisplay">0 SET</span>
+          <span class="stat-subtext">設備與授權總組數</span>
+        </div>
+
+        <div class="summary-stat-card primary">
+          <span class="stat-label">合約總金額 / Tổng Giá Trị Hợp Đồng</span>
+          <span class="stat-value" id="summaryTotalDisplay" style="color: #1d4ed8;">0 VND</span>
+          <span class="stat-subtext">含稅及全部實施費用</span>
+        </div>
+
+        <div class="summary-stat-card warning">
+          <span class="stat-label" id="summaryPhase1Label">第1期款 / Đợt 1</span>
+          <span class="stat-value" id="summaryPhase1Display" style="font-size: 1.25rem; color: #b45309;">0 VND</span>
+          <span class="stat-subtext">簽約定金 / Tạm ứng</span>
+        </div>
+
+        <div class="summary-stat-card success">
+          <span class="stat-label" id="summaryPhaseLastLabel">尾款 / Đợt Cuối</span>
+          <span class="stat-value" id="summaryPhaseLastDisplay" style="font-size: 1.25rem; color: #047857;">0 VND</span>
+          <span class="stat-subtext">驗收交付款 / Nghiệm thu</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Party A Info -->
+    <div class="tab-content" id="tabParties">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">買方公司名稱 (繁體中文 / Tiếng Trung) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldCompanyACn" class="form-control" placeholder="Ví dụ: 越南金迅科技有限公司 / 台灣精星科技(越南)有限公司">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tên Công Ty Bên A (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldCompanyA" class="form-control" placeholder="Ví dụ: CÔNG TY TNHH CÔNG NGHỆ JINXUN VIỆT NAM">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">公司地址 (繁體中文 / Tiếng Trung)</label>
+          <input type="text" id="fieldAddressACn" class="form-control" placeholder="Nhập địa chỉ bằng tiếng Trung (Ví dụ: 越南海防市越和坊柱村)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Địa Chỉ Trụ Sở (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldAddressA" class="form-control" placeholder="Nhập địa chỉ nhà máy hoặc trụ sở chính">
+        </div>
+      </div>
+
+      <div class="form-grid-3" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">稅號 / Mã Số Thuế (MST) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldTaxA" class="form-control" placeholder="0801382054">
+        </div>
+        <div class="form-group">
+          <label class="form-label">代表人 / Người Đại Diện Ký Hợp Đồng <span class="badge-req">*</span></label>
+          <input type="text" id="fieldRepA" class="form-control" placeholder="Ví dụ: HUANG YU">
+        </div>
+        <div class="form-group">
+          <label class="form-label">職務 / Chức Vụ Đại Diện</label>
+          <input type="text" id="fieldRoleA" class="form-control" value="總經理 / Tổng giám đốc">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Contract General Details -->
+    <div class="tab-content" id="tabGeneral">
+      <div class="form-grid-3" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">合約編號 / Số Hợp Đồng <span class="badge-req">*</span></label>
+          <input type="text" id="fieldContractNo" class="form-control" placeholder="Ví dụ: 001/HĐMB/HM-CX/2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label">簽約日期 / Ngày Tháng Năm Ký <span class="badge-req">*</span></label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+            <input type="text" id="fieldDay" class="form-control text-center" placeholder="Ngày">
+            <input type="text" id="fieldMonth" class="form-control text-center" placeholder="Tháng">
+            <input type="text" id="fieldYear" class="form-control text-center" placeholder="Năm">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">合約總金額 (數字) / Tổng Tiền HĐ <span class="badge-req">*</span></label>
+          <input type="text" id="fieldTotalAmount" class="form-control font-bold" placeholder="Tự động tính từ danh mục sản phẩm" oninput="ContractEditor.recalculateAllTotals()">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">專案名稱 (繁體中文 / Tiếng Trung)</label>
+          <input type="text" id="fieldProjectCn" class="form-control" placeholder="Nhập tên dự án bằng tiếng Trung (Ví dụ: MES Lite 系統導入專案)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tên Dự Án (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldProjectVn" class="form-control" placeholder="Nhập tên dự án bằng tiếng Việt">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Terms & Installments -->
+    <div class="tab-content" id="tabTerms">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">交貨期限 (天) / Thời Hạn Giao Hàng (Ngày) <span class="badge-req">*</span></label>
+          <input type="number" id="fieldDeliveryDays" class="form-control" value="80">
+        </div>
+        <div class="form-group">
+          <label class="form-label">保固期限 (月) / Thời Hạn Bảo Hành (Tháng) <span class="badge-req">*</span></label>
+          <input type="number" id="fieldWarrantyMonths" class="form-control" value="12">
+        </div>
+      </div>
+
+      <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem; line-height: 1.7;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:0.75rem;">
+          <div>
+            <strong style="color: var(--primary); display: block; font-size: 0.9rem;">付款進度 / Tiến Độ Thanh Toán Linh Hoạt</strong>
+            <span style="color:#64748b;">Hệ thống tự động đồng bộ theo chuẩn công ty (35% - 55% - 10%) hoặc tùy chỉnh linh hoạt.</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+            <strong id="paymentPercentTotal" style="color:#b91c1c;">總計 / Tổng: 0%</strong>
+            <button type="button" class="btn btn-outline btn-sm" onclick="ContractEditor.addInstallment()">＋ 新增期別 / Thêm Đợt</button>
+          </div>
+        </div>
+        <div id="paymentInstallmentsEditor"></div>
+      </div>
+    </div>
+
+    <!-- Tab 5: Danh Sách Hợp Đồng Đã Tạo -->
+    <div class="tab-content" id="tabContractList">
+      <!-- Toolbar: Tiêu đề, Thống kê, Tìm kiếm, Làm mới, Tạo mới -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+          <span style="font-weight: 700; color: var(--text-main); font-size: 1rem;">
+            📑 已建立合約清單 / Danh Sách Hợp Đồng Mua Bán Đã Tạo
+          </span>
+          <span class="badge-pill blue" id="contractListCountBadge">0 hợp đồng</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+          <!-- Search box -->
+          <div style="position: relative; width: 320px;">
+            <input type="text" id="contractSearchInput" class="form-control form-control-sm" placeholder="🔍 Tìm theo mã HĐ, khách hàng, dự án, file..." oninput="ContractEditor.filterContracts(this.value)" style="border-radius: 20px; padding-left: 0.9rem;">
+          </div>
+
+          <button type="button" class="btn btn-outline btn-sm" onclick="ContractEditor.loadContractsList()" title="Tải lại danh sách hợp đồng mới nhất" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span>↻ Làm Mới</span>
+          </button>
+
+          <button type="button" class="btn btn-primary btn-sm" onclick="switchTab('tabProducts')" title="Quay lại bảng sản phẩm để soạn thảo hợp đồng mới" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+            <span>＋ Soạn Hợp Đồng Mới</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick KPI Mini Bar -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.75rem; margin-bottom: 1.15rem;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
+          <div style="font-size: 0.76rem; color: #64748b; font-weight: 600;">TỔNG HỢP ĐỒNG ĐÃ LẬP</div>
+          <div id="statTotalContracts" style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-top: 0.2rem;">0</div>
+        </div>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem 1rem;">
+          <div style="font-size: 0.76rem; color: #166534; font-weight: 600;">TỔNG GIÁ TRỊ (DATABASE)</div>
+          <div id="statTotalAmount" style="font-size: 1.25rem; font-weight: 800; color: #15803d; margin-top: 0.2rem;">0 VND</div>
+        </div>
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.75rem 1rem;">
+          <div style="font-size: 0.76rem; color: #1e40af; font-weight: 600;">TỆP WORD (.DOCX) SẴN SÀNG</div>
+          <div id="statTotalWordFiles" style="font-size: 1.25rem; font-weight: 800; color: #1d4ed8; margin-top: 0.2rem;">0 tệp</div>
+        </div>
+      </div>
+
+      <!-- Bảng danh sách hợp đồng -->
+      <div class="modern-table-card">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th style="width: 45px; text-align: center;">STT</th>
+              <th style="width: 175px;">Mã Hợp Đồng<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">合約編號 / Ngày ký</span></th>
+              <th style="min-width: 250px;">Khách Hàng (Bên A)<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">買方公司名稱</span></th>
+              <th style="min-width: 200px;">Dự Án<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">專案名稱</span></th>
+              <th style="width: 165px; text-align: right;">Tổng Giá Trị (VND)<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">含稅總金額</span></th>
+              <th style="min-width: 220px;">Tệp Word Đã Xuất<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">.docx / Thời gian</span></th>
+              <th style="width: 135px; text-align: center;">Trạng Thái<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">執行狀態</span></th>
+              <th style="width: 175px; text-align: center;">Thao Tác<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">功能操作</span></th>
+            </tr>
+          </thead>
+          <tbody id="contractsListTableBody">
+            <!-- Render dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div id="contractListEmptyState" style="display: none; text-align: center; padding: 3rem 1rem; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 8px; margin-top: 1rem;">
+        <svg style="width: 48px; height: 48px; color: #94a3b8; margin: 0 auto 0.75rem auto;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div style="font-weight: 700; color: #475569; font-size: 0.95rem;">Chưa có hợp đồng nào được tạo hoặc không tìm thấy kết quả phù hợp</div>
+        <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.25rem;">Hãy soạn thảo và bấm "Tải File Word" hoặc "Lưu Hợp Đồng" để lưu vào danh sách.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Action Footer -->
+  <div class="action-footer-bar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span class="badge-pill green">Zero Layout Distortion</span>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">
+        Xuất file DOCX chuẩn mực: Giữ nguyên vẹn 100% font chữ, lề in A4, đường viền và điều khoản pháp lý gốc.
+      </span>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <button type="button" class="btn btn-outline" onclick="handleCopyRichText()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Sao Chép Rich Text</span>
+      </button>
+      <button type="button" class="btn btn-primary" onclick="handleGenerateDocx()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        <span>Tải Xuống File Word (.docx)</span>
+      </button>
+      <button type="button" class="btn btn-ai" onclick="handleSaveContract()" style="font-weight: 700;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>💾 Lưu Hợp Đồng Vào Hồ Sơ Hệ Thống</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: Lưu Hợp Đồng Thành Công -->
+  <div id="saveContractSuccessModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: #ffffff; border-radius: 12px; max-width: 520px; width: 90%; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); border: 1.5px solid #86efac; animation: fadeIn 0.2s ease;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 1.5rem; flex-shrink: 0; font-weight: 800;">
+          ✓
+        </div>
+        <div>
+          <h3 style="margin: 0; color: #166534; font-size: 1.15rem; font-weight: 800;">Lưu Hợp Đồng Thành Công!</h3>
+          <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: #475569;">Đã lập hồ sơ và liên kết các đợt thanh toán vào hệ thống.</p>
+        </div>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; line-height: 1.6;">
+        <div>• <strong>Mã Hợp Đồng:</strong> <span id="modalSavedContractCode" style="font-family: monospace; font-weight: 700; color: #1d4ed8;"></span></div>
+        <div>• <strong>Khách Hàng:</strong> <span id="modalSavedCustomer" style="font-weight: 600; color: #0f172a;"></span></div>
+        <div>• <strong>Tổng Giá Trị:</strong> <span id="modalSavedTotal" style="color: #166534; font-weight: 700;"></span></div>
+        <div>• <strong>Tệp Đã Lưu:</strong> <span id="modalSavedFile" style="font-family: monospace; font-size: 0.8rem; color: #475569;"></span></div>
+        <div style="margin-top: 0.25rem;">• <strong>Vị Trí Trên Máy:</strong> <span id="modalSavedPath" style="font-family: monospace; font-size: 0.78rem; color: #0284c7; word-break: break-all;"></span></div>
+        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #cbd5e1; color: #1e3a8a; font-size: 0.82rem;">
+          ✓ Các đợt thanh toán và Phiếu Yêu Cầu Thanh Toán mẫu 1:1 đã sẵn sàng tại trang <strong>Đề Nghị TT & Nhắc Nợ</strong>.
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+        <button type="button" id="btnModalOpenFolder" class="btn btn-outline" style="border-color: #0284c7; color: #0369a1;" title="Mở trực tiếp thư mục chứa file trong Windows Explorer">
+          📂 Mở Thư Mục Chứa File
+        </button>
+        <a id="btnModalDownloadDocx" href="#" download class="btn btn-outline" style="border-color: #16a34a; color: #15803d; text-decoration: none;" title="Tải file Word .docx về máy tính">
+          ⬇️ Tải Word (.docx)
+        </a>
+        <button type="button" class="btn btn-outline" onclick="closeSaveContractModal()">Đóng</button>
+        <a href="/reminders" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+          <span>👉 Đến Trang Nhắc Nợ</span>
+          <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (!document.querySelector("#paymentInstallmentsEditor .payment-installment-row")) {
+    ContractEditor.renderInstallments([
+      {
+        phan_tram: 35,
+        tieu_de_trung: "簽約定金",
+        tieu_de: "Đợt 1 (35%)",
+        dieu_kien_trung: "雙方簽約後即期以電匯 (T/T) 方式支付",
+        dieu_kien_viet: "Thanh toán tạm ứng 35% ngay sau khi hai bên ký kết hợp đồng"
+      },
+      {
+        phan_tram: 55,
+        tieu_de_trung: "設備安裝款",
+        tieu_de: "Đợt 2 (55%)",
+        dieu_kien_trung: "於設備安裝及系統建置完成並經雙方簽署確認文件後",
+        dieu_kien_viet: "Sau khi bàn giao thiết bị và hoàn thành cài đặt hệ thống"
+      },
+      {
+        phan_tram: 10,
+        tieu_de_trung: "驗收尾款",
+        tieu_de: "Đợt 3 (10%)",
+        dieu_kien_trung: "於最終驗收 (FAC) 完成並簽署驗收交付文件後",
+        dieu_kien_viet: "Sau khi khách hàng nghiệm thu hoàn tất và ký biên bản bàn giao (FAC)"
+      }
+    ]);
+  }
+  // Tải danh sách hợp đồng đã tạo để cập nhật huy hiệu số lượng và bảng
+  if (window.ContractEditor && typeof ContractEditor.loadContractsList === "function") {
+    ContractEditor.loadContractsList();
+  }
+});
+</script>
+{% endblock %}

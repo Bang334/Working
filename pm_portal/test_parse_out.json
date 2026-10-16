@@ -1,0 +1,129 @@
+{
+  "_executed_model": "LocalHeuristicsParser",
+  "tieu_de_viet": "BIÊN BẢN KIỂM TRA & NGHIỆM THU THIẾT BỊ SAU SỬA CHỮA",
+  "tieu_de_trung": "維修設備檢查及驗收記錄",
+  "so_hop_dong": "HM-FINEPRO-20261013.002",
+  "so_bien_ban": "001/2026/BBNT-SC",
+  "ngay_nghiem_thu": "09/10/2026",
+  "ben_a": {
+    "ten_cong_ty": "（買方）Bên Mua: CÔNG TY TNHH CÔNG NGHỆ MINH PHÁT",
+    "ten_tieng_trung": "CX Technology (VN) 股份有限公司",
+    "dia_chi": "KCX Tân Thuận, Quận 7, TP.HCM"
+  },
+  "hang_muc": [
+    {
+      "stt": 1,
+      "serial_number": "RFR900NA65RSWLB572",
+      "loi_ban_dau": "Cần kiểm tra kỹ thuật",
+      "bo_phan": "CNC",
+      "hang_muc_kiem_tra": "Đã kiểm tra nhưng không có lỗi\n已檢查，未發現異常",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "1.100.000 VND",
+      "tong_gia": "1.100.000 VND",
+      "can_anh": false
+    },
+    {
+      "stt": 2,
+      "serial_number": "EF550RA4LAWBH672",
+      "loi_ban_dau": "Màn hình lỗi\n螢幕故障",
+      "bo_phan": "CNC",
+      "hang_muc_kiem_tra": "Kiểm tra hiển thị màn hình & đầu quét barcode\n檢查螢幕顯示及條碼掃描功能",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "8.200.000 VND",
+      "tong_gia": "8.200.000 VND",
+      "can_anh": false
+    },
+    {
+      "stt": 3,
+      "serial_number": "RFR900NA65RSWLB681",
+      "loi_ban_dau": "Cần kiểm tra kỹ thuật",
+      "bo_phan": "CNC",
+      "hang_muc_kiem_tra": "Kiểm tra cò bắn & gá chuyển đổi Mounting Adapter\n檢查扳機及轉接支架功能",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "10.500.000 VND",
+      "tong_gia": "10.500.000 VND",
+      "can_anh": false
+    },
+    {
+      "stt": 4,
+      "serial_number": "EF550RA4LAWBH752",
+      "loi_ban_dau": "Cần kiểm tra kỹ thuật",
+      "bo_phan": "Xi treo\n吊鍍",
+      "hang_muc_kiem_tra": "Đã kiểm tra nhưng không có lỗi\n已檢查，未發現異常",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "1.300.000 VND",
+      "tong_gia": "1.300.000 VND",
+      "can_anh": false
+    },
+    {
+      "stt": 5,
+      "serial_number": "EF550RA4LAWBH763",
+      "loi_ban_dau": "Cần kiểm tra kỹ thuật",
+      "bo_phan": "Xi treo\n吊鍍",
+      "hang_muc_kiem_tra": "Đã kiểm tra nhưng không có lỗi\n已檢查，未發現異常",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "950.000 VND",
+      "tong_gia": "950.000 VND",
+      "can_anh": false
+    },
+    {
+      "stt": 6,
+      "serial_number": "EF550RA4LAWBH774",
+      "loi_ban_dau": "Cần kiểm tra kỹ thuật",
+      "bo_phan": "CNC",
+      "hang_muc_kiem_tra": "Đã kiểm tra nhưng không có lỗi\n已檢查，未發現異常",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "2.500.000 VND",
+      "tong_gia": "2.500.000 VND",
+      "can_anh": false
+    },
+    {
+      "stt": 7,
+      "serial_number": "RFR900NA65RSWLB795",
+      "loi_ban_dau": "Cần kiểm tra kỹ thuật",
+      "bo_phan": "CNC",
+      "hang_muc_kiem_tra": "Đã kiểm tra nhưng không có lỗi\n已檢查，未發現異常",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "2.800.000 VND",
+      "tong_gia": "2.800.000 VND",
+      "can_anh": false
+    },
+    {
+      "stt": 8,
+      "serial_number": "EF550RA4LAWBH816",
+      "loi_ban_dau": "Màn hình lỗi\n螢幕故障",
+      "bo_phan": "Xi treo\n吊鍍",
+      "hang_muc_kiem_tra": "Kiểm tra hiển thị màn hình & đầu quét barcode\n檢查螢幕顯示及條碼掃描功能",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "8.400.000 VND",
+      "tong_gia": "8.400.000 VND",
+      "can_anh": false
+    },
+    {
+      "stt": 9,
+      "serial_number": "RFR900NA65RSWLB837",
+      "loi_ban_dau": "Cần kiểm tra kỹ thuật",
+      "bo_phan": "CNC",
+      "hang_muc_kiem_tra": "Đã kiểm tra nhưng không có lỗi\n已檢查，未發現異常",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "1.500.000 VND",
+      "tong_gia": "1.500.000 VND",
+      "can_anh": false
+    },
+    {
+      "stt": 10,
+      "serial_number": "EF550RA4LAWBH858",
+      "loi_ban_dau": "Cần kiểm tra kỹ thuật",
+      "bo_phan": "CNC",
+      "hang_muc_kiem_tra": "Đã kiểm tra nhưng không có lỗi\n已檢查，未發現異常",
+      "ket_qua": "Đạt / 合格",
+      "don_gia": "2.340.000 VND",
+      "tong_gia": "2.340.000 VND",
+      "can_anh": false
+    }
+  ],
+  "tong_so_luong": "10 Thiết bị",
+  "tong_tien_so": "39.590.000",
+  "ghi_chu_1": "Thiết bị đã được kiểm tra chức năng, bảo trì/sửa chữa và chạy thử đạt tiêu chuẩn kỹ thuật trước khi bàn giao / 設備已完成功能檢查、維修更換零件並測試正常運作後交付。",
+  "ghi_chu_3": "Chi tiết kết quả kiểm tra & linh kiện thay thế / 檢驗結果與更換零件明細:\n   - STT 1, 4, 5, 6: Không phát hiện lỗi phát sinh thêm (No error founds) / 檢查未發現異常。\n   - STT 2 (EF550RA4LAWBHI677): Xử lý cụm Barcode / 檢修條碼掃描模組。\n   - STT 3 (RFR900NA55RSWLBA565): Thay thế Mounting Adapter / 更換轉接支架。"
+}

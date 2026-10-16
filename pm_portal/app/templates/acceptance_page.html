@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="workspace-single">
+
+  <!-- Action & Status Bar (Tiêu đề đã hiển thị trên thanh Header chính) -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <span class="badge-pill blue">Biên Bản Nghiệm Thu</span>
+      <span class="badge-pill green">Mẫu CX Technology 1:1</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Quản lý thiết bị sửa chữa, kiểm tra tính năng máy kiểm kho, xuất Excel chuẩn 1:1 và Word chính thức.</span>
+    </div>
+
+    <!-- Quick Actions on Header -->
+    <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="handleCopyAcceptanceRichText()" title="Sao chép văn bản để dán trực tiếp vào Email hoặc WeChat">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Sao Chép Rich Text</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="handlePrintAcceptance()" title="In hoặc xuất sang PDF">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>In / PDF</span>
+      </button>
+
+      <button type="button" class="btn btn-success btn-sm" onclick="handleGenerateAcceptanceWord()" title="Tải file Word nghiệm thu">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        <span>Tải File Word (.docx)</span>
+      </button>
+
+      <button type="button" class="btn btn-primary btn-sm" onclick="handleGenerateAcceptanceExcel()" title="Tải file Excel nghiệm thu chuẩn 1:1">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+        <span>Tải File Excel (.xlsx) CX Tech</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Primary workflow: upload one repair workbook and generate acceptance -->
+  <section class="card repair-upload-card" aria-labelledby="repairUploadTitle">
+    <div class="card-header repair-upload-header">
+      <div>
+        <div class="card-title" id="repairUploadTitle">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/></svg>
+          <span>Tạo Nghiệm Thu Từ File Biên Bản Sửa Chữa</span>
+        </div>
+        <p class="repair-upload-subtitle">Tải lên file Excel do bên sửa chữa cung cấp. Hệ thống sẽ nhập toàn bộ thiết bị, tạo đủ sheet chi tiết; Gemini chỉ gán Ghi chú / 備註 khi nêu rõ mã sản phẩm.</p>
+      </div>
+      <span class="badge-pill purple">Gemini tự động đối chiếu Serial</span>
+    </div>
+
+    <div class="repair-upload-grid">
+      <label class="repair-dropzone" id="repairDropzone" for="repairFileInput" tabindex="0" role="button" aria-label="Chọn hoặc kéo thả file biên bản sửa chữa Excel">
+        <input class="repair-file-input" type="file" id="repairFileInput" name="file" tabindex="-1" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-describedby="repairFileHelp repairUploadStatus">
+        <span class="repair-dropzone-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+        </span>
+        <span class="repair-dropzone-title">Kéo thả file vào đây hoặc bấm để chọn</span>
+        <span class="repair-dropzone-help" id="repairFileHelp">Chấp nhận một file .xlsx, dung lượng tối đa 20 MB</span>
+      </label>
+
+      <div class="repair-upload-panel">
+        <ol class="repair-process-list" aria-label="Quy trình xử lý">
+          <li><span>1</span><div><strong>Nhập đủ danh sách thiết bị</strong><small>Đồng bộ serial, lỗi ban đầu, bộ phận và kết quả kiểm tra từ file tải lên.</small></div></li>
+          <li><span>2</span><div><strong>Đối chiếu ghi chú bằng Gemini</strong><small>Bỏ ghi chú cũ; chỉ gán khi dòng nguồn nêu rõ serial hợp lệ.</small></div></li>
+          <li><span>3</span><div><strong>Giữ nguyên mẫu 1:1</strong><small>Bảo toàn logo, khung ảnh, font, màu và bố cục.</small></div></li>
+        </ol>
+
+        <div class="repair-selected-file" id="repairSelectedFile" hidden>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          <div>
+            <strong id="repairSelectedFileName"></strong>
+            <small id="repairSelectedFileSize"></small>
+          </div>
+          <button type="button" class="repair-clear-button" id="repairClearFileButton" aria-label="Bỏ file đã chọn" title="Bỏ file đã chọn">×</button>
+        </div>
+
+        <div class="repair-upload-actions">
+          <p class="repair-upload-status" id="repairUploadStatus" role="status" aria-live="polite">Chưa chọn file biên bản sửa chữa.</p>
+          <button type="button" class="btn btn-primary" id="repairProcessButton" onclick="handleProcessRepairWorkbook()" disabled>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 18h14"/></svg>
+            <span>Phân Tích & Tạo Biên Bản Nghiệm Thu</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="repair-result-panel" id="repairResultPanel" hidden aria-live="polite">
+      <div class="repair-result-heading">
+        <span class="repair-result-check" aria-hidden="true">✓</span>
+        <div><strong>Đã tạo xong file nghiệm thu</strong><small id="repairResultSummary"></small></div>
+      </div>
+      <div class="repair-result-metrics">
+        <span><strong id="repairRecordCount">0</strong> bản ghi thiết bị</span>
+        <span><strong id="repairAssignedCount">0</strong> ghi chú đã gán</span>
+        <span><strong id="repairIgnoredCount">0</strong> ghi chú bỏ qua</span>
+        <span>Model: <strong id="repairGeminiModel">Gemini</strong></span>
+      </div>
+      <a class="btn btn-success" id="repairDownloadButton" href="#" download>
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        <span>Tải File Nghiệm Thu (.xlsx)</span>
+      </a>
+    </div>
+  </section>
+
+  <div class="workflow-divider" role="separator"><span>Hoặc nhập dữ liệu thủ công</span></div>
+
+  <!-- Alternative workflow: AI Prompt Input (Full Width) -->
+  <div class="card ai-prompt-box">
+    <div class="card-header">
+      <div class="card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <span>Bóc Tách Dữ Liệu Nghiệm Thu Bằng Gemini AI</span>
+      </div>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">Tự động nhận diện Serial Number, kết quả kiểm tra và lỗi thiết bị</span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0.85rem;">
+      <textarea id="aiPromptInput" class="form-control" rows="5" placeholder="Dán bảng kiểm tra, phiếu giao nhận bàn giao phần cứng (CX Technology交接單), tin nhắn WeChat/Zalo hoặc ghi chú sửa chữa thiết bị vào đây..."></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+      <button type="button" class="btn btn-ai" onclick="handleAIParseAcceptance()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>Gọi Gemini AI Phân Tích & Điền Vào Bảng</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 2: Full Width Interactive Editor with Tabs -->
+  <div class="card">
+    <div class="tabs-nav">
+      <button type="button" class="tab-btn active" data-tab="tabDevices">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-9 5-9-5 9-5 9 5z"/><path d="m3 8 9 5 9-5M3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
+        <span>Bảng Thiết Bị & Hạng Mục Nghiệm Thu</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabParties">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M6 21V5l6-3 6 3v16M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>
+        <span>Khách Hàng (Bên A)</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabContractMeta">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.6 11 23l-9-9V2h12l6.6 6.6a3.5 3.5 0 0 1 0 5z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+        <span>Số HĐ & Căn Cứ Biên Bản</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabNotes">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span>Ghi Chú & Kết Luận Kỹ Thuật</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Equipment Table (Full Width Modern Table) -->
+    <div class="tab-content active" id="tabDevices">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Danh sách thiết bị kiểm tra, sửa chữa và nghiệm thu thực tế</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Hỗ trợ tự động tạo sheet chi tiết kèm khung ảnh trong file Excel)</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="AcceptanceEditor.addRow()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm Dòng Thiết Bị</span>
+        </button>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th style="width: 45px; text-align: center;">STT</th>
+              <th style="width: 170px;">Serial / Mã Máy</th>
+              <th style="min-width: 220px;">Lỗi Ban Đầu (Song Ngữ)</th>
+              <th style="width: 100px; text-align: center;">Bộ Phận</th>
+              <th style="min-width: 240px;">Hạng Mục Kiểm Tra & Xử Lý</th>
+              <th style="width: 120px; text-align: center;">Kết Quả</th>
+              <th style="width: 160px; text-align: right;">Thành Tiền (VND)</th>
+              <th style="width: 50px; text-align: center;">Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="acceptanceTableBody">
+            <!-- Dynamically populated via AcceptanceEditor.addRow() -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KPI Summary Cards Grid -->
+      <div class="summary-cards-grid">
+        <div class="summary-stat-card">
+          <span class="stat-label">Tổng Thiết Bị Kiểm Tra</span>
+          <span class="stat-value" id="summaryDeviceCount">0 Thiết bị</span>
+          <span class="stat-subtext">Danh sách đã nghiệm thu</span>
+        </div>
+
+        <div class="summary-stat-card primary">
+          <span class="stat-label">Tổng Tiền Nghiệm Thu</span>
+          <span class="stat-value" id="summaryAmountDisplay" style="color: #1d4ed8;">0 VND</span>
+          <span class="stat-subtext">Căn cứ mở đợt thanh toán</span>
+        </div>
+
+        <div class="summary-stat-card success">
+          <span class="stat-label">Tỷ Lệ Đạt Yêu Cầu</span>
+          <span class="stat-value" style="color: #047857;">100% Đạt</span>
+          <span class="stat-subtext">Hoạt động bình thường</span>
+        </div>
+
+        <div class="summary-stat-card warning">
+          <span class="stat-label">Căn Cứ Kích Hoạt</span>
+          <span class="stat-value" style="font-size: 1.15rem; color: #b45309;">Đợt Nghiệm Thu FAC</span>
+          <span class="stat-subtext">Thanh toán theo hợp đồng</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Party A -->
+    <div class="tab-content" id="tabParties">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Tên Bên A / Khách Hàng (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="benATenViet" class="form-control" placeholder="Nhập tên pháp nhân khách hàng" value="CÔNG TY TNHH CX TECHNOLOGY (VIỆT NAM)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tên Bên A (Tiếng Trung Phồn Thể)</label>
+          <input type="text" id="benATenTrung" class="form-control" placeholder="Nhập tên công ty bằng tiếng Trung" value="台灣精星科技(越南)有限公司">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Địa Chỉ Nhà Máy / Trụ Sở (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="benADiaChiViet" class="form-control" placeholder="Nhập địa chỉ nhà máy" value="Đường số 18, KCX Tân Thuận, P. Tân Thuận Đông, Q.7, TP.HCM">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Địa Chỉ (Tiếng Trung)</label>
+          <input type="text" id="benADiaChiTrung" class="form-control" placeholder="Nhập địa chỉ bằng tiếng Trung" value="胡志明市第七郡新順加工出口區第18街">
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Người Đại Diện Khách Hàng</label>
+          <input type="text" id="benANguoiDaiDien" class="form-control" placeholder="Ông / Bà..." value="Lê Văn Hoàng">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Chức Vụ Đại Diện</label>
+          <input type="text" id="benAChucVu" class="form-control" value="Trưởng phòng Cơ Điện / 機電課長">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số Điện Thoại / Email</label>
+          <input type="text" id="benALienHe" class="form-control" placeholder="Điện thoại...">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Contract Meta -->
+    <div class="tab-content" id="tabContractMeta">
+      <div class="form-grid-3" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Số Biên Bản Nghiệm Thu <span class="badge-req">*</span></label>
+          <input type="text" id="soBienBan" class="form-control" value="HM-FINEPRO-20261009.001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày Nghiệm Thu</label>
+          <input type="date" id="ngayNghiemThu" class="form-control" value="2026-10-14">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Căn Cứ Hợp Đồng Số</label>
+          <input type="text" id="soHopDongCanCu" class="form-control" value="001/HĐMB/HM-CX/2026">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Tên Dự Án / Hạng Mục</label>
+          <input type="text" id="tenDuAn" class="form-control" value="Bảo Trì Sửa Chữa Thiết Bị Kiểm Kho EF550 & Máy Quét RFR900">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Địa Điểm Tiến Hành Nghiệm Thu</label>
+          <input type="text" id="diaDiemNghiemThu" class="form-control" value="Xưởng sản xuất CX Technology, KCX Tân Thuận, Quận 7">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Notes -->
+    <div class="tab-content" id="tabNotes">
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label">Kết Luận Của Hội Đồng Nghiệm Thu</label>
+        <textarea id="ketLuanNghiemThu" class="form-control" rows="3">Các thiết bị nêu trên đã được đội ngũ kỹ thuật Công ty Hong Ming kiểm tra, thay thế linh kiện chính hãng và chạy thử nghiệm 48 giờ liên tục đạt yêu cầu kỹ thuật. Bên A đồng ý tiếp nhận bàn giao để đưa vào sử dụng sản xuất.</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Điều Khoản Thanh Toán Đính Kèm Biên Bản</label>
+        <textarea id="dieuKhoanThanhToan" class="form-control" rows="2">Biên bản nghiệm thu này là căn cứ để Bên B hoàn thiện hồ sơ đề nghị Bên A thanh toán 100% giá trị dịch vụ theo thỏa thuận.</textarea>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Action Footer -->
+  <div class="action-footer-bar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span class="badge-pill green">Mẫu CX Tech Chuẩn 1:1</span>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">
+        File Excel xuất ra tự động cố định hàng tiêu đề (Freeze Panes A6), tỷ lệ in 52%, không loang viền thừa và tạo đủ các sheet chi tiết có khung ảnh.
+      </span>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <button type="button" class="btn btn-outline" onclick="handleCopyAcceptanceRichText()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Sao Chép Rich Text</span>
+      </button>
+
+      <button type="button" class="btn btn-success" onclick="handleGenerateAcceptanceWord()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        <span>Tải File Word (.docx)</span>
+      </button>
+
+      <button type="button" class="btn btn-primary" onclick="handleGenerateAcceptanceExcel()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+        <span>Tải File Excel (.xlsx) CX Tech</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/acceptance_editor.js?v=4.0"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    AcceptanceEditor.initTabs();
+    initRepairWorkbookUpload();
+    AcceptanceEditor.addRow({
+      stt: 1,
+      serial_number: "EF550-202401-098",
+      loi_ban_dau: "Không lên nguồn / 無法開機",
+      bo_phan: "Bo Mạch",
+      hang_muc_kiem_tra: "Thay thế IC nguồn và vệ sinh chân tiếp xúc",
+      ket_qua: "Đạt / 合格",
+      tong_gia: "3.500.000"
+    });
+    AcceptanceEditor.addRow({
+      stt: 2,
+      serial_number: "RFR900-202311-042",
+      loi_ban_dau: "Quét mã vạch chập chờn / 掃描不良",
+      bo_phan: "Đầu Đọc",
+      hang_muc_kiem_tra: "Căn chỉnh cụm gương phản xạ và nạp firmware mới",
+      ket_qua: "Đạt / 合格",
+      tong_gia: "2.800.000"
+    });
+  });
+</script>
+{% endblock %}

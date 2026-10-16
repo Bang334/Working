@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/tracker.css?v=5.0">
+{% endblock %}
+
+{% block content %}
+<div class="workspace-single tracker-workspace">
+  <!-- Hero Section -->
+  <section class="dashboard-hero" aria-labelledby="dashboardTitle">
+    <div class="dashboard-hero-copy">
+      <div class="dashboard-kicker">
+        <span class="live-indicator"><span aria-hidden="true"></span> Dữ liệu vận hành thực tế</span>
+        <span class="dashboard-date-range" id="dashboardPeriod">Kỳ báo cáo · Đang tải...</span>
+      </div>
+      <h2 id="dashboardTitle">Tổng quan danh mục dự án</h2>
+      <p>Theo dõi tiến độ triển khai, giá trị hợp đồng và các mốc công nợ cần xử lý trên toàn hệ thống Hong Ming.</p>
+    </div>
+    <div class="dashboard-actions" aria-label="Thao tác dashboard">
+      <button type="button" class="btn btn-outline dashboard-action" onclick="refreshDashboard()" title="Cập nhật số liệu mới nhất">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <span>Làm mới</span>
+      </button>
+      <button type="button" class="btn btn-outline dashboard-action" onclick="syncTrackerExcel()" title="Đồng bộ các dự án từ file Excel theo dõi gốc">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Đồng bộ Excel</span>
+      </button>
+      <button type="button" class="btn btn-outline dashboard-action" onclick="exportDashboardExcel()" title="Tải báo cáo tổng quan định dạng Excel">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Xuất Excel</span>
+      </button>
+      <a href="/contracts" class="btn btn-primary dashboard-action">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Thêm hợp đồng</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- KPI Grid (Real Metrics) -->
+  <section class="kpi-grid" aria-label="Các chỉ số chính">
+    <article class="kpi-card kpi-blue">
+      <div class="kpi-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Tổng hợp đồng / dự án</span>
+        <div class="kpi-value-row">
+          <strong id="kpiTotalProjects">--</strong>
+          <span class="kpi-change positive" id="kpiActiveBadge">-- đang hoạt động</span>
+        </div>
+        <span class="kpi-detail" id="kpiProjectsDetail">Đang tải dữ liệu...</span>
+      </div>
+    </article>
+
+    <article class="kpi-card kpi-indigo">
+      <div class="kpi-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Giá trị danh mục</span>
+        <div class="kpi-value-row">
+          <strong id="kpiPortfolioValue">-- <small>triệu</small></strong>
+        </div>
+        <span class="kpi-detail" id="kpiPortfolioDetail">Đang tải dữ liệu...</span>
+      </div>
+    </article>
+
+    <article class="kpi-card kpi-amber">
+      <div class="kpi-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Cần xử lý & Đôn đốc</span>
+        <div class="kpi-value-row">
+          <strong id="kpiUrgentActions">--</strong>
+          <span class="kpi-change warning" id="kpiUrgentBadge">-- ưu tiên</span>
+        </div>
+        <span class="kpi-detail" id="kpiUrgentDetail">Thu hồi công nợ & nghiệm thu</span>
+      </div>
+    </article>
+
+    <article class="kpi-card kpi-green">
+      <div class="kpi-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Tỷ lệ thu hồi nợ</span>
+        <div class="kpi-value-row">
+          <strong id="kpiCollectionRate">--%</strong>
+          <span class="kpi-change positive" id="kpiCollectionBadge">--</span>
+        </div>
+        <div class="kpi-progress" aria-label="Tỷ lệ hoàn tất thu tiền">
+          <span id="kpiCollectionProgressBar" style="width: 0%"></span>
+        </div>
+        <span class="kpi-detail" id="kpiCollectionDetail" style="margin-top: 4px;">Đang tính toán...</span>
+      </div>
+    </article>
+  </section>
+
+  <!-- Analytics Grid -->
+  <section class="analytics-grid" aria-label="Phân tích danh mục dự án">
+    <!-- Panel 1: Bar Chart -->
+    <article class="dashboard-panel portfolio-panel">
+      <header class="panel-header">
+        <div>
+          <span class="panel-eyebrow">Quy mô hợp đồng thực tế</span>
+          <h3>Giá trị theo dự án</h3>
+        </div>
+        <span class="panel-unit">Đơn vị: triệu VND</span>
+      </header>
+      <div class="bar-chart" id="portfolioBarChart" role="img" aria-label="Biểu đồ giá trị hợp đồng">
+        <div class="bar-chart-scale" aria-hidden="true">
+          <span>0</span>
+          <span>33%</span>
+          <span>66%</span>
+          <span>100%</span>
+        </div>
+        <div class="bar-chart-body" id="barChartRows">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </article>
+
+    <!-- Panel 2: Status Donut Chart -->
+    <article class="dashboard-panel status-panel">
+      <header class="panel-header">
+        <div>
+          <span class="panel-eyebrow">Cơ cấu trạng thái</span>
+          <h3>Phân bổ dự án</h3>
+        </div>
+        <span class="status-total" id="statusTotalProjects">0 dự án</span>
+      </header>
+      <div class="status-chart-wrap">
+        <div class="donut-chart" id="statusDonutChart" role="img">
+          <div class="donut-center">
+            <strong id="donutCenterPct">0%</strong>
+            <span>hoạt động</span>
+          </div>
+        </div>
+        <div class="chart-legend" id="statusChartLegend">
+          <div>
+            <span class="legend-dot blue"></span>
+            <span><strong>Đang triển khai</strong><small id="legendRunningSub">0 dự án · 0%</small></span>
+            <b id="legendRunningCount">0</b>
+          </div>
+          <div>
+            <span class="legend-dot amber"></span>
+            <span><strong>Chờ thanh toán</strong><small id="legendWaitingSub">0 dự án · 0%</small></span>
+            <b id="legendWaitingCount">0</b>
+          </div>
+          <div>
+            <span class="legend-dot green"></span>
+            <span><strong>Đã hoàn tất</strong><small id="legendDoneSub">0 dự án · 0%</small></span>
+            <b id="legendDoneCount">0</b>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Panel 3: Action List -->
+    <article class="dashboard-panel action-panel">
+      <header class="panel-header">
+        <div>
+          <span class="panel-eyebrow">Hành động cần ưu tiên</span>
+          <h3>Việc cần theo dõi & đôn đốc</h3>
+        </div>
+        <span class="attention-badge" id="actionCountBadge">0 đầu việc</span>
+      </header>
+      <ol class="action-list" id="dashboardActionList">
+        <!-- Rendered dynamically -->
+      </ol>
+    </article>
+  </section>
+
+  <!-- Projects Detailed Table -->
+  <section class="dashboard-panel projects-panel" aria-labelledby="projectsHeading">
+    <header class="projects-header">
+      <div>
+        <span class="panel-eyebrow">Project lifecycle matrix</span>
+        <h3 id="projectsHeading">Danh sách dự án chi tiết</h3>
+      </div>
+      <div class="projects-tools">
+        <label class="project-search" for="projectSearch">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <span class="sr-only">Tìm kiếm dự án</span>
+          <input id="projectSearch" type="search" placeholder="Tìm theo mã HĐ, khách hàng..." autocomplete="off">
+        </label>
+        <div class="filter-tabs" role="group" aria-label="Lọc dự án theo trạng thái">
+          <button type="button" class="filter-btn active" data-filter="all" aria-pressed="true">Tất cả <span id="filterAllCount">0</span></button>
+          <button type="button" class="filter-btn" data-filter="running" aria-pressed="false">Đang chạy <span id="filterRunningCount">0</span></button>
+          <button type="button" class="filter-btn" data-filter="payment" aria-pressed="false">Chờ thu <span id="filterPaymentCount">0</span></button>
+          <button type="button" class="filter-btn" data-filter="done" aria-pressed="false">Hoàn tất <span id="filterDoneCount">0</span></button>
+        </div>
+      </div>
+    </header>
+
+    <div class="projects-table-wrap">
+      <table class="projects-table" id="trackerTable">
+        <thead>
+          <tr>
+            <th>Mã HĐ</th>
+            <th>Khách hàng & Hạng mục</th>
+            <th class="align-right">Giá trị HĐ</th>
+            <th>Tiến độ thu tiền</th>
+            <th>Mốc hiện tại</th>
+            <th>Trạng thái</th>
+            <th style="text-align: center; width: 140px;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="trackerTableBody">
+          <!-- Rendered dynamically -->
+        </tbody>
+      </table>
+      <div class="empty-state" id="projectEmptyState" hidden>
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <strong id="emptyStateTitle">Không tìm thấy dự án</strong>
+        <span id="emptyStateDesc">Thử thay đổi từ khóa hoặc bộ lọc trạng thái.</span>
+      </div>
+    </div>
+    <footer class="projects-footer">
+      <span id="projectCount" aria-live="polite">Hiển thị 0 dự án</span>
+      <span id="lastUpdatedText">Cập nhật từ cơ sở dữ liệu thực tế Hong Ming</span>
+    </footer>
+  </section>
+</div>
+
+<!-- Modal Xem Hồ Sơ & Tài Liệu Hợp Đồng -->
+<div class="dossier-modal-backdrop" id="dossierModal" style="display: none;" onclick="closeDossierModal(event)">
+  <div class="dossier-modal-content" onclick="event.stopPropagation()">
+    <header class="dossier-modal-header">
+      <div>
+        <span class="panel-eyebrow">Hồ sơ lưu trữ điện tử</span>
+        <h3 id="modalContractCode">HD-XXXXXXXX</h3>
+        <p id="modalCustomerName" style="margin: 2px 0 0; color: #64748b; font-size: 0.8rem;"></p>
+      </div>
+      <button type="button" class="toast-close" onclick="closeDossierModal()" aria-label="Đóng">×</button>
+    </header>
+    <div class="dossier-modal-body">
+      <div class="dossier-summary-box" id="modalSummaryBox">
+        <!-- Rendered dynamically -->
+      </div>
+      
+      <div style="margin-top: 1rem;">
+        <h4 style="font-size: 0.82rem; font-weight: 750; margin-bottom: 0.5rem; color: #1e293b;">
+          Tài liệu & Chứng từ liên kết (<span id="modalDocsCount">0</span>)
+        </h4>
+        <div class="dossier-docs-list" id="modalDocsList">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <div style="margin-top: 1.25rem;">
+        <h4 style="font-size: 0.82rem; font-weight: 750; margin-bottom: 0.5rem; color: #1e293b;">
+          Chi tiết các đợt thanh toán
+        </h4>
+        <div class="dossier-milestones-list" id="modalMilestonesList">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+    <footer class="dossier-modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeDossierModal()">Đóng</button>
+      <a href="#" id="modalBtnDntt" class="btn btn-primary" style="text-decoration: none;">
+        <span>Tạo Đề Nghị Thanh Toán</span>
+      </a>
+    </footer>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/tracker.js?v=5.0"></script>
+{% endblock %}

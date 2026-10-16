@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="workspace-single">
+
+  <!-- Action & Status Bar (Tiêu đề đã hiển thị trên thanh Header chính) -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <span class="badge-pill green">Tất Toán Hợp Đồng</span>
+      <span class="badge-pill blue">Kích Hoạt Bảo Hành</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Xác nhận hoàn tất 100% nghĩa vụ giao hàng, nghiệm thu và đối soát sạch công nợ để đóng mã dự án.</span>
+    </div>
+
+    <div style="display: flex; gap: 0.65rem;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="simulateAIParseLiquidation()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Điền Dữ Liệu Thanh Lý Mẫu</span>
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="alert('Đã lưu dữ liệu biên bản thanh lý hợp đồng!')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>Lưu Dữ Liệu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 1: AI Prompt Input -->
+  <div class="card ai-prompt-box">
+    <div class="card-header">
+      <div class="card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <span>Bóc Tách Dữ Liệu Đối Soát Bằng Gemini AI</span>
+      </div>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">Trích xuất giá trị hợp đồng, các đợt đã thanh toán, số hóa đơn điện tử</span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0.85rem;">
+      <textarea id="aiLiqInput" class="form-control" rows="4" placeholder="Dán số hợp đồng, biên bản nghiệm thu tổng thể hoặc email xác nhận chuyển tiền đợt cuối từ kế toán..."></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.65rem;">
+      <button type="button" class="btn btn-ai" onclick="simulateAIParseLiquidation()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>Trích Xuất & Điền Vào Biên Bản Thanh Lý</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 2: Interactive Editor with Tabs -->
+  <div class="card">
+    <div class="tabs-nav">
+      <button type="button" class="tab-btn active" data-tab="tabLiqFinance">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>
+        <span>Đối Soát Giá Trị & Tiến Độ Thanh Toán</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabLiqContract">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        <span>Căn Cứ Hợp Đồng & Nghiệm Thu</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabLiqWarranty">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Trách Nhiệm Bảo Hành Hậu Mãi</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Finance Reconciliation Table -->
+    <div class="tab-content active" id="tabLiqFinance">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Bảng đối chiếu nghĩa vụ thanh toán theo các đợt hợp đồng</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Khẳng định hai bên không còn nợ đọng tài chính)</span>
+        </div>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th style="width: 60px; text-align: center;">Đợt</th>
+              <th style="min-width: 250px;">Nội Dung Giai Đoạn Hợp Đồng</th>
+              <th style="width: 120px; text-align: center;">Tỷ Lệ (%)</th>
+              <th style="width: 180px; text-align: right;">Giá Trị Theo HĐ (VND)</th>
+              <th style="width: 180px; text-align: right;">Đã Thanh Toán (VND)</th>
+              <th style="width: 160px; text-align: center;">Chứng Từ Căn Cứ</th>
+              <th style="width: 130px; text-align: center;">Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="text-align: center; font-weight: 700; color: var(--primary);">Đợt 1</td>
+              <td><strong>Tạm ứng đặt cọc sau khi ký hợp đồng</strong></td>
+              <td style="text-align: center; font-weight: 600;">50%</td>
+              <td style="text-align: right; font-weight: 600;">68.200.000 VND</td>
+              <td style="text-align: right; font-weight: 700; color: #166534;">68.200.000 VND</td>
+              <td style="text-align: center; font-size: 0.78rem;">Ủy nhiệm chi VCB</td>
+              <td style="text-align: center;"><span class="badge-pill green">✓ Hoàn tất</span></td>
+            </tr>
+            <tr>
+              <td style="text-align: center; font-weight: 700; color: var(--primary);">Đợt 2</td>
+              <td><strong>Giao hàng toàn bộ thiết bị đến nhà máy</strong></td>
+              <td style="text-align: center; font-weight: 600;">40%</td>
+              <td style="text-align: right; font-weight: 600;">54.560.000 VND</td>
+              <td style="text-align: right; font-weight: 700; color: #166534;">54.560.000 VND</td>
+              <td style="text-align: center; font-size: 0.78rem;">Phiếu xuất kho kiêm bàn giao</td>
+              <td style="text-align: center;"><span class="badge-pill green">✓ Hoàn tất</span></td>
+            </tr>
+            <tr>
+              <td style="text-align: center; font-weight: 700; color: var(--primary);">Đợt 3</td>
+              <td><strong>Nghiệm thu đưa vào sử dụng tổng thể (FAC)</strong></td>
+              <td style="text-align: center; font-weight: 600;">10%</td>
+              <td style="text-align: right; font-weight: 600;">13.640.000 VND</td>
+              <td style="text-align: right; font-weight: 700; color: #166534;">13.640.000 VND</td>
+              <td style="text-align: center; font-size: 0.78rem;">Biên bản nghiệm thu FAC</td>
+              <td style="text-align: center;"><span class="badge-pill green">✓ Hoàn tất</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KPI Stats -->
+      <div class="summary-cards-grid">
+        <div class="summary-stat-card">
+          <span class="stat-label">Tổng Giá Trị Hợp Đồng</span>
+          <span class="stat-value" id="statLiqContractVal">136.400.000 VND</span>
+          <span class="stat-subtext">Đã bao gồm VAT 10%</span>
+        </div>
+
+        <div class="summary-stat-card success">
+          <span class="stat-label">Tổng Đã Thanh Toán</span>
+          <span class="stat-value" id="statLiqPaidVal" style="color: #047857;">136.400.000 VND</span>
+          <span class="stat-subtext">Đạt 100% giá trị hợp đồng</span>
+        </div>
+
+        <div class="summary-stat-card primary">
+          <span class="stat-label">Số Tiền Còn Lại</span>
+          <span class="stat-value" style="color: #1d4ed8;">0 VND</span>
+          <span class="stat-subtext">Sạch nợ - Không còn tranh chấp</span>
+        </div>
+
+        <div class="summary-stat-card">
+          <span class="stat-label">Tình Trạng Hóa Đơn</span>
+          <span class="stat-value" style="font-size: 1.1rem; color: #166534;">Đã Xuất Đủ 100%</span>
+          <span class="stat-subtext">Hóa đơn điện tử GTGT hợp lệ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Contract Info -->
+    <div class="tab-content" id="tabLiqContract">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Căn Cứ Hợp Đồng Mua Bán Số <span class="badge-req">*</span></label>
+          <input type="text" id="liqContractNo" class="form-control" value="001/HĐMB/HM-CX/2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày Ký Hợp Đồng Gốc</label>
+          <input type="date" id="liqContractDate" class="form-control" value="2026-03-15">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Bên Mua (Bên A - Khách Hàng FDI) <span class="badge-req">*</span></label>
+          <input type="text" id="liqPartyA" class="form-control" value="CÔNG TY TNHH CX TECHNOLOGY (VIỆT NAM)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày Lập Biên Bản Thanh Lý Hợp Đồng</label>
+          <input type="date" id="liqSignDate" class="form-control" value="2026-10-14">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Căn Cứ Biên Bản Nghiệm Thu Tổng Thể Đạt Yêu Cầu</label>
+        <input type="text" id="liqAcceptanceRef" class="form-control" value="Biên bản nghiệm thu số 001_BIEN_BAN_NGHIEM_THU_BAN_GIAO_CX ký ngày 09/10/2026">
+      </div>
+    </div>
+
+    <!-- Tab 3: Warranty -->
+    <div class="tab-content" id="tabLiqWarranty">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Thời Hạn Bảo Hành Phần Cứng & Hệ Thống</label>
+          <input type="text" id="liqWarrantyDuration" class="form-control" value="12 tháng kể từ ngày nghiệm thu bàn giao đưa vào sử dụng">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Thời Hạn Bảo Hành Đến Hết Ngày</label>
+          <input type="date" id="liqWarrantyEndDate" class="form-control" value="2027-10-09">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Đầu Mối Hỗ Trợ Kỹ Thuật Bảo Hành & Xử Lý Sự Cố</label>
+        <input type="text" id="liqSupportContact" class="form-control" value="Hotline: +84966687109 | Email: sales@hongming-global.com (Mr. Jenson Chang - Trương Vĩnh Cát)">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Action Footer -->
+  <div class="action-footer-bar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span class="badge-pill yellow">Chế độ Form Mẫu</span>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">
+        Khi bạn có file Word mẫu thanh lý hợp đồng của công ty, hệ thống sẽ tự động ghép dữ liệu để xuất file 1:1.
+      </span>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <button type="button" class="btn btn-outline" onclick="window.print()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>In / Lưu PDF Trực Tiếp</span>
+      </button>
+      <button type="button" class="btn btn-primary" onclick="alert('Đã sẵn sàng! Hãy gửi file mẫu Word thanh lý của công ty khi bạn có nhé.')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Sẵn Sàng Xuất File Word (.docx)</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function simulateAIParseLiquidation() {
+  document.getElementById("liqContractNo").value = "003/HĐMB/HM-CHENGFENG/2026";
+  document.getElementById("liqPartyA").value = "CÔNG TY TNHH CHENG FENG LE HUA (VIỆT NAM)";
+  document.getElementById("statLiqContractVal").textContent = "285.000.000 VND";
+  document.getElementById("statLiqPaidVal").textContent = "285.000.000 VND";
+  alert("Đã cập nhật dữ liệu thanh lý mẫu từ Cheng Feng Le Hua!");
+}
+
+// Tab Switching Logic
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const parent = btn.closest(".card");
+    parent.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    parent.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    btn.classList.add("active");
+    const target = parent.querySelector(`#${btn.dataset.tab}`);
+    if (target) target.classList.add("active");
+  });
+});
+</script>
+{% endblock %}

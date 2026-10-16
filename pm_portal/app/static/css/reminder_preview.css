@@ -1,0 +1,334 @@
+/* Reminder & Payment Request Preview Styles for Hong Ming PM Portal */
+
+/* Email Client Simulation (Matching Image 1) */
+.email-client-container {
+  width: 100%;
+  max-width: 820px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05));
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.email-client-header {
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-surface, #f8fafc);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.email-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #991b1b;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.email-header-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.email-sender-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+}
+
+.sender-address {
+  font-weight: 600;
+  color: var(--text-main, #1e293b);
+  font-size: 0.95rem;
+}
+
+.email-timestamp {
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+}
+
+.email-field-row {
+  font-size: 0.825rem;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 0.2rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.email-field-row .field-label {
+  width: 25px;
+  font-weight: 600;
+  color: var(--text-main, #334155);
+}
+
+.email-field-row .field-value {
+  flex: 1;
+  word-break: break-all;
+  color: var(--text-main, #1e293b);
+}
+
+.email-subject-line {
+  margin-top: 0.65rem;
+  font-size: 1.05rem;
+  color: var(--text-main, #0f172a);
+  line-height: 1.4;
+}
+
+/* Attachments Bar */
+.email-attachments-bar {
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-surface, #f8fafc);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.email-attach-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.85rem;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.email-attach-card:hover {
+  border-color: var(--primary, #2563eb);
+  background: #f0f7ff;
+}
+
+.attach-icon-pdf {
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.attach-icon-xlsx {
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.attach-icon-docx {
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.attach-icon-file {
+  background: #64748b;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.attach-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.attach-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main, #1e293b);
+  word-break: break-all;
+}
+
+.attach-size {
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748b);
+}
+
+/* Email Body */
+.email-client-body {
+  padding: 1.75rem;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 0.93rem;
+  line-height: 1.65;
+}
+
+/* ================================================= */
+/* DXYCTT A4 PAPER SIMULATION                        */
+/* ================================================= */
+.dxyctt-paper {
+  width: 100%;
+  max-width: 820px;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 2.5rem;
+  border-radius: var(--radius-sm, 6px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid #cbd5e1;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.dxyctt-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid #1e3a8a;
+  margin-bottom: 1.5rem;
+}
+
+.dxyctt-title-box {
+  text-align: center;
+  margin: 1.5rem 0 1.25rem 0;
+}
+
+.dxyctt-title-box h1 {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.dxyctt-title-box h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #475569;
+  margin: 4px 0 0 0;
+}
+
+.dxyctt-meta-box {
+  background: #f8fafc;
+  border-left: 4px solid #1e3a8a;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+}
+
+.dxyctt-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.92rem;
+}
+
+.dxyctt-table th,
+.dxyctt-table td {
+  border: 1px solid #94a3b8;
+  padding: 8px 10px;
+}
+
+.dxyctt-table th {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  font-weight: 700;
+  text-align: center;
+}
+
+.dxyctt-bank-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-top: 1.25rem;
+}
+
+.dxyctt-sign-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+.dxyctt-sign-col .sign-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.dxyctt-sign-col .sign-sub {
+  font-style: italic;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.dxyctt-sign-col .sign-space {
+  height: 70px;
+}
+
+.dxyctt-sign-col .sign-name {
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+/* Modal Search Drive */
+.drive-search-results {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-sm, 6px);
+  margin-top: 0.75rem;
+}
+
+.drive-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--border-light, #f1f5f9);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.drive-file-item:last-child {
+  border-bottom: none;
+}
+
+.drive-file-item:hover {
+  background: var(--bg-surface, #f8fafc);
+}
+
+.drive-file-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main, #1e293b);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.drive-file-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  color: #475569;
+}

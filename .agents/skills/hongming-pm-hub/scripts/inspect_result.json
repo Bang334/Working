@@ -1,0 +1,1239 @@
+{
+  "template": {
+    "sheets": {
+      "Nghiệm Thu": {
+        "max_row": 30,
+        "max_col": 7,
+        "rows": [
+          [
+            1,
+            [
+              "BIÊN BẢN KIỂM TRA & NGHIỆM THU THIẾT BỊ SAU SỬA CHỮA",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            2,
+            [
+              "維修設備檢查及驗收記錄",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            3,
+            [
+              "Số HĐ / 合約編號: HDSC/HMV06032026001",
+              null,
+              null,
+              null,
+              "Ngày / 日期: ……/……/2026          Số BB: ……/2026/BBNT-SC",
+              null,
+              null
+            ]
+          ],
+          [
+            4,
+            [
+              "Bên A / 甲方: CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)",
+              null,
+              null,
+              null,
+              "Bên B / 乙方: CÔNG TY TNHH TOÀN CẦU HONG MING",
+              null,
+              null
+            ]
+          ],
+          [
+            5,
+            [
+              "STT\n序號",
+              "Serial Number\n產品序號",
+              "Lỗi ban đầu\n故障說明",
+              "Bộ phận\n部門",
+              "Hạng mục kiểm tra\n檢查項目",
+              "Kết quả\n結果",
+              "Sheet hình ảnh\n圖片工作表"
+            ]
+          ],
+          [
+            6,
+            [
+              "1",
+              "RFR900NA55RSVHBA036\n(BF606-1677)",
+              "Trigger scan. Không quét khi bấm cò\n扳機掃描功能異常，按下扳機無法掃描",
+              "CT2",
+              "Kiểm tra chức năng quét trigger scan\n檢查扳機掃描功能",
+              "Đạt / 合格",
+              "→ RFR900NA55RSVHBA036"
+            ]
+          ],
+          [
+            7,
+            [
+              "2",
+              "EF550R4ALAWBI670\n(BF606-1677)",
+              "Barcode lỗi\n條碼掃描故障",
+              "CT2",
+              "Kiểm tra chức năng quét barcode\n檢查條碼掃描功能",
+              "Đạt / 合格",
+              "→ EF550R4ALAWBI670"
+            ]
+          ],
+          [
+            8,
+            [
+              "3",
+              "EF550R4ALAWBH111\n(BF606-1677)",
+              "Barcode lỗi\n條碼掃描故障",
+              "洗料",
+              "Kiểm tra chức năng quét barcode\n檢查條碼掃描功能",
+              "Đạt / 合格",
+              "→ EF550R4ALAWBH111"
+            ]
+          ],
+          [
+            9,
+            [
+              "4",
+              "EF550R4ALAWBH109\n(BF606-1677)",
+              "Barcode lỗi\n條碼掃描故障",
+              "LH",
+              "Kiểm tra chức năng quét barcode\n檢查條碼掃描功能",
+              "Đạt / 合格",
+              "→ EF550R4ALAWBH109"
+            ]
+          ],
+          [
+            10,
+            [
+              null,
+              null,
+              "Không nhận pin\n無法辨識電池",
+              null,
+              "Kiểm tra nhận dạng và sạc pin\n檢查電池辨識與充電功能",
+              "Đạt / 合格",
+              null
+            ]
+          ],
+          [
+            11,
+            [
+              "5",
+              "EF550R4ALAWBI654\n(BF606-1677)",
+              "Màn hình lỗi\n螢幕顯示異常",
+              "CNC",
+              "Kiểm tra hiển thị màn hình\n檢查螢幕顯示功能",
+              "Đạt / 合格",
+              "→ EF550R4ALAWBI654"
+            ]
+          ],
+          [
+            12,
+            [
+              "6",
+              "EF550R4ALAWBI661\n(BF606-1677)",
+              "Màn hình lỗi\n螢幕顯示異常",
+              "XI MẠ",
+              "Kiểm tra hiển thị màn hình\n檢查螢幕顯示功能",
+              "Đạt / 合格",
+              "→ EF550R4ALAWBI661"
+            ]
+          ],
+          [
+            13,
+            [
+              "7",
+              "EF550R4ALAWBI677\n(BF606-1677)",
+              "Màn hình lỗi\n螢幕顯示異常",
+              "NC",
+              "Kiểm tra hiển thị màn hình\n檢查螢幕顯示功能",
+              "Đạt / 合格",
+              "→ EF550R4ALAWBI677"
+            ]
+          ],
+          [
+            14,
+            [
+              "8",
+              "EF550RA4LAWBI657\n(BF606-1677)",
+              "Màn hình lỗi sau khi bật nguồn\n開機後螢幕顯示錯誤",
+              "X-TR",
+              "Kiểm tra khởi động & hiển thị màn hình\n檢查開機及螢幕顯示功能",
+              "Đạt / 合格",
+              "→ EF550RA4LAWBI657"
+            ]
+          ],
+          [
+            15,
+            [
+              "9",
+              "EF550R4ALAWBI641\n(BF606-1677)",
+              "Không sạc được pin\n無法充電",
+              "X-TR",
+              "Kiểm tra chức năng sạc\n檢查充電功能",
+              "Đạt / 合格",
+              "→ EF550R4ALAWBI641"
+            ]
+          ],
+          [
+            16,
+            [
+              "10",
+              "EF550RA4LAWBI686\n(BF606-1677)",
+              "Màn hình lỗi\nAlume 螢幕顯示異常",
+              "Alume\n鋁製裝組",
+              "Kiểm tra hiển thị màn hình\n檢查螢幕顯示功能",
+              "Đạt / 合格",
+              "→ EF550RA4LAWBI686"
+            ]
+          ],
+          [
+            17,
+            [
+              "11",
+              "EF550RA4LAWBI666\n(BF606-1677)",
+              "Màn hình lỗi\n螢幕顯示異常",
+              "DG\n包裝組",
+              "Kiểm tra hiển thị màn hình\n檢查螢幕顯示功能",
+              "Đạt / 合格",
+              "→ EF550RA4LAWBI666"
+            ]
+          ],
+          [
+            18,
+            [
+              "12",
+              "EF550RA4LAWBI678\n(BF606-1677)",
+              "Màn hình lỗi\n螢幕顯示異常",
+              "DG\n包裝組",
+              "Kiểm tra hiển thị màn hình\n檢查螢幕顯示功能",
+              "Đạt / 合格",
+              "→ EF550RA4LAWBI678"
+            ]
+          ],
+          [
+            19,
+            [
+              "GHI CHÚ / 備註:",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            20,
+            [
+              "1. RFR900NA55RSVHBA036 (BF606-1677) – Không có pin trước khi nhận sửa chữa / 送修前無電池\n2. EF550RA4LAWBI666 (BF606-1677) – Không có pin trước khi nhận sửa chữa / 送修前無電池\n3. EF550RA4LAWBI678 (BF606-1677) – Không có pin trước khi nhận sửa chữa / 送修前無電池",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            22,
+            [
+              "ĐẠI DIỆN BÊN A / 甲方代表\n(Ký xác nhận / 簽字確認)\n\n\nCÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)",
+              null,
+              null,
+              null,
+              "ĐẠI DIỆN BÊN B / 乙方代表\n(Ký tên, đóng dấu / 簽字蓋章)\n\n\nCÔNG TY TNHH TOÀN CẦU HONG MING",
+              null,
+              null
+            ]
+          ]
+        ],
+        "merged": [
+          "B9:B10",
+          "G9:G10",
+          "D9:D10",
+          "A1:G1",
+          "E22:G22",
+          "A9:A10",
+          "A4:D4",
+          "A3:D3",
+          "A22:C22",
+          "A20:G20",
+          "A2:G2",
+          "E4:G4",
+          "E3:G3",
+          "A19:G19"
+        ]
+      },
+      "RFR900NA55RSVHBA036": {
+        "max_row": 8,
+        "max_col": 4,
+        "rows": [
+          [
+            1,
+            [
+              "HÌNH ẢNH KIỂM TRA / 檢查圖片 — RFR900NA55RSVHBA036 (BF606-1677)",
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            2,
+            [
+              "STT: 1    |    Bộ phận / 部門: CT2    |    Kết quả / 結果: Đạt / 合格",
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            3,
+            [
+              "Lỗi ban đầu / 故障說明: Trigger scan. Không quét khi bấm cò / 扳機掃描功能異常，按下扳機無法掃描",
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            4,
+            [
+              "Hạng mục KT / 檢查項目: Kiểm tra chức năng quét trigger scan / 檢查扳機掃描功能",
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            5,
+            [
+              "Hình 1 / 圖片1",
+              "Hình 2 / 圖片2",
+              "Hình 3 / 圖片3",
+              "Ghi chú / 備註"
+            ]
+          ],
+          [
+            6,
+            [
+              null,
+              null,
+              null,
+              "KHÔNG CÓ PIN \n無電池"
+            ]
+          ],
+          [
+            7,
+            [
+              "⬆  Chèn hình ảnh vào ô màu vàng: Insert → Pictures → Place in Cell  /  請將圖片插入黃色儲存格",
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            8,
+            [
+              "← Quay về bảng tổng hợp \"Nghiệm Thu\" / 返回總表",
+              null,
+              null,
+              null
+            ]
+          ]
+        ],
+        "merged": [
+          "A1:D1",
+          "A8:D8",
+          "A4:D4",
+          "A3:D3",
+          "A7:D7",
+          "A2:D2"
+        ]
+      },
+      "EF550R4ALAWBI670": {
+        "max_row": 8,
+        "max_col": 6,
+        "rows": [
+          [
+            1,
+            [
+              "HÌNH ẢNH KIỂM TRA / 檢查圖片 — EF550R4ALAWBI670 (BF606-1677)",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            2,
+            [
+              "STT: 2    |    Bộ phận / 部門: CT2    |    Kết quả / 結果: Đạt / 合格",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            3,
+            [
+              "Lỗi ban đầu / 故障說明: Barcode lỗi / 條碼掃描故障",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            4,
+            [
+              "Hạng mục KT / 檢查項目: Kiểm tra chức năng quét barcode / 檢查條碼掃描功能",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            5,
+            [
+              "Hình 1 / 圖片1",
+              "Hình 2 / 圖片2",
+              "Hình 3 / 圖片3",
+              "Hình 4 / 圖片4",
+              "Hình 5 / 圖片5",
+              "Ghi chú / 備註"
+            ]
+          ],
+          [
+            7,
+            [
+              "⬆  Chèn hình ảnh vào ô màu vàng: Insert → Pictures → Place in Cell  /  請將圖片插入黃色儲存格",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            8,
+            [
+              "← Quay về bảng tổng hợp \"Nghiệm Thu\" / 返回總表",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ]
+        ],
+        "merged": [
+          "A2:F2",
+          "A1:F1",
+          "A8:F8",
+          "A4:F4",
+          "A3:F3",
+          "A7:F7"
+        ]
+      },
+      "EF550R4ALAWBH111": {
+        "max_row": 8,
+        "max_col": 6,
+        "rows": [
+          [
+            1,
+            [
+              "HÌNH ẢNH KIỂM TRA / 檢查圖片 — EF550R4ALAWBH111 (BF606-1677)",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            2,
+            [
+              "STT: 3    |    Bộ phận / 部門: 洗料    |    Kết quả / 結果: Đạt / 合格",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            3,
+            [
+              "Lỗi ban đầu / 故障說明: Barcode lỗi / 條碼掃描故障",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            4,
+            [
+              "Hạng mục KT / 檢查項目: Kiểm tra chức năng quét barcode / 檢查條碼掃描功能",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            5,
+            [
+              "Hình 1 / 圖片1",
+              "Hình 2 / 圖片2",
+              "Hình 3 / 圖片3",
+              "Hình 4 / 圖片4",
+              "Hình 5 / 圖片5",
+              "Ghi chú / 備註"
+            ]
+          ],
+          [
+            7,
+            [
+              "⬆  Chèn hình ảnh vào ô màu vàng: Insert → Pictures → Place in Cell  /  請將圖片插入黃色儲存格",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            8,
+            [
+              "← Quay về bảng tổng hợp \"Nghiệm Thu\" / 返回總表",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ]
+        ],
+        "merged": [
+          "A2:F2",
+          "A1:F1",
+          "A8:F8",
+          "A4:F4",
+          "A3:F3",
+          "A7:F7"
+        ]
+      }
+    }
+  },
+  "data": {
+    "sheets": {
+      "CX Technology (VN)": {
+        "max_row": 26,
+        "max_col": 9,
+        "rows": [
+          [
+            3,
+            [
+              "浤詺資訊責任有限公司",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            5,
+            [
+              "Hardware Delivery Receipt",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            6,
+            [
+              "硬體交貨簽收單 Đơn Ký Nhận Bàn Giao PhầnCứng",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            8,
+            [
+              "合約編號 Số Hợp Đồng ：HM-FINEPRO-20261009.001",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            9,
+            [
+              "甲方 (買方) Bên Mua：CÔNG TY CỔ PHẦN  CX Technology (VN)",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            10,
+            [
+              "乙方 (賣方) Bên Bán：CÔNG TY TNHH TOÀN CẦU HONG MING",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            11,
+            [
+              "STT",
+              "Tên Sản Phẩm\n產品名稱",
+              "Hạng mục khách hàng yêu cầu kiểm tra 客戶要求檢查的項目",
+              "Bộ phận gửi sửa \n送修部門",
+              "Kết quả kiểm tra\n 檢查結果",
+              "Số lượng\n數量",
+              "Đơn Giá  \n單價",
+              "Tổng Giá \n總價",
+              null
+            ]
+          ],
+          [
+            12,
+            [
+              1,
+              "RFR900NA55RSWLBA574",
+              "Cò bắn không nhả \n扳机扣住不松",
+              "CNC",
+              "No error founds",
+              1,
+              550000,
+              550000,
+              null
+            ]
+          ],
+          [
+            13,
+            [
+              2,
+              "EF550RA4LAWBHI677",
+              "Màn hình lỗi \n螢幕故障",
+              "CNC",
+              "Barcode",
+              1,
+              8000000,
+              8000000,
+              null
+            ]
+          ],
+          [
+            14,
+            [
+              3,
+              "RFR900NA55RSWLBA565",
+              "Cò bắn không nhả \n扳机扣住不松",
+              "CNC",
+              "Mounting Adapter",
+              1,
+              3500000,
+              3500000,
+              null
+            ]
+          ],
+          [
+            15,
+            [
+              4,
+              "EF550RA4LAWBHI641",
+              "Cò bắn → 扳机  Sạc không vô điện → 充电器无法充电  ",
+              "xi treo",
+              "No error founds",
+              1,
+              550000,
+              550000,
+              null
+            ]
+          ],
+          [
+            16,
+            [
+              5,
+              "EF550RA4LAWBHI657",
+              "Cò bắn → 扳机  Sạc không vô điện → 充电器无法充电  ",
+              "xi treo",
+              "No error founds",
+              1,
+              550000,
+              550000,
+              null
+            ]
+          ],
+          [
+            17,
+            [
+              6,
+              "EF550RA4LAWBHI650",
+              "Cò bắn → 扳机  Sạc không vô điện → 充电器无法充电  ",
+              "xi treo",
+              "No error founds",
+              1,
+              550000,
+              550000,
+              null
+            ]
+          ],
+          [
+            18,
+            [
+              "以下空白 Chỗ trống sau đây",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            19,
+            [
+              "Ghi chú\n備註",
+              null,
+              null,
+              null,
+              null,
+              null,
+              "TỔNG THÀNH TIỀN \n總價",
+              13700000,
+              null
+            ]
+          ],
+          [
+            20,
+            [
+              "Sau khi kiểm tra hàng hóa, bên nhận ký xác nhận đồng nghĩa với việc đã xác nhận số lượng, chủng loại và tình trạng hàng hóa tại thời điểm nhận hàng.\n貨物經檢查後，收貨方簽字確認，即表示已確認收貨當時貨物的數量、品項及貨物狀況。",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            21,
+            [
+              "雙方簽收確認簽名 Chữ ký xác nhận ký nhận của hai bên",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            24,
+            [
+              null,
+              "CÔNG TY CỔ PHẦN  CX Technology (VN)",
+              null,
+              "CÔNG TY TNHH TOÀN CẦU HONG MING",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            25,
+            [
+              null,
+              " 甲方  Bên Mua(確認)  2026年10月09日",
+              null,
+              "乙方 Bên Bán(確認)  2026年10月09日",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            26,
+            [
+              null,
+              null,
+              "    ",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ]
+        ],
+        "merged": [
+          "A18:H18",
+          "A10:F10",
+          "A5:F5",
+          "A9:F9",
+          "A6:F6",
+          "A21:E22",
+          "A3:F3",
+          "A20:C20"
+        ]
+      },
+      "Sheet1": {
+        "max_row": 26,
+        "max_col": 10,
+        "rows": [
+          [
+            1,
+            [
+              null,
+              null,
+              "Thông tin người bán 賣方資訊",
+              null,
+              null,
+              "Thông tin người mua 買方資訊",
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            2,
+            [
+              null,
+              null,
+              "Tên công ty 公司名稱：",
+              "CÔNG TY TNHH TOÀN CẦU HONG MING",
+              null,
+              "Tên công ty 公司名稱：",
+              null,
+              "Công ty cổ phần CX Technology (VN)",
+              null,
+              null
+            ]
+          ],
+          [
+            3,
+            [
+              null,
+              null,
+              "Người liên lạc 聯絡人：",
+              "張永吉 Jenson",
+              null,
+              "Người liên lạc 聯絡人：",
+              null,
+              "採購部 - 阮金銀",
+              null,
+              null
+            ]
+          ],
+          [
+            4,
+            [
+              null,
+              null,
+              "Điện thoại 聯絡電話：",
+              "+84966687109, +8663-3392057",
+              null,
+              "Điện thoại 聯絡電話：",
+              null,
+              "+84-28-3770-1025~26 Ext: 226",
+              null,
+              null
+            ]
+          ],
+          [
+            5,
+            [
+              null,
+              null,
+              "Fax 傳真電話：",
+              null,
+              null,
+              "Fax 傳真電話：",
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            6,
+            [
+              null,
+              null,
+              "Địa chỉ 聯絡地址：",
+              "Lầu 2, số 68 Nguyễn Huệ, Phường Sài Gòn, TP Hồ Chí Minh, Việt Nam",
+              null,
+              "Địa chỉ 聯絡地址：",
+              null,
+              "Tan Thuan E.P.Z, Tan Thuan Street, Tan Thuan Dong Ward, District 7, Ho Chi Minh, Tân Thuận Đông, Quận 7, Hồ Chí Minh",
+              null,
+              null
+            ]
+          ],
+          [
+            7,
+            [
+              null,
+              null,
+              "E-mail電子郵件：",
+              "sales@hongming-global.com",
+              null,
+              "E-mail電子郵件：",
+              null,
+              "pur02_vn@mail.cxtechnology.com",
+              null,
+              null
+            ]
+          ],
+          [
+            9,
+            [
+              "Báo giá phần cứng 硬體報價訂購確認單",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            10,
+            [
+              "Ngày báo giá報價日期：25/08/2026",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            11,
+            [
+              "STT",
+              "Tên Sản Phẩm\n產品名稱",
+              "Hạng mục khách hàng yêu cầu kiểm tra 客戶要求檢查的項目",
+              "Bộ phận gửi sửa \n送修部門",
+              "Kết quả kiểm tra\n 檢查結果",
+              "Số lượng\n數量",
+              "Thời gian hoàn thành\n 完成時間",
+              "Đơn Giá  \n單價",
+              "Tổng Giá \n總價",
+              null
+            ]
+          ],
+          [
+            12,
+            [
+              1,
+              "RFR900NA55RSWLBA574",
+              "Cò bắn không nhả \n扳机扣住不松",
+              "CNC",
+              "No error founds",
+              1,
+              "4–6周",
+              550000,
+              550000,
+              null
+            ]
+          ],
+          [
+            13,
+            [
+              2,
+              "EF550RA4LAWBHI677",
+              "Màn hình lỗi \n螢幕故障",
+              "CNC",
+              "Barcode",
+              1,
+              "4–6周",
+              8000000,
+              8000000,
+              null
+            ]
+          ],
+          [
+            14,
+            [
+              3,
+              "RFR900NA55RSWLBA565",
+              "Cò bắn không nhả \n扳机扣住不松",
+              "CNC",
+              "Mounting Adapter",
+              1,
+              "4–6周",
+              3500000,
+              3500000,
+              null
+            ]
+          ],
+          [
+            15,
+            [
+              4,
+              "EF550RA4LAWBHI641",
+              "Cò bắn → 扳机  Sạc không vô điện → 充电器无法充电  ",
+              "xi treo",
+              "No error founds",
+              1,
+              "4–6周",
+              550000,
+              550000,
+              null
+            ]
+          ],
+          [
+            16,
+            [
+              5,
+              "EF550RA4LAWBHI657",
+              "Cò bắn → 扳机  Sạc không vô điện → 充电器无法充电  ",
+              "xi treo",
+              "No error founds",
+              1,
+              "4–6周",
+              550000,
+              550000,
+              null
+            ]
+          ],
+          [
+            17,
+            [
+              6,
+              "EF550RA4LAWBHI650",
+              "Cò bắn → 扳机  Sạc không vô điện → 充电器无法充电  ",
+              "xi treo",
+              "No error founds",
+              1,
+              "4–6周",
+              550000,
+              550000,
+              null
+            ]
+          ],
+          [
+            18,
+            [
+              "以下空白 Chỗ trống sau đây",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            19,
+            [
+              "此致\n         Công ty cổ phần CX Technology (VN)",
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              "TỔNG THÀNH TIỀN \n總價",
+              13700000,
+              null
+            ]
+          ],
+          [
+            20,
+            [
+              "※客戶確認 Xác nhận khách hàng",
+              null,
+              null,
+              null,
+              "◆ 報價特別聲明 Tuyên bố đặc biệt của báo giá :",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            21,
+            [
+              "(請簽名用印 Vui lòng ký tên và đóng dấu)",
+              null,
+              null,
+              null,
+              "1. 以上報價交期：報價單簽回後，另日程安排後回覆。\n    Ngày giao hàng theo báo giá trên: Sau khi ký báo giá, chúng tôi sẽ trả lời sau khi sắp xếp lịch trình.",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            22,
+            [
+              null,
+              null,
+              null,
+              null,
+              "2. 報價有效期限：報價單有效期限至2026/09/10，報價簽回視同專案確認，不可任意終止、取消本專案。\n    Thời hạn hiệu lực của báo giá: Báo giá có hiệu lực đến hết ngày 10/09/2026. Báo giá đã ký được coi là xác nhận của dự án. Dự án không thể bị chấm dứt hoặc hủy bỏ theo ý muốn.",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            23,
+            [
+              null,
+              null,
+              null,
+              null,
+              "3. 上述報價中的硬體設備自交貨日起保固六個月；因人為因素造成之碰撞、破裂、損壞等情況，不在保固範圍內\n  Thiết bị phần cứng trong báo giá trên được bảo hành sáu tháng kể từ ngày giao hàng; các hư hỏng do va chạm, vỡ, gãy do con người gây ra không nằm trong phạm vi bảo hành",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            24,
+            [
+              null,
+              null,
+              null,
+              null,
+              "4.以上報價不含增值稅 VAT，稅率則按當時發票開出時之規定。\nGiá trên chưa bao gồm VAT. Thuế suất sẽ áp dụng theo quy định tại thời điểm xuất hóa đơn.",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ],
+          [
+            25,
+            [
+              null,
+              null,
+              null,
+              null,
+              "5. 付款方式：預付50%訂金，交貨時支付50%尾款，可現金付款或銀行轉帳，付款期限10天。\n     Phương thức thanh toán: Đặt cọc 50%, thanh toán 50% khi giao hàng, thanh toán bằng tiền mặt/chuyển khoản, TT10 ngày.          ",
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ]
+        ],
+        "merged": [
+          "F4:G4",
+          "C1:E1",
+          "E21:I21",
+          "E24:I24",
+          "A18:I18",
+          "F6:G6",
+          "H4:I4",
+          "E23:I23",
+          "F7:G7",
+          "F3:G3",
+          "F1:I1",
+          "H6:I6",
+          "F5:G5",
+          "B8:F8",
+          "F2:G2",
+          "H2:I2",
+          "H7:I7",
+          "A9:I9",
+          "H3:I3",
+          "A19:B19",
+          "E25:I25",
+          "H5:I5",
+          "E22:I22"
+        ]
+      }
+    }
+  }
+}

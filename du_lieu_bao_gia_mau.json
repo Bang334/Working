@@ -1,0 +1,138 @@
+{
+  "quotation_header": {
+    "appendix_title": "Phụ lục 1  附件一",
+    "document_title": "Báo giá phần cứng & Thiết bị Hàn Quốc 硬體報價訂購確認單",
+    "quotation_date": "10/10/2026",
+    "quotation_no": "HM-QT-202610-KOR-01"
+  },
+  "seller_info": {
+    "company_name": "浤詺資訊責任有限公司 / CÔNG TY TNHH TOÀN CẦU HONG MING",
+    "contact_person": "張永吉 Jenson (+84966687109)",
+    "phone": "+84966687109",
+    "fax": "—",
+    "address": "Lầu 2, số 68 Nguyễn Huệ, Phường Sài Gòn, Thành phố Hồ Chí Minh, Việt Nam",
+    "email": "sales@hongming-global.com"
+  },
+  "buyer_info": {
+    "company_name": "Công ty TNHH Cơ Khí Chính Xác Dongjin Techwin (동진테크윈 베트남 / 東進精密責任有限公司)",
+    "contact_person": "Ông Park Jin Woo – Giám đốc Kỹ thuật (朴鎮宇 技術總監)",
+    "phone": "+84 938 889 922",
+    "fax": "—",
+    "address": "Lô CN-05, KCN Yên Phong II-C, Xã Tam Giang, Huyện Yên Phong, Tỉnh Bắc Ninh",
+    "email": "park.jinwoo@dongjin-techwin.co.kr; purchasing@dongjin-techwin.vn"
+  },
+  "sections": [
+    {
+      "section_title": "1) 韓國 LS ELECTRIC 濾波補償方案 Phương án lọc sóng hài & Bù công suất phản kháng LS ELECTRIC (Hàn Quốc)",
+      "items": [
+        {
+          "stt": "1",
+          "product_name": "Tủ lọc sóng hài chủ động APF\n韓國 LS 主動式電力濾波裝置 (APF 100A)",
+          "category": "Lọc sóng hài & Bù công suất\n主動式諧波抑制系統",
+          "description": "Model: LS ELECTRIC Smart APF-100A / 3P4W 380-415V\nKhử sóng hài bậc cao từ bậc 2 đến bậc 50, hiệu suất lọc > 97%, bù công suất phản kháng tức thời, nâng hệ số cosφ > 0.98\n進口韓國原裝模組 / 濾除2~50次高次諧波 / 響應時間 < 5ms / 提高功率因數\nXuất xứ: LS ELECTRIC (Hàn Quốc / 韓國製造)",
+          "quantity": 1,
+          "unit": "HỆ",
+          "unit_price": 285000000
+        },
+        {
+          "stt": "2",
+          "product_name": "Bộ kháng lọc sóng hài & Tụ khô LS\nLS 低壓電抗器與乾式電力電容器組",
+          "category": "Bộ bù tụ khô LS\n電力電容補償組",
+          "description": "Model: LS ELECTRIC HPR 50kVAR 7% Detuned Reactor + 3x Heavy Duty Dry Capacitor\nBảo vệ chống cộng hưởng điện lưới, vỏ hợp kim nhôm chống cháy nổ IP42\n低壓防爆乾式電容器組含 7% 諧波抑制電抗器，防止系統諧振過電壓\nXuất xứ: LS ELECTRIC (Hàn Quốc / 韓國製造)",
+          "quantity": 2,
+          "unit": "BỘ",
+          "unit_price": 42000000
+        }
+      ]
+    },
+    {
+      "section_title": "2) 韓國 AUTONICS 能源物聯網監控方案 Giải pháp IoT giám sát năng lượng AUTONICS (Hàn Quốc)",
+      "items": [
+        {
+          "stt": "3",
+          "product_name": "Đồng hồ đo điện đa năng Autonics\nAutonics 智慧型多功能數位電表 (2M-Series)",
+          "category": "Đồng hồ đo điện\n數位電力儀表",
+          "description": "Model: Autonics MT4W / MT4Y Digital Power Meter (Cấp chính xác Class 0.2S)\nĐo đếm điện áp 3 pha, dòng điện, công suất P-Q-S, sóng hài THD, giao tiếp Modbus RTU RS-485\n韓國 Autonics 原裝多功能電表，具備高精準度 Class 0.2S，支援 RS485 通訊\n能耗收集範圍：Trạm biến áp trung tâm 1500kVA + Xưởng đúc áp lực máy CNC 1-8\nXuất xứ: Autonics Corporation (Hàn Quốc / 韓國製造)",
+          "quantity": 4,
+          "unit": "CÁI",
+          "unit_price": 7900000
+        },
+        {
+          "stt": "4",
+          "product_name": "Biến dòng lõi hở chuyên dụng Autonics\nAutonics 開口式比流器 (Split-Core CT)",
+          "category": "Biến dòng đo lường\n開口式比流器 (CT)",
+          "description": "Model: Autonics CTS-400A / 5A (Loại kẹp hở lõi Ferrite siêu chính xác)\nThi công lắp kẹp trực tiếp vào thanh cái đồng mà không cần tháo nguồn hay dừng chuyền sản xuất\n開口夾式比流器，免斷電快速安裝，高導磁率鐵芯，輸出精確穩定\nXuất xứ: Autonics (Hàn Quốc / 韓國原裝)",
+          "quantity": 12,
+          "unit": "CÁI",
+          "unit_price": 1950000
+        },
+        {
+          "stt": "5",
+          "product_name": "Cáp tín hiệu chống nhiễu kép LS Cable\nLS 電線 雙層屏蔽工業通訊訊號線",
+          "category": "Cáp tín hiệu chuyên dụng\n隔離訊號線",
+          "description": "Model: LS Cable & System 4-Pair Shielded Twisted Pair (STP Cat5e / RS-485 Industrial)\nLõi đồng nguyên chất 100%, 2 lớp bảo vệ chống nhiễu điện từ cực mạnh (Màng nhôm + lưới đồng bện mạ thiếc)\n韓國第一品牌 LS 電纜，高抗干擾工業級雙重屏蔽雙絞線 / Cuộn 200m\nXuất xứ: LS Cable & System (Hàn Quốc / 韓國製造)",
+          "quantity": 2,
+          "unit": "Cuộn",
+          "unit_price": 8500000
+        },
+        {
+          "stt": "6",
+          "product_name": "Gateway truyền thông biên Autonics\nAutonics 工業邊緣物聯網閘道器 (IoT Gateway)",
+          "category": "Cổng truyền thông\n通訊閘道器 GATEWAY",
+          "description": "Model: Autonics SCM-WF48 / ARM Cortex Quad-Core Gateway\nThu thập dữ liệu đồng thời từ 32 thiết bị Modbus, hỗ trợ giao thức IoT MQTT, OPC-UA, Ethernet kép 10/100M\n乙太網路與RS485雙向高速轉換，內建本地斷線資料快取暫存，支援雲端與ERP連線\nXuất xứ: Autonics (Hàn Quốc / 韓國原裝)",
+          "quantity": 2,
+          "unit": "BỘ",
+          "unit_price": 11500000
+        },
+        {
+          "stt": "7",
+          "product_name": "Hệ thống AI EMS Quản lý Năng lượng\n韓國智慧 AI 能源管理與碳盤查系統 (Smart EMS)",
+          "category": "Hệ thống quản lý năng lượng\n智慧能管軟體系統",
+          "description": "Phiên bản AI Smart Energy Suite V5.0 (Bản quyền trọn đời cho nhà máy)\n1. Giám sát thời gian thực toàn bộ phụ tải điện, cảnh báo sớm nguy cơ quá tải trạm biến áp\n2. Dự báo xu hướng tiêu thụ điện, tự động tối ưu hóa biểu giá điện 3 giá của EVN\n3. Tự động kết xuất báo cáo kiểm kê khí nhà kính ESG và ISO 50001 đạt chuẩn kiểm toán quốc tế\n即時電能監控 / 負載需量預測 / 尖峰離峰電費最佳化 / ESG碳排放盤查 / 支援全廠能源管理",
+          "quantity": 1,
+          "unit": "HỆ",
+          "unit_price": 145000000
+        }
+      ]
+    },
+    {
+      "section_title": "3) 現場安裝、系統調校與移交 Thi công lắp đặt, hiệu chỉnh hệ thống & Bàn giao",
+      "items": [
+        {
+          "stt": "8",
+          "product_name": "Tủ phân phối Inox 304 tiêu chuẩn Hàn Quốc\n韓國標準 304不銹鋼防塵防腐配電箱",
+          "category": "Tủ điện công nghiệp\n配電箱體與配件",
+          "description": "Quy cách: 500*400*200mm Inox 304 chuẩn IP65 chống bụi và hơi dầu công nghiệp\nTích hợp aptomat chống giật LS MCB 2P 16A, chống sét lan truyền SPD Phoenix Contact, bộ nguồn công nghiệp 24V\n韓國工業標準防塵箱體 / LS 微型斷路器 / 工業級防雷保護器 / 模組化導軌\nSố lượng: 2 tủ trọn bộ",
+          "quantity": 2,
+          "unit": "TỦ",
+          "unit_price": 4500000
+        },
+        {
+          "stt": "9",
+          "product_name": "Vật tư phụ thi công chuẩn phòng sạch\n無塵室與高標準廠房施工專用配件",
+          "category": "Vật tư phụ thi công\n現場施工輔材",
+          "description": "Máng cáp nhôm định hình, ống mềm bọc inox chống chuột, đầu cosse mạ bạc chống oxi hóa, ốc vít inox / Trọn gói\n鋁合金線槽、不銹鋼保護軟管、防鼠咬管件、鍍銀接線端子及專用耗材 / 式",
+          "quantity": 1,
+          "unit": "SET",
+          "unit_price": 6800000
+        },
+        {
+          "stt": "10",
+          "product_name": "Chi phí thi công, hiệu chuẩn & Hoàn công\n現場配線安裝、系統校正及竣工移交服務",
+          "category": "Dịch vụ kỹ thuật\n工程服務費用",
+          "description": "1. Khảo sát thực tế, lập phương án thi công an toàn không ngắt điện sản xuất (Hot-line Installation)\n2. Thi công kéo cáp tín hiệu, hàn nối đấu tủ, định vị cảm biến đo lường\n3. Kỹ sư chuyên gia cấu hình truyền thông Gateway, kiểm tra sai số đồng hồ, hiệu chỉnh hệ thống\n4. Đào tạo vận hành song ngữ (Việt - Hàn/Trung) cho kỹ sư nhà máy và chuyển giao bản vẽ hoàn công CAD\n一式 / One SET",
+          "quantity": 1,
+          "unit": "SET",
+          "unit_price": 15000000
+        }
+      ]
+    }
+  ],
+  "terms_and_notes": [
+    "1. 以上報價交期：韓國原裝設備下單後約 3~4 週抵達越南工廠；施工與系統調校約 7 個工作天；含現場安裝設定。\n   Thời gian giao hàng: Thiết bị nhập khẩu Hàn Quốc về đến nhà máy trong 3-4 tuần; thời gian thi công và hiệu chỉnh trong vòng 7 ngày làm việc; đã bao gồm lắp đặt.",
+    "2. 報價有效期限：2026/11/30 止，報價簽回視同專案確認，不可任意終止；韓國原裝設備保固 18 個月，其餘工程保固 1 年。\n   Thời hạn hiệu lực của báo giá: Đến hết ngày 30/11/2026. Thiết bị chính hãng Hàn Quốc bảo hành 18 tháng, các hạng mục phụ trợ bảo hành 12 tháng kể từ ngày nghiệm thu.",
+    "3. 以上報價不含增值稅 VAT, 稅率則按當時發票開出時之規定（開立 8% 或 10% 增值稅專用發票）.\n   Giá trên chưa bao gồm thuế GTGT (VAT), thuế suất sẽ áp dụng theo quy định của nhà nước tại thời điểm xuất hóa đơn điện tử.",
+    "4. 試用與效益承諾：安裝完成後免費試用 30 天，節能與諧波改善效益達標後始進行請款；未達標無條件全額拆除退回。\n   Cam kết hiệu quả: Dùng thử miễn phí trong 30 ngày sau lắp đặt, đạt chỉ tiêu tiết kiệm và lọc sóng hài mới thanh toán; nếu không đạt hiệu quả sẽ tháo dỡ vô điều kiện.",
+    "5. 付款方式 : 驗收完成 100% TT 30 天（電匯至賣方銀行指定帳戶）。\n   Điều khoản thanh toán: Nghiệm thu hoàn tất 100% thanh toán bằng hình thức chuyển khoản (T/T) trong vòng 30 ngày."
+  ]
+}

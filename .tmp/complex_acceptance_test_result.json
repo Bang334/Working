@@ -1,0 +1,25 @@
+{
+  "source_path": "E:\\Working\\Bieu Mau\\Biên bản sữa chữa_TEST_14_BAN_GHI.xlsx",
+  "source_sheet": "CX Technology (VN)",
+  "source_label_cell": "A27",
+  "target_path": "E:\\Working\\Bieu Mau\\Biên Bản Nghiệm Thu_TEST_14_BAN_GHI.xlsx",
+  "saved_path": "E:\\Working\\Bieu Mau\\Biên Bản Nghiệm Thu_TEST_14_BAN_GHI.xlsx",
+  "gemini_model": "gemini-3.8-flash",
+  "note_text": "1. RFR900NA55RSVHBA036 (BF606-1677) – Không có pin trước khi nhận sửa chữa / 送修前無電池\n2. EF550R4ALAWBH109 (BF606-1677) – Vỏ máy trầy xước nhẹ trước khi nhận / 送修前機殼有輕微刮痕\n3. EF550R4ALAWBI661 (BF606-1677) – Thiếu dây đeo tay khi bàn giao / 交付時缺少手腕帶\n4. EF550R4ALAWBI677 (BF606-1677) – Tem serial bị mờ trước khi sửa chữa / 維修前序號標籤模糊\n5. EF550RA4LAWBI666 (BF606-1677) – Không có pin trước khi nhận sửa chữa / 送修前無電池\n6. EF550RA4LAWBI678 (BF606-1677) – Không có pin và nắp che cổng sạc / 無電池且缺少充電埠護蓋\n7. RFR900NA55RSVTEST901 (RF-TEST) – Vỏ cò bắn đã nứt trước khi tiếp nhận / 接收前扳機外殼已破裂\n8. Thiết bị được đóng gói chung trong 03 thùng carton; đề nghị đối chiếu số lượng khi nhận / 設備共裝於三個紙箱，收貨時請核對數量",
+  "assignments": {
+    "RFR900NA55RSVHBA036": "Không có pin trước khi nhận sửa chữa / 送修前無電池",
+    "EF550R4ALAWBH109": "Vỏ máy trầy xước nhẹ trước khi nhận / 送修前機殼有輕微刮痕",
+    "EF550R4ALAWBI661": "Thiếu dây đeo tay khi bàn giao / 交付時缺少手腕帶",
+    "EF550R4ALAWBI677": "Tem serial bị mờ trước khi sửa chữa / 維修前序號標籤模糊",
+    "EF550RA4LAWBI666": "Không có pin trước khi nhận sửa chữa / 送修前無電池",
+    "EF550RA4LAWBI678": "Không có pin và nắp che cổng sạc / 無電池且缺少充電埠護蓋"
+  },
+  "blank_detail_sheets": [
+    "EF550R4ALAWBH111",
+    "EF550R4ALAWBI641",
+    "EF550R4ALAWBI654",
+    "EF550R4ALAWBI670",
+    "EF550RA4LAWBI657",
+    "EF550RA4LAWBI686"
+  ]
+}
