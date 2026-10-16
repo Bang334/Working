@@ -444,6 +444,35 @@ const CustomReminderManager = {
     return "📎";
   },
 
+  getVietnamDate(offsetDays = 0, toMonday = false) {
+    // Luôn tính toán chuẩn xác 100% theo múi giờ Việt Nam (Asia/Ho_Chi_Minh: UTC+7)
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const vnDateStr = formatter.format(new Date()); // Format YYYY-MM-DD
+    const [y, m, d] = vnDateStr.split("-").map(Number);
+    const targetDate = new Date(y, m - 1, d);
+
+    if (toMonday) {
+      const dayOfWeek = targetDate.getDay();
+      let daysUntilMonday = 1 - dayOfWeek;
+      if (daysUntilMonday <= 0) {
+        daysUntilMonday += 7;
+      }
+      targetDate.setDate(targetDate.getDate() + daysUntilMonday);
+    } else if (offsetDays !== 0) {
+      targetDate.setDate(targetDate.getDate() + offsetDays);
+    }
+
+    const yyyy = targetDate.getFullYear();
+    const mm = String(targetDate.getMonth() + 1).padStart(2, "0");
+    const dd = String(targetDate.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  },
+
   openCreateModal() {
     this.activeEditingId = null;
     this.stagedFiles = [];
@@ -455,11 +484,7 @@ const CustomReminderManager = {
     document.getElementById("crTitleInput").value = "";
     document.getElementById("crDescInput").value = "";
     
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    document.getElementById("crDueDateInput").value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById("crDueDateInput").value = this.getVietnamDate(0);
     document.getElementById("crDueTimeInput").value = "09:00";
 
     document.getElementById("crPrioritySelect").value = "NORMAL";
@@ -675,22 +700,7 @@ const CustomReminderManager = {
   },
 
   setQuickDate(offsetDays, toMonday = false) {
-    const date = new Date();
-    if (toMonday) {
-      const dayOfWeek = date.getDay();
-      let daysUntilMonday = 1 - dayOfWeek;
-      if (daysUntilMonday <= 0) {
-        daysUntilMonday += 7;
-      }
-      date.setDate(date.getDate() + daysUntilMonday);
-    } else {
-      date.setDate(date.getDate() + offsetDays);
-    }
-
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-    document.getElementById("crDueDateInput").value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById("crDueDateInput").value = this.getVietnamDate(offsetDays, toMonday);
   },
 
   async submitReminder() {

@@ -162,3 +162,56 @@ def test_custom_reminder_api_endpoints_and_delete_with_files():
         assert del_resp.status_code == 200
         # Dedicated folder must be deleted!
         assert not folder_path.exists()
+
+
+def test_vietnam_timezone_enforcement():
+    """Verify strict adherence to Vietnam Standard Time (ICT / GMT+7 / UTC+7 / Asia/Ho_Chi_Minh)."""
+    from datetime import datetime, timezone, timedelta
+    from app.services.time_utils import (
+        VIETNAM_TZ,
+        get_vietnam_now,
+        get_vietnam_today,
+        get_vietnam_today_str,
+        get_vietnam_time_str,
+        get_day_of_week_vi,
+        format_due_string_vn,
+    )
+
+    # 1. Check exact offset (+07:00 = 25200 seconds)
+    offset = VIETNAM_TZ.utcoffset(None)
+    assert offset == timedelta(hours=7)
+    assert offset.total_seconds() == 7 * 3600
+
+    # 2. Check get_vietnam_now() matches UTC + 7 hours
+    utc_now = datetime.now(timezone.utc)
+    vn_now = get_vietnam_now()
+    # The absolute timestamp (seconds since epoch) must match within 1 second
+    assert abs(vn_now.timestamp() - utc_now.timestamp()) < 2.0
+    # The hour in Vietnam should be (utc_hour + 7) % 24
+    expected_hour = (utc_now.hour + 7) % 24
+    assert vn_now.hour == expected_hour
+
+    # 3. Check get_vietnam_today() returns correct date
+    vn_today = get_vietnam_today()
+    assert get_vietnam_today_str() == vn_today.strftime("%Y-%m-%d")
+
+    # 4. Check weekday name in Vietnamese
+    sample_monday = date(2026, 10, 19) # 2026-10-19 is a Monday
+    assert get_day_of_week_vi(sample_monday) == "Thứ Hai"
+    sample_sunday = date(2026, 10, 18)
+    assert get_day_of_week_vi(sample_sunday) == "Chủ Nhật"
+
+    # 5. Check format_due_string_vn calculations
+    today_str = get_vietnam_today_str()
+    # Future appointment today (at 23:59)
+    res_today = format_due_string_vn(today_str, "23:59")
+    assert res_today[3] is True  # is_today
+    assert res_today[4] is False # is_overdue (time has not passed)
+
+    # Yesterday appointment
+    yesterday_str = (vn_today - timedelta(days=1)).strftime("%Y-%m-%d")
+    res_yest = format_due_string_vn(yesterday_str, "09:00")
+    assert res_yest[2] == -1    # days_diff = -1
+    assert res_yest[4] is True  # is_overdue
+    assert "Quá hạn 1 ngày" in res_yest[1]
+

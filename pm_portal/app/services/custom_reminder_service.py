@@ -11,21 +11,22 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import WORKING_DIR
 from app.database import get_db_connection
+from app.services.time_utils import (
+    VIETNAM_TZ,
+    format_due_string_vn,
+    get_day_of_week_vi,
+    get_vietnam_now,
+    get_vietnam_time_str,
+    get_vietnam_today,
+    get_vietnam_today_str,
+    parse_date_to_iso,
+    WEEKDAYS_VI,
+)
 
 logger = logging.getLogger(__name__)
 
 # Base folder for personal reminders
 REMINDERS_DIR = WORKING_DIR / "Ho So Du An" / "Nhac Nho"
-
-WEEKDAYS_VI = [
-    "Thứ Hai",
-    "Thứ Ba",
-    "Thứ Tư",
-    "Thứ Năm",
-    "Thứ Sáu",
-    "Thứ Bảy",
-    "Chủ Nhật",
-]
 
 IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"}
 
@@ -53,57 +54,11 @@ def format_size_human(size_bytes: int) -> str:
         return f"{round(size_bytes / 1048576, 2)} MB"
 
 
-def parse_date_to_iso(date_str: str) -> str:
-    """Standardize date string into YYYY-MM-DD."""
-    if not date_str:
-        return datetime.now().strftime("%Y-%m-%d")
-    clean_str = str(date_str).strip()
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d"):
-        try:
-            return datetime.strptime(clean_str, fmt).strftime("%Y-%m-%d")
-        except ValueError:
-            continue
-    return clean_str
-
-
-def get_day_of_week_vi(dt: date) -> str:
-    """Return Vietnamese weekday name (e.g. Thứ Hai)."""
-    return WEEKDAYS_VI[dt.weekday()]
-
-
 def format_due_string(due_date_str: str, due_time_str: str = "09:00") -> Tuple[str, str, int, bool, bool, bool]:
-    """Calculate date relations, day of week, and readable display text."""
-    iso_date = parse_date_to_iso(due_date_str)
-    today = datetime.now().date()
-    try:
-        due_d = datetime.strptime(iso_date, "%Y-%m-%d").date()
-    except Exception:
-        due_d = today
-
-    days_diff = (due_d - today).days
-    day_name = get_day_of_week_vi(due_d)
-    date_display = due_d.strftime("%d/%m/%Y")
-    time_display = due_time_str or "09:00"
-
-    is_today = (days_diff == 0)
-    is_overdue = (days_diff < 0)
-    is_upcoming = (days_diff > 0)
-
-    formatted_full = f"{day_name}, {date_display} ({time_display})"
-
-    if is_today:
-        timing_badge = "Hôm nay"
-    elif days_diff == 1:
-        timing_badge = "Ngày mai"
-    elif days_diff == -1:
-        timing_badge = "Hôm qua (Quá hạn 1 ngày)"
-    elif days_diff < -1:
-        timing_badge = f"Quá hạn {abs(days_diff)} ngày"
-    elif days_diff <= 7:
-        timing_badge = f"{day_name} tới ({days_diff} ngày nữa)"
-    else:
-        timing_badge = f"Còn {days_diff} ngày"
-
+    """Calculate date relations, day of week, and readable display text in Vietnam timezone."""
+    formatted_full, timing_badge, days_diff, is_today, is_overdue, is_upcoming, _ = format_due_string_vn(
+        due_date_str, due_time_str
+    )
     return formatted_full, timing_badge, days_diff, is_today, is_overdue, is_upcoming
 
 
@@ -142,7 +97,7 @@ def get_custom_reminders_list(
     all_rows = cursor.fetchall()
     conn.close()
 
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_str = get_vietnam_today_str("%Y-%m-%d")
     stats = {
         "total": len(all_rows),
         "pending": 0,
@@ -270,7 +225,7 @@ def get_sidebar_due_stats() -> Dict[str, Any]:
     rows = cursor.fetchall()
     conn.close()
 
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_str = get_vietnam_today_str("%Y-%m-%d")
     today_count = 0
     overdue_count = 0
 
@@ -352,7 +307,7 @@ def create_custom_reminder(
             dest_file = reminder_folder / clean_fname
             # If exists, avoid overwrite by prefixing timestamp
             if dest_file.exists():
-                dest_file = reminder_folder / f"{datetime.now().strftime('%H%M%S')}_{clean_fname}"
+                dest_file = reminder_folder / f"{get_vietnam_now().strftime('%H%M%S')}_{clean_fname}"
             dest_file.write_bytes(fbytes)
             ext = dest_file.suffix.lstrip(".").lower()
             sz = len(fbytes)
@@ -489,7 +444,7 @@ def update_custom_reminder(
             clean_fname = Path(fname).name
             dest_file = reminder_folder / clean_fname
             if dest_file.exists():
-                dest_file = reminder_folder / f"{datetime.now().strftime('%H%M%S')}_{clean_fname}"
+                dest_file = reminder_folder / f"{get_vietnam_now().strftime('%H%M%S')}_{clean_fname}"
             dest_file.write_bytes(fbytes)
             ext = dest_file.suffix.lstrip(".").lower()
             sz = len(fbytes)
@@ -563,7 +518,7 @@ def toggle_custom_reminder_status(reminder_id: int) -> Dict[str, Any]:
 
     curr_status = row["status"]
     new_status = "COMPLETED" if curr_status == "PENDING" else "PENDING"
-    completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S") if new_status == "COMPLETED" else None
+    completed_at = get_vietnam_now().strftime("%Y-%m-%d %H:%M:%S") if new_status == "COMPLETED" else None
 
     cursor.execute("""
         UPDATE custom_reminders SET
