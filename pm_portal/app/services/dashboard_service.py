@@ -328,6 +328,20 @@ def sync_contracts_from_tracker_excel() -> Dict[str, Any]:
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # Check if user explicitly cleared dummy/sample contracts
+    try:
+        cursor.execute("SELECT setting_value FROM system_settings WHERE setting_key = 'cleared_seed_data'")
+        setting_row = cursor.fetchone()
+        if setting_row and setting_row[0] == '1':
+            conn.close()
+            return {
+                "status": "info",
+                "message": "Dữ liệu mẫu đã được dọn dẹp. Hệ thống giữ trạng thái trống cho dữ liệu thực tế.",
+                "synced_count": 0,
+            }
+    except Exception:
+        pass
+
     # Get existing contract codes to avoid duplicates
     cursor.execute("SELECT contract_code FROM contracts")
     existing_codes = {row["contract_code"] for row in cursor.fetchall()}

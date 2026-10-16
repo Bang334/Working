@@ -463,10 +463,9 @@ def get_all_contracts_list() -> List[Dict[str, Any]]:
     except Exception as exc:
         logging.getLogger(__name__).warning("Error querying contracts table: %s", exc)
 
-    # 2. Scan physical folders for exported DOCX files not yet in the DB list
+    # 2. Scan official project folder for exported DOCX files not yet in the DB list
     scan_dirs = [
-        WORKING_DIR / "Ho So Du An" / "Hop Dong",
-        OUTPUTS_DIR
+        WORKING_DIR / "Ho So Du An" / "Hop Dong"
     ]
 
     for s_dir in scan_dirs:
@@ -474,7 +473,7 @@ def get_all_contracts_list() -> List[Dict[str, Any]]:
             continue
 
         for p in s_dir.glob("*.docx"):
-            if p.name.startswith("~$") or p.name.lower().startswith("test_") or "bien_ban" in p.name.lower():
+            if p.name.startswith("~$") or p.name.lower().startswith("test_") or "test" in p.name.lower() or "bien_ban" in p.name.lower():
                 continue
 
             clean_lower = p.name.lower()

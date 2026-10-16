@@ -89,6 +89,11 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS system_settings (
+        setting_key TEXT PRIMARY KEY,
+        setting_value TEXT
+    );
+
     CREATE INDEX IF NOT EXISTS idx_contracts_code ON contracts(contract_code);
     CREATE INDEX IF NOT EXISTS idx_milestones_contract ON payment_milestones(contract_code);
     CREATE INDEX IF NOT EXISTS idx_documents_contract ON documents(contract_code);
@@ -118,6 +123,17 @@ def seed_database():
     """Seed database with contracts, milestones, and indexed document paths."""
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    # Safeguard: If user explicitly cleared dummy/sample contracts, DO NOT recreate them!
+    try:
+        cursor.execute("SELECT setting_value FROM system_settings WHERE setting_key = 'cleared_seed_data'")
+        setting_row = cursor.fetchone()
+        if setting_row and setting_row[0] == '1':
+            scan_and_index_documents(conn)
+            conn.close()
+            return
+    except Exception:
+        pass
 
     # Check if contracts already populated
     cursor.execute("SELECT COUNT(*) FROM contracts")
@@ -442,8 +458,6 @@ def scan_and_index_documents(conn: sqlite3.Connection):
     contract_id_map = {row["contract_code"]: row["id"] for row in cursor.fetchall()}
 
     scan_directories = [
-        # Biểu mẫu gốc
-        (WORKING_DIR / "Bieu Mau", "BIEU_MAU", "Biểu mẫu mẫu chuẩn"),
         # Hồ sơ dự án - Nghiệm thu
         (WORKING_DIR / "Ho So Du An" / "Nghiem Thu", "NGHIEM_THU", "Biên bản nghiệm thu & bàn giao"),
         # Hồ sơ dự án - Yêu cầu thanh toán
@@ -979,6 +993,10 @@ def delete_contract_dossier(contract_code: str) -> bool:
         try:
             fp_str = d["file_path"]
             if fp_str:
+                # SAFEGUARD: Never delete files inside Bieu Mau
+                if "bieu mau" in fp_str.lower() or "bieu_mau" in fp_str.lower():
+                    logger.warning("SAFEGUARD: Blocked attempt to delete master template: %s", fp_str)
+                    continue
                 p = Path(fp_str)
                 if p.exists() and p.is_file():
                     p.unlink(missing_ok=True)
@@ -996,7 +1014,7 @@ def delete_contract_dossier(contract_code: str) -> bool:
 
 
 def clear_all_contracts() -> int:
-    """Clear all contracts, milestones, and documents for a clean slate."""
+    """Clear all dummy/sample contracts, milestones, and documents for a clean slate."""
     import logging
     logger = logging.getLogger(__name__)
     conn = get_db_connection()
@@ -1004,17 +1022,29 @@ def clear_all_contracts() -> int:
     cursor.execute("SELECT COUNT(*) FROM contracts")
     count = cursor.fetchone()[0]
 
-    # Delete physical files for all documents
+    # Delete generated physical output files only (NEVER touch Bieu Mau!)
     cursor.execute("SELECT file_path FROM documents")
     for d in cursor.fetchall():
         try:
             fp_str = d["file_path"]
             if fp_str:
-                p = Path(fp_str)
-                if p.exists() and p.is_file():
-                    p.unlink(missing_ok=True)
+                # SAFEGUARD: Absolute protection for Bieu Mau templates!
+                if "bieu mau" in fp_str.lower() or "bieu_mau" in fp_str.lower():
+                    logger.warning("SAFEGUARD: Skipped master template file: %s", fp_str)
+                    continue
+                # Only clean outputs or generated payment requests
+                if "outputs" in fp_str.lower() or "yeu cau thanh toan" in fp_str.lower():
+                    p = Path(fp_str)
+                    if p.exists() and p.is_file():
+                        p.unlink(missing_ok=True)
         except Exception as err:
-            logger.warning("Error deleting file during clear_all: %s", err)
+            logger.warning("Error deleting generated file during clear_all: %s", err)
+
+    # Record persistent flag: User has cleared dummy data, DO NOT auto-seed sample contracts again!
+    try:
+        cursor.execute("INSERT OR REPLACE INTO system_settings (setting_key, setting_value) VALUES ('cleared_seed_data', '1')")
+    except Exception as flag_err:
+        logger.warning("Could not set cleared_seed_data flag: %s", flag_err)
 
     cursor.execute("DELETE FROM payment_milestones")
     cursor.execute("DELETE FROM documents")
