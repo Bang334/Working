@@ -133,6 +133,8 @@ def init_db():
         attachment_name TEXT,
         attachment_path TEXT,
         attachment_size INTEGER DEFAULT 0,
+        folder_path TEXT,
+        attachments TEXT DEFAULT '[]',
         completed_at TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -161,6 +163,19 @@ def init_db():
         if column_name not in existing_columns:
             cursor.execute(
                 f"ALTER TABLE payment_milestones ADD COLUMN {column_name} {definition}"
+            )
+
+    # Backward-compatible migration for custom_reminders (folder_path & attachments)
+    cr_columns = {
+        row[1] for row in cursor.execute("PRAGMA table_info(custom_reminders)").fetchall()
+    }
+    for col_name, col_def in (
+        ("folder_path", "TEXT"),
+        ("attachments", "TEXT DEFAULT '[]'"),
+    ):
+        if col_name not in cr_columns:
+            cursor.execute(
+                f"ALTER TABLE custom_reminders ADD COLUMN {col_name} {col_def}"
             )
 
     conn.commit()

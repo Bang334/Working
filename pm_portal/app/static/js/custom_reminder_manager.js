@@ -1,12 +1,12 @@
 /**
  * Custom Personal Reminders & Task Appointments Manager for Hong Ming PM Portal.
- * Handles:
- * - Independent personal reminders & task scheduling (separate from project contracts)
- * - Due date & time with Vietnamese weekday calculation (Thứ Hai, Thứ Ba...)
- * - File attachments: direct file upload or 1-click link to project files in Ho So Du An/
- * - Search, filtering by status (Today, Upcoming, Overdue, Completed) and priority
- * - Quick date buttons (Hôm nay, Ngày mai, Thứ Hai tới, +3 ngày, +1 tuần)
- * - Full CRUD & status toggles
+ * Supports:
+ * - Dedicated folders per reminder on disk
+ * - Multiple file & image attachments with thumbnail galleries & full lightbox preview
+ * - Linking files from anywhere on PC or Ho So Du An
+ * - Deletion options: delete files in dedicated folder vs keep files intact
+ * - Direct folder opening in Windows Explorer
+ * - Glowing red notification alert on sidebar when due today or overdue
  */
 
 const CustomReminderManager = {
@@ -24,7 +24,16 @@ const CustomReminderManager = {
   searchQuery: "",
   availableProjectFiles: [],
   activeEditingId: null,
-  attachmentMode: "upload", // 'upload' or 'project'
+  attachmentMode: "upload",
+
+  // Staged state for modal
+  stagedFiles: [],       // Array of File objects selected from computer
+  stagedLinkedPaths: [], // Array of string paths linked from project or custom disk path
+  existingAttachments: [], // Current attachments when editing
+  removedIndices: [],    // Indices of existing attachments to remove
+
+  // Pending delete target
+  targetDeleteId: null,
 
   init() {
     this.bindEvents();
@@ -108,6 +117,11 @@ const CustomReminderManager = {
         this.renderStats();
         this.renderReminders();
         this.updateMasterBadge();
+
+        // Refresh global sidebar alert as well
+        if (typeof refreshSidebarRemindersAlert === "function") {
+          refreshSidebarRemindersAlert();
+        }
       }
     } catch (err) {
       console.error("Lỗi khi tải danh sách nhắc nhở:", err);
@@ -137,7 +151,7 @@ const CustomReminderManager = {
       return;
     }
 
-    let html = '<option value="">-- Chọn một file từ Hồ Sơ Dự Án để đính kèm --</option>';
+    let html = '<option value="">-- Chọn file từ Hồ Sơ Dự Án để gắn vào lịch hẹn --</option>';
     const grouped = {};
     for (const f of this.availableProjectFiles) {
       const cat = f.category_label || "Hồ Sơ Khác";
@@ -148,7 +162,7 @@ const CustomReminderManager = {
     for (const [catName, fileList] of Object.entries(grouped)) {
       html += `<optgroup label="📂 ${catName}">`;
       for (const f of fileList) {
-        html += `<option value="${this.escapeHtml(f.path)}">${this.escapeHtml(f.name)} (${this.escapeHtml(f.size_human)})</option>`;
+        html += `<option value="${this.escapeHtml(f.file_path)}">${this.escapeHtml(f.file_name)} (${this.escapeHtml(f.file_size_formatted)})</option>`;
       }
       html += `</optgroup>`;
     }
@@ -158,13 +172,13 @@ const CustomReminderManager = {
   updateMasterBadge() {
     const badge = document.getElementById("badgeCustomCount");
     if (badge) {
-      const pendingCount = (this.stats.today || 0) + (this.stats.overdue || 0);
-      badge.textContent = this.stats.pending || 0;
+      const dueCount = (this.stats.today || 0) + (this.stats.overdue || 0);
+      badge.textContent = dueCount > 0 ? dueCount : (this.stats.pending || 0);
       if (this.stats.overdue > 0) {
         badge.style.background = "#dc2626";
         badge.title = `${this.stats.overdue} việc quá hạn, ${this.stats.today} việc hôm nay!`;
       } else if (this.stats.today > 0) {
-        badge.style.background = "#f59e0b";
+        badge.style.background = "#ea580c";
         badge.title = `${this.stats.today} việc cần làm hôm nay!`;
       } else {
         badge.style.background = "#3b82f6";
@@ -186,7 +200,6 @@ const CustomReminderManager = {
     if (elOverdue) elOverdue.textContent = this.stats.overdue || 0;
     if (elCompleted) elCompleted.textContent = this.stats.completed || 0;
 
-    // Filter pill counts
     const pillAll = document.getElementById("crPillCountAll");
     const pillToday = document.getElementById("crPillCountToday");
     const pillUpcoming = document.getElementById("crPillCountUpcoming");
@@ -213,19 +226,15 @@ const CustomReminderManager = {
     const container = document.getElementById("crCardsContainer");
     if (!container) return;
 
-    // Filter list
     let filtered = this.reminders.filter((r) => {
-      // Status filter
       if (this.currentFilter === "today" && (!r.is_today || r.status === "COMPLETED")) return false;
       if (this.currentFilter === "upcoming" && (!r.is_upcoming || r.status === "COMPLETED")) return false;
       if (this.currentFilter === "overdue" && (!r.is_overdue || r.status === "COMPLETED")) return false;
       if (this.currentFilter === "pending" && r.status !== "PENDING") return false;
       if (this.currentFilter === "completed" && r.status !== "COMPLETED") return false;
 
-      // Priority filter
       if (this.currentPriority !== "ALL" && r.priority !== this.currentPriority) return false;
 
-      // Search query
       if (this.searchQuery) {
         const text = `${r.title} ${r.description || ""} ${r.attachment_name || ""}`.toLowerCase();
         if (!text.includes(this.searchQuery)) return false;
@@ -242,7 +251,7 @@ const CustomReminderManager = {
           <p style="font-size: 0.85rem; color: #64748b; margin: 0 0 1.25rem 0; max-width: 420px; line-height: 1.5;">
             ${this.searchQuery || this.currentFilter !== "all" 
               ? "Hãy thử chọn bộ lọc khác hoặc tìm kiếm từ khóa khác." 
-              : "Bạn chưa có lời nhắc hoặc lịch hẹn riêng nào. Hãy thêm ngay việc cần nhớ kèm file đính kèm!"}
+              : "Bạn chưa có lời nhắc hoặc lịch hẹn riêng nào. Hãy thêm ngay việc cần nhớ kèm nhiều file hoặc ảnh đính kèm!"}
           </p>
           <button type="button" class="btn btn-primary" onclick="CustomReminderManager.openCreateModal()" style="font-weight: 700;">
             ➕ Tạo Nhắc Nhở Đầu Tiên
@@ -279,36 +288,81 @@ const CustomReminderManager = {
         timingBadge = `<span class="cr-timing cr-timing-upcoming">⏳ Còn ${r.days_remaining} ngày</span>`;
       }
 
-      // Category Pill
       const catLabel = this.getCategoryLabel(r.category);
 
-      // Attachment Block
-      let attachHtml = "";
-      if (r.attachment_name) {
-        const fileIcon = this.getFileIcon(r.attachment_name);
-        const sizeHuman = r.attachment_size_human || "";
-        attachHtml = `
-          <div class="cr-attachment-box">
-            <div style="display: flex; align-items: center; gap: 0.5rem; overflow: hidden; min-width: 0;">
-              <span style="font-size: 1.3rem;">${fileIcon}</span>
-              <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                <div style="font-size: 0.85rem; font-weight: 600; color: #1e3a8a; overflow: hidden; text-overflow: ellipsis;" title="${this.escapeHtml(r.attachment_name)}">
-                  ${this.escapeHtml(r.attachment_name)}
-                </div>
-                <div style="font-size: 0.72rem; color: #64748b;">
-                  ${sizeHuman ? sizeHuman : ""} ${r.is_linked_from_project ? "• 📂 Hồ sơ dự án" : "• 📁 Tệp tải lên"}
-                </div>
-              </div>
-            </div>
-            <a href="/api/v1/custom-reminders/${r.id}/download" target="_blank" class="btn btn-outline btn-sm cr-download-btn" title="Tải về tệp đính kèm">
-              <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Tải Tệp</span>
-            </a>
+      // Dedicated Folder Box
+      const folderBoxHtml = `
+        <div class="cr-folder-box" title="Thư mục lưu trữ: ${this.escapeHtml(r.folder_path || '')}">
+          <div style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden;">
+            <span>📁</span>
+            <span class="cr-folder-path">reminder_${r.id}</span>
           </div>
-        `;
+          <button type="button" class="cr-open-folder-btn" onclick="CustomReminderManager.openFolder(${r.id})" title="Mở thư mục này trên máy tính trong File Explorer">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 12px; height: 12px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>Mở Folder</span>
+          </button>
+        </div>
+      `;
+
+      // Attachments & Images rendering
+      const attachList = r.attachments_list || [];
+      const imageItems = [];
+      const docItems = [];
+
+      for (let i = 0; i < attachList.length; i++) {
+        const att = attachList[i];
+        if (att.is_image) {
+          imageItems.push({ ...att, index: i });
+        } else {
+          docItems.push({ ...att, index: i });
+        }
       }
 
-      // Card Container
+      // Render image thumbnails gallery
+      let galleryHtml = "";
+      if (imageItems.length > 0) {
+        galleryHtml += `<div class="cr-images-gallery">`;
+        for (const img of imageItems) {
+          galleryHtml += `
+            <div class="cr-image-thumb-box" onclick="CustomReminderManager.openLightbox('${img.preview_url}')" title="${this.escapeHtml(img.name)} (${img.size_human})">
+              <img src="${img.preview_url}" class="cr-image-thumb-img" alt="${this.escapeHtml(img.name)}" loading="lazy">
+              <div class="cr-image-thumb-overlay">🔍</div>
+            </div>
+          `;
+        }
+        galleryHtml += `</div>`;
+      }
+
+      // Render documents stack
+      let docsHtml = "";
+      if (docItems.length > 0) {
+        docsHtml += `<div class="cr-attachments-stack">`;
+        for (const doc of docItems) {
+          const fileIcon = this.getFileIcon(doc.name);
+          docsHtml += `
+            <div class="cr-attachment-row">
+              <div style="display: flex; align-items: center; gap: 0.45rem; overflow: hidden; min-width: 0;">
+                <span style="font-size: 1.15rem;">${fileIcon}</span>
+                <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <span style="font-size: 0.82rem; font-weight: 600; color: #1e3a8a;" title="${this.escapeHtml(doc.path)}">
+                    ${this.escapeHtml(doc.name)}
+                  </span>
+                  <span style="font-size: 0.72rem; color: #64748b; margin-left: 0.35rem;">
+                    (${doc.size_human}) ${doc.is_uploaded ? "• 📁 Thư mục" : "• 📂 Liên kết"}
+                  </span>
+                </div>
+              </div>
+              <a href="${doc.download_url}" target="_blank" class="btn btn-outline btn-sm cr-download-btn" title="Tải về tệp này">
+                <svg class="icon" viewBox="0 0 24 24" style="width: 12px; height: 12px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Tải</span>
+              </a>
+            </div>
+          `;
+        }
+        docsHtml += `</div>`;
+      }
+
+      // Card assembly
       cardsHtml += `
         <div class="cr-card ${isDone ? "is-completed" : ""} ${r.is_overdue && !isDone ? "is-overdue" : ""} ${r.is_today && !isDone ? "is-today" : ""}">
           <div class="cr-card-header">
@@ -328,10 +382,10 @@ const CustomReminderManager = {
             </div>
 
             <div class="cr-card-actions">
-              <button type="button" class="cr-action-icon-btn" onclick="CustomReminderManager.openEditModal(${r.id})" title="Chỉnh sửa nhắc nhở">
+              <button type="button" class="cr-action-icon-btn" onclick="CustomReminderManager.openEditModal(${r.id})" title="Chỉnh sửa nhắc nhở & tệp đính kèm">
                 <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
-              <button type="button" class="cr-action-icon-btn delete" onclick="CustomReminderManager.deleteReminder(${r.id})" title="Xóa nhắc nhở">
+              <button type="button" class="cr-action-icon-btn delete" onclick="CustomReminderManager.openDeleteModal(${r.id})" title="Xóa nhắc nhở (Chọn xóa tệp hoặc giữ tệp)">
                 <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
               </button>
             </div>
@@ -339,7 +393,11 @@ const CustomReminderManager = {
 
           ${r.description ? `<div class="cr-card-desc">${this.escapeHtml(r.description)}</div>` : ""}
 
-          ${attachHtml}
+          ${folderBoxHtml}
+
+          ${galleryHtml}
+
+          ${docsHtml}
 
           <div class="cr-card-footer">
             <div class="cr-schedule-time">
@@ -381,18 +439,22 @@ const CustomReminderManager = {
     if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) return "📊";
     if (lower.endsWith(".docx") || lower.endsWith(".doc")) return "📄";
     if (lower.endsWith(".pdf")) return "📑";
-    if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "🖼️";
+    if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp")) return "🖼️";
     if (lower.endsWith(".zip") || lower.endsWith(".rar") || lower.endsWith(".7z")) return "📦";
     return "📎";
   },
 
   openCreateModal() {
     this.activeEditingId = null;
-    document.getElementById("crModalTitle").innerHTML = "➕ Thêm Nhắc Nhở Riêng & Lịch Hẹn";
+    this.stagedFiles = [];
+    this.stagedLinkedPaths = [];
+    this.existingAttachments = [];
+    this.removedIndices = [];
+
+    document.getElementById("crModalTitle").innerHTML = "➕ Thêm Nhắc Nhở Riêng & Đính Kèm Tệp";
     document.getElementById("crTitleInput").value = "";
     document.getElementById("crDescInput").value = "";
     
-    // Default date: today or tomorrow
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, "0");
@@ -406,9 +468,9 @@ const CustomReminderManager = {
     // Reset attachments
     document.getElementById("crFileInput").value = "";
     document.getElementById("crProjectFileSelect").value = "";
-    document.getElementById("crCurrentAttachmentWrapper").style.display = "none";
-    document.getElementById("crRemoveAttachmentCheck").checked = false;
+    document.getElementById("crCustomFilePathInput").value = "";
 
+    this.renderStagedAttachments();
     this.switchAttachmentTab("upload");
     this.showModal();
   },
@@ -418,7 +480,12 @@ const CustomReminderManager = {
     if (!item) return;
 
     this.activeEditingId = id;
-    document.getElementById("crModalTitle").innerHTML = "✏️ Chỉnh Sửa Nhắc Nhở Riêng";
+    this.stagedFiles = [];
+    this.stagedLinkedPaths = [];
+    this.existingAttachments = [...(item.attachments_list || [])];
+    this.removedIndices = [];
+
+    document.getElementById("crModalTitle").innerHTML = `✏️ Sửa Nhắc Nhở (#${id} - folder: reminder_${id})`;
     document.getElementById("crTitleInput").value = item.title || "";
     document.getElementById("crDescInput").value = item.description || "";
     document.getElementById("crDueDateInput").value = item.due_date || "";
@@ -426,19 +493,11 @@ const CustomReminderManager = {
     document.getElementById("crPrioritySelect").value = item.priority || "NORMAL";
     document.getElementById("crCategorySelect").value = item.category || "GENERAL";
 
-    // Attachment
     document.getElementById("crFileInput").value = "";
     document.getElementById("crProjectFileSelect").value = "";
-    document.getElementById("crRemoveAttachmentCheck").checked = false;
+    document.getElementById("crCustomFilePathInput").value = "";
 
-    const currentAttachWrapper = document.getElementById("crCurrentAttachmentWrapper");
-    if (item.attachment_name) {
-      currentAttachWrapper.style.display = "block";
-      document.getElementById("crCurrentAttachmentName").textContent = `${item.attachment_name} (${item.attachment_size_human || ""})`;
-    } else {
-      currentAttachWrapper.style.display = "none";
-    }
-
+    this.renderStagedAttachments();
     this.switchAttachmentTab("upload");
     this.showModal();
   },
@@ -473,11 +532,152 @@ const CustomReminderManager = {
     }
   },
 
+  onFilesSelected(event) {
+    const files = event.target.files;
+    if (!files || !files.length) return;
+    for (let i = 0; i < files.length; i++) {
+      this.stagedFiles.push(files[i]);
+    }
+    // Clear input so selecting same file again triggers change
+    event.target.value = "";
+    this.renderStagedAttachments();
+  },
+
+  onProjectFileSelected(filePath) {
+    if (!filePath) return;
+    if (!this.stagedLinkedPaths.includes(filePath)) {
+      this.stagedLinkedPaths.push(filePath);
+      this.renderStagedAttachments();
+    }
+    document.getElementById("crProjectFileSelect").value = "";
+  },
+
+  addCustomFilePath() {
+    const input = document.getElementById("crCustomFilePathInput");
+    if (!input) return;
+    const pathVal = input.value.trim();
+    if (!pathVal) {
+      alert("Vui lòng nhập hoặc dán đường dẫn tệp tin!");
+      return;
+    }
+    if (!this.stagedLinkedPaths.includes(pathVal)) {
+      this.stagedLinkedPaths.push(pathVal);
+      this.renderStagedAttachments();
+    }
+    input.value = "";
+  },
+
+  removeStagedFile(index) {
+    this.stagedFiles.splice(index, 1);
+    this.renderStagedAttachments();
+  },
+
+  removeStagedLinkedPath(index) {
+    this.stagedLinkedPaths.splice(index, 1);
+    this.renderStagedAttachments();
+  },
+
+  markExistingAttachmentRemove(index) {
+    if (!this.removedIndices.includes(index)) {
+      this.removedIndices.push(index);
+    }
+    this.renderStagedAttachments();
+  },
+
+  unmarkExistingAttachmentRemove(index) {
+    this.removedIndices = this.removedIndices.filter((i) => i !== index);
+    this.renderStagedAttachments();
+  },
+
+  renderStagedAttachments() {
+    const container = document.getElementById("crStagedAttachmentsContainer");
+    const list = document.getElementById("crStagedList");
+    const countEl = document.getElementById("crStagedCount");
+    if (!container || !list) return;
+
+    let itemsHtml = "";
+    let activeExistingCount = 0;
+
+    // Existing attachments when editing
+    for (let i = 0; i < this.existingAttachments.length; i++) {
+      const att = this.existingAttachments[i];
+      const isRemoved = this.removedIndices.includes(i);
+      if (!isRemoved) activeExistingCount++;
+
+      itemsHtml += `
+        <div class="cr-staged-item" style="${isRemoved ? 'opacity: 0.5; text-decoration: line-through; background: #fee2e2;' : ''}">
+          <div style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden;">
+            <span>${this.getFileIcon(att.name)}</span>
+            <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              ${this.escapeHtml(att.name)}
+            </span>
+            <span style="color: #64748b; font-size: 0.72rem;">(${att.size_human || ""}) • Hiện có</span>
+          </div>
+          <div>
+            ${isRemoved 
+              ? `<button type="button" class="btn btn-outline btn-sm" onclick="CustomReminderManager.unmarkExistingAttachmentRemove(${i})" style="font-size: 0.7rem; padding: 1px 6px;">↺ Khôi phục</button>`
+              : `<button type="button" class="cr-staged-remove" onclick="CustomReminderManager.markExistingAttachmentRemove(${i})" title="Gỡ tệp này">✕ Gỡ</button>`}
+          </div>
+        </div>
+      `;
+    }
+
+    // Newly staged upload files
+    for (let i = 0; i < this.stagedFiles.length; i++) {
+      const f = this.stagedFiles[i];
+      const szHuman = (f.size < 1048576) ? `${round1(f.size / 1024)} KB` : `${round2(f.size / 1048576)} MB`;
+      const isImg = f.type.startsWith("image/");
+      itemsHtml += `
+        <div class="cr-staged-item" style="border-left: 3px solid #2563eb;">
+          <div style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden;">
+            <span>${isImg ? "🖼️" : this.getFileIcon(f.name)}</span>
+            <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              ${this.escapeHtml(f.name)}
+            </span>
+            <span style="color: #2563eb; font-size: 0.72rem;">(${szHuman}) • Sẽ tải lên</span>
+          </div>
+          <button type="button" class="cr-staged-remove" onclick="CustomReminderManager.removeStagedFile(${i})" title="Bỏ chọn">✕</button>
+        </div>
+      `;
+    }
+
+    // Newly staged linked paths
+    for (let i = 0; i < this.stagedLinkedPaths.length; i++) {
+      const p = this.stagedLinkedPaths[i];
+      const fname = p.split(/[\\/]/).pop();
+      itemsHtml += `
+        <div class="cr-staged-item" style="border-left: 3px solid #059669;">
+          <div style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden;">
+            <span>📂</span>
+            <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${this.escapeHtml(p)}">
+              ${this.escapeHtml(fname)}
+            </span>
+            <span style="color: #059669; font-size: 0.72rem;">• Đường dẫn ngoài</span>
+          </div>
+          <button type="button" class="cr-staged-remove" onclick="CustomReminderManager.removeStagedLinkedPath(${i})" title="Bỏ chọn">✕</button>
+        </div>
+      `;
+    }
+
+    const totalCount = activeExistingCount + this.stagedFiles.length + this.stagedLinkedPaths.length;
+    if (countEl) countEl.textContent = totalCount;
+
+    if (totalCount > 0 || this.removedIndices.length > 0) {
+      container.style.display = "block";
+      list.innerHTML = itemsHtml;
+    } else {
+      container.style.display = "none";
+      list.innerHTML = "";
+    }
+
+    function round1(v) { return Math.round(v * 10) / 10; }
+    function round2(v) { return Math.round(v * 100) / 100; }
+  },
+
   setQuickDate(offsetDays, toMonday = false) {
     const date = new Date();
     if (toMonday) {
-      // Find upcoming Monday
-      const dayOfWeek = date.getDay(); // 0 is Sunday, 1 is Monday
+      const dayOfWeek = date.getDay();
       let daysUntilMonday = 1 - dayOfWeek;
       if (daysUntilMonday <= 0) {
         daysUntilMonday += 7;
@@ -521,17 +721,19 @@ const CustomReminderManager = {
     formData.append("priority", priority);
     formData.append("category", category);
 
-    // Attachment logic
-    const fileInput = document.getElementById("crFileInput");
-    const projectFileSelect = document.getElementById("crProjectFileSelect");
-    const removeCheck = document.getElementById("crRemoveAttachmentCheck");
+    // Staged uploaded files
+    for (const f of this.stagedFiles) {
+      formData.append("files", f);
+    }
 
-    if (this.activeEditingId && removeCheck && removeCheck.checked) {
-      formData.append("remove_attachment", "true");
-    } else if (this.attachmentMode === "upload" && fileInput && fileInput.files.length > 0) {
-      formData.append("file", fileInput.files[0]);
-    } else if (this.attachmentMode === "project" && projectFileSelect && projectFileSelect.value) {
-      formData.append("existing_file_path", projectFileSelect.value);
+    // Staged linked paths
+    if (this.stagedLinkedPaths.length > 0) {
+      formData.append("existing_file_paths", JSON.stringify(this.stagedLinkedPaths));
+    }
+
+    // Removed indices when editing
+    if (this.activeEditingId && this.removedIndices.length > 0) {
+      formData.append("removed_indices", JSON.stringify(this.removedIndices));
     }
 
     const btnSubmit = document.getElementById("btnSubmitCustomReminder");
@@ -582,22 +784,69 @@ const CustomReminderManager = {
     }
   },
 
-  async deleteReminder(id) {
+  openDeleteModal(id) {
+    this.targetDeleteId = id;
     const item = this.reminders.find((r) => r.id === id);
-    const title = item ? item.title : `lời nhắc #${id}`;
-    if (!confirm(`Bạn có chắc muốn xóa "${title}" không?`)) {
-      return;
+    const titleEl = document.getElementById("crDeleteReminderTitle");
+    if (titleEl && item) {
+      titleEl.innerHTML = `Đang xóa: <strong>${this.escapeHtml(item.title)}</strong> (Thư mục: <code>reminder_${id}</code> có ${item.attachments_count || 0} tệp)`;
     }
+    const modal = document.getElementById("customReminderDeleteModal");
+    if (modal) modal.style.display = "flex";
+  },
+
+  closeDeleteModal() {
+    this.targetDeleteId = null;
+    const modal = document.getElementById("customReminderDeleteModal");
+    if (modal) modal.style.display = "none";
+  },
+
+  async confirmDeleteExecute(deleteFiles) {
+    const id = this.targetDeleteId;
+    if (!id) return;
 
     try {
-      const res = await fetch(`/api/v1/custom-reminders/${id}?delete_file=false`, {
+      const res = await fetch(`/api/v1/custom-reminders/${id}?delete_files=${deleteFiles}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Không thể xóa lời nhắc");
+      this.closeDeleteModal();
       await this.loadReminders();
     } catch (err) {
       alert(err.message);
     }
+  },
+
+  async openFolder(id) {
+    try {
+      const res = await fetch(`/api/v1/custom-reminders/${id}/open-folder`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        console.log(data.message);
+      } else {
+        alert(data.message || "Không thể mở thư mục trên máy tính.");
+      }
+    } catch (err) {
+      alert(`Lỗi khi mở thư mục: ${err.message}`);
+    }
+  },
+
+  openLightbox(imageUrl) {
+    const modal = document.getElementById("crImageLightboxModal");
+    const img = document.getElementById("crLightboxImg");
+    const dlLink = document.getElementById("crLightboxDownloadLink");
+    if (!modal || !img) return;
+
+    img.src = imageUrl;
+    if (dlLink) dlLink.href = imageUrl;
+    modal.style.display = "flex";
+  },
+
+  closeLightbox() {
+    const modal = document.getElementById("crImageLightboxModal");
+    if (modal) modal.style.display = "none";
   },
 
   escapeHtml(str) {
@@ -611,7 +860,6 @@ const CustomReminderManager = {
   },
 };
 
-// Global hooks for direct inline onclick handlers
 function switchMasterReminderTab(tabName) {
   CustomReminderManager.switchMasterTab(tabName);
 }

@@ -102,6 +102,42 @@
   <script src="/static/js/api_client.js?v=4.0"></script>
   <script src="/static/js/contract_editor.js?v=4.0"></script>
   <script src="/static/js/app.js?v=4.0"></script>
+  <script>
+    // Global sidebar unread reminders alert check
+    async function refreshSidebarRemindersAlert() {
+      try {
+        const res = await fetch("/api/v1/custom-reminders/due-count");
+        if (!res.ok) return;
+        const data = await res.json();
+        const badge = document.getElementById("sidebarReminderBadge");
+        const dot = document.getElementById("sidebarReminderDot");
+        if (!badge || !dot) return;
+
+        const totalDue = data.total_due || 0;
+        if (totalDue > 0) {
+          badge.textContent = totalDue > 99 ? "99+" : totalDue;
+          badge.style.display = "inline-flex";
+          dot.style.display = "block";
+          let tip = "";
+          if (data.overdue_count > 0 && data.today_count > 0) {
+            tip = `${data.overdue_count} việc quá hạn, ${data.today_count} việc đến hạn hôm nay!`;
+          } else if (data.overdue_count > 0) {
+            tip = `${data.overdue_count} việc quá hạn chưa xử lý!`;
+          } else {
+            tip = `${data.today_count} việc cần thực hiện hôm nay!`;
+          }
+          badge.title = tip;
+          dot.title = tip;
+        } else {
+          badge.style.display = "none";
+          dot.style.display = "none";
+        }
+      } catch (e) {
+        // Silent catch for background notification check
+      }
+    }
+    document.addEventListener("DOMContentLoaded", refreshSidebarRemindersAlert);
+  </script>
   {% block scripts %}{% endblock %}
 
 </body>

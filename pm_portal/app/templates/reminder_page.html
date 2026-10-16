@@ -1011,51 +1011,58 @@
         </div>
       </div>
 
-      <!-- Tệp đính kèm -->
+      <!-- Tệp đính kèm đa năng -->
       <div class="card" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem;">
-        <label class="form-label" style="font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; display: block; font-size: 0.9rem;">
-          📎 Tệp Đính Kèm Cần Gửi / Cần Lưu Trữ:
-        </label>
-
-        <!-- Current Attachment Warning (if editing) -->
-        <div id="crCurrentAttachmentWrapper" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.6rem 0.85rem; border-radius: 6px; margin-bottom: 0.75rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.82rem; color: #1e3a8a; font-weight: 600;">
-              📂 Tệp hiện tại: <span id="crCurrentAttachmentName"></span>
-            </span>
-            <label style="font-size: 0.76rem; color: #dc2626; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;">
-              <input type="checkbox" id="crRemoveAttachmentCheck"> Gỡ tệp này
-            </label>
-          </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <label class="form-label" style="font-weight: 700; color: #1e3a8a; margin: 0; font-size: 0.9rem;">
+            📎 Đính Kèm Nhiều Tệp & Hình Ảnh (Lưu theo Thư Mục Riêng):
+          </label>
+          <span style="font-size: 0.74rem; color: #64748b;">(Tự động tạo folder riêng cho từng lời nhắc)</span>
         </div>
 
         <!-- Attachment Mode Switcher -->
         <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
           <button type="button" class="btn btn-outline btn-sm active" id="crAttachTabUpload" style="font-size: 0.78rem;">
-            📁 Tải Tệp Mới Từ Máy
+            📁 Tải Tệp / Ảnh Mới Từ Máy
           </button>
           <button type="button" class="btn btn-outline btn-sm" id="crAttachTabProject" style="font-size: 0.78rem;">
-            📂 Chọn Từ Hồ Sơ Dự Án
+            📂 Chọn Từ Hồ Sơ / Đường Dẫn Khác
           </button>
         </div>
 
-        <!-- Mode 1: Upload File -->
+        <!-- Mode 1: Upload Multiple Files -->
         <div id="crAttachContentUpload">
-          <input type="file" id="crFileInput" class="form-control" style="background: #ffffff;">
+          <input type="file" id="crFileInput" class="form-control" multiple style="background: #ffffff;" onchange="CustomReminderManager.onFilesSelected(event)">
           <p style="font-size: 0.74rem; color: #64748b; margin: 0.35rem 0 0 0;">
-            Hỗ trợ tài liệu Word (.docx), Excel (.xlsx), PDF (.pdf), hình ảnh hoặc file nén (.zip). Tệp sẽ được lưu vào <code>Ho So Du An/Nhac Nho/</code>.
+            Hỗ trợ chọn cùng lúc <strong>nhiều tệp và hình ảnh</strong> (Word, Excel, PDF, PNG, JPG...). Tệp tải lên sẽ được gom vào thư mục riêng của lời nhắc này.
           </p>
         </div>
 
-        <!-- Mode 2: Link Project File -->
+        <!-- Mode 2: Link Existing Project File or Custom Disk Path -->
         <div id="crAttachContentProject" style="display: none;">
-          <select id="crProjectFileSelect" class="form-control" style="background: #ffffff;">
-            <option value="">-- Đang quét file từ Hồ Sơ Dự Án... --</option>
-          </select>
-          <p style="font-size: 0.74rem; color: #64748b; margin: 0.35rem 0 0 0;">
-            Chọn nhanh báo giá, hợp đồng hoặc biên bản nghiệm thu đã lập trước đó để gắn vào lịch hẹn mà không cần tải lại file.
-          </p>
+          <div style="margin-bottom: 0.5rem;">
+            <select id="crProjectFileSelect" class="form-control" style="background: #ffffff;" onchange="CustomReminderManager.onProjectFileSelected(this.value)">
+              <option value="">-- Chọn file từ Hồ Sơ Dự Án --</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 0.4rem;">
+            <input type="text" id="crCustomFilePathInput" class="form-control" placeholder="Hoặc dán đường dẫn file bất kỳ trên máy (Ví dụ: D:\TaiLieu\ban_ve.pdf)..." style="font-size: 0.8rem; background: #ffffff;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="CustomReminderManager.addCustomFilePath()" style="white-space: nowrap; font-weight: 700;">
+              ➕ Thêm
+            </button>
+          </div>
         </div>
+
+        <!-- Staged / Existing Attachments List -->
+        <div id="crStagedAttachmentsContainer" style="margin-top: 0.75rem; display: none;">
+          <div style="font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.3rem;">
+            Danh sách tệp đính kèm (<span id="crStagedCount">0</span>):
+          </div>
+          <div id="crStagedList" class="cr-staged-box">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
       </div>
 
       <!-- Action Buttons -->
@@ -1066,6 +1073,77 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Modal: Xác Nhận Xóa Lời Nhắc (Lựa Chọn Xóa Tệp Hay Giữ Tệp) -->
+<div id="customReminderDeleteModal" class="loading-overlay" style="display: none; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(3px);" role="dialog">
+  <div class="card" style="max-width: 520px; width: 94%; padding: 1.5rem; text-align: left; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); border-radius: 12px; border: 1.5px solid #fca5a5;">
+    
+    <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; border-bottom: 1px solid #fee2e2; padding-bottom: 0.75rem;">
+      <span style="font-size: 1.5rem;">⚠️</span>
+      <div>
+        <h3 style="margin: 0; color: #991b1b; font-size: 1.1rem; font-weight: 800;">
+          Xác Nhận Xóa Lời Nhắc & Quản Lý Tệp Tin
+        </h3>
+        <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: #64748b;" id="crDeleteReminderTitle">
+          Lời nhắc: ...
+        </p>
+      </div>
+    </div>
+
+    <p style="font-size: 0.85rem; color: #334155; line-height: 1.5; margin-bottom: 1.25rem;">
+      Bạn muốn xóa lời nhắc này như thế nào? Vui lòng chọn một trong hai phương án xử lý tệp tin dưới đây:
+    </p>
+
+    <!-- Option 1: Xóa cả folder tệp tin -->
+    <div class="cr-delete-choice-card purge" onclick="CustomReminderManager.confirmDeleteExecute(true)">
+      <div>
+        <div style="font-weight: 800; font-size: 0.9rem; color: #dc2626; display: flex; align-items: center; gap: 0.35rem;">
+          <span>🗑️ Xóa Lời Nhắc & XÓA CẢ THƯ MỤC TỆP</span>
+        </div>
+        <p style="margin: 0.25rem 0 0 0; font-size: 0.76rem; color: #64748b; line-height: 1.4;">
+          Xóa bản ghi và dọn dẹp sạch toàn bộ các tệp/ảnh trong thư mục riêng của lời nhắc để giải phóng ổ cứng.
+        </p>
+      </div>
+      <button type="button" class="btn btn-sm" style="background: #dc2626; color: #fff; font-weight: 700; white-space: nowrap;">
+        Xóa Cả Tệp
+      </button>
+    </div>
+
+    <!-- Option 2: Giữ lại tệp tin trên máy -->
+    <div class="cr-delete-choice-card" onclick="CustomReminderManager.confirmDeleteExecute(false)">
+      <div>
+        <div style="font-weight: 800; font-size: 0.9rem; color: #2563eb; display: flex; align-items: center; gap: 0.35rem;">
+          <span>📁 Chỉ Xóa Lời Nhắc, GIỮ NGUYÊN TỆP TIN</span>
+        </div>
+        <p style="margin: 0.25rem 0 0 0; font-size: 0.76rem; color: #64748b; line-height: 1.4;">
+          Chỉ xóa nhắc nhở khỏi hệ thống, toàn bộ thư mục và tệp tin trên máy tính vẫn được bảo toàn nguyên vẹn.
+        </p>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" style="color: #2563eb; border-color: #93c5fd; font-weight: 700; white-space: nowrap;">
+        Giữ Lại Tệp
+      </button>
+    </div>
+
+    <!-- Footer Cancel -->
+    <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="CustomReminderManager.closeDeleteModal()">
+        Hủy Bỏ (Không Xóa)
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Lightbox Xem Ảnh Lớn -->
+<div id="crImageLightboxModal" class="cr-lightbox" style="display: none;" onclick="CustomReminderManager.closeLightbox()">
+  <div style="position: relative;" onclick="event.stopPropagation()">
+    <img id="crLightboxImg" src="" alt="Xem trước hình ảnh">
+    <div style="position: absolute; top: -35px; right: 0; display: flex; gap: 0.5rem;">
+      <a id="crLightboxDownloadLink" href="#" target="_blank" class="btn btn-primary btn-sm" download>📥 Tải ảnh</a>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="CustomReminderManager.closeLightbox()">✕ Đóng</button>
+    </div>
   </div>
 </div>
 {% endblock %}

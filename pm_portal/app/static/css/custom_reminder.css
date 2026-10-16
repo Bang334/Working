@@ -451,3 +451,201 @@
 .cr-quick-btn:hover {
   background: #dbeafe;
 }
+
+/* Dedicated Folder Badge & Button */
+.cr-folder-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  font-size: 0.76rem;
+}
+
+.cr-folder-path {
+  color: #334155;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-open-folder-btn {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  padding: 2px 7px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.cr-open-folder-btn:hover {
+  background: #dbeafe;
+}
+
+/* Image Thumbnails Gallery */
+.cr-images-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cr-image-thumb-box {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1.5px solid #cbd5e1;
+  background: #0f172a;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.cr-image-thumb-box:hover {
+  transform: scale(1.05);
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.cr-image-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cr-image-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.cr-image-thumb-box:hover .cr-image-thumb-overlay {
+  opacity: 1;
+}
+
+/* Multi-Attachments Stack */
+.cr-attachments-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.cr-attachment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  transition: background 0.15s ease;
+}
+
+.cr-attachment-row:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+/* Staged Files List inside Modal */
+.cr-staged-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.cr-staged-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.6rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.78rem;
+}
+
+.cr-staged-remove {
+  background: transparent;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.cr-staged-remove:hover {
+  background: #fee2e2;
+}
+
+/* Delete Choice Modal Buttons */
+.cr-delete-choice-card {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cr-delete-choice-card:hover {
+  border-color: #93c5fd;
+  background: #f8fafc;
+}
+
+.cr-delete-choice-card.purge:hover {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+/* Lightbox Image Preview */
+.cr-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 2rem;
+}
+
+.cr-lightbox img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+

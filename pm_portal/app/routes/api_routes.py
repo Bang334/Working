@@ -2,7 +2,7 @@
 
 import logging
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
@@ -41,8 +41,11 @@ from app.controllers.custom_reminder_controller import (
     create_custom_reminder_controller,
     delete_custom_reminder_controller,
     download_reminder_attachment_controller,
+    get_sidebar_due_count_controller,
     list_available_project_files_controller,
     list_custom_reminders_controller,
+    open_reminder_folder_controller,
+    preview_reminder_attachment_controller,
     toggle_reminder_status_controller,
     update_custom_reminder_controller,
 )
@@ -654,6 +657,12 @@ async def list_quotation_files_endpoint():
 # CUSTOM PERSONAL REMINDERS & SCHEDULE
 # ==========================================
 
+@router.get("/custom-reminders/due-count")
+async def get_sidebar_due_count_endpoint():
+    """Retrieve due today and overdue count for glowing red sidebar indicator."""
+    return await get_sidebar_due_count_controller()
+
+
 @router.get("/custom-reminders")
 async def list_custom_reminders_endpoint(
     status: Optional[str] = None,
@@ -672,10 +681,12 @@ async def create_custom_reminder_endpoint(
     due_time: str = Form("09:00"),
     priority: str = Form("NORMAL"),
     category: str = Form("GENERAL"),
+    existing_file_paths: Optional[str] = Form(None),
     existing_file_path: Optional[str] = Form(None),
+    files: List[UploadFile] = File(default=[]),
     file: Optional[UploadFile] = File(None),
 ):
-    """Create a new custom personal reminder with optional file upload or link."""
+    """Create a new custom personal reminder with dedicated folder and multi-file attachments."""
     return await create_custom_reminder_controller(
         title=title,
         due_date=due_date,
@@ -683,6 +694,8 @@ async def create_custom_reminder_endpoint(
         due_time=due_time,
         priority=priority,
         category=category,
+        files=files,
+        existing_file_paths=existing_file_paths,
         file=file,
         existing_file_path=existing_file_path,
     )
@@ -697,11 +710,14 @@ async def update_custom_reminder_endpoint(
     due_time: Optional[str] = Form(None),
     priority: Optional[str] = Form(None),
     category: Optional[str] = Form(None),
+    existing_file_paths: Optional[str] = Form(None),
     existing_file_path: Optional[str] = Form(None),
     remove_attachment: bool = Form(False),
+    removed_indices: Optional[str] = Form(None),
+    files: List[UploadFile] = File(default=[]),
     file: Optional[UploadFile] = File(None),
 ):
-    """Update custom personal reminder details or attachment."""
+    """Update custom personal reminder details or attachments."""
     return await update_custom_reminder_controller(
         reminder_id=reminder_id,
         title=title,
@@ -710,9 +726,12 @@ async def update_custom_reminder_endpoint(
         due_time=due_time,
         priority=priority,
         category=category,
+        files=files,
+        existing_file_paths=existing_file_paths,
         file=file,
         existing_file_path=existing_file_path,
         remove_attachment=remove_attachment,
+        removed_indices=removed_indices,
     )
 
 
@@ -723,15 +742,38 @@ async def toggle_custom_reminder_endpoint(reminder_id: int):
 
 
 @router.delete("/custom-reminders/{reminder_id}")
-async def delete_custom_reminder_endpoint(reminder_id: int, delete_file: bool = False):
-    """Delete a custom reminder and optionally its uploaded file."""
-    return await delete_custom_reminder_controller(reminder_id, delete_file)
+async def delete_custom_reminder_endpoint(
+    reminder_id: int,
+    delete_files: bool = False,
+    delete_file: bool = False,
+):
+    """Delete a custom reminder and optionally its dedicated folder & files."""
+    should_delete_files = delete_files or delete_file
+    return await delete_custom_reminder_controller(reminder_id, should_delete_files)
 
 
 @router.get("/custom-reminders/{reminder_id}/download")
-async def download_custom_reminder_attachment_endpoint(reminder_id: int):
-    """Download attached file for a custom reminder."""
-    return await download_reminder_attachment_controller(reminder_id)
+async def download_custom_reminder_primary_attachment_endpoint(reminder_id: int):
+    """Download primary attached file for a custom reminder."""
+    return await download_reminder_attachment_controller(reminder_id, index=0)
+
+
+@router.get("/custom-reminders/{reminder_id}/attachments/{index}/download")
+async def download_custom_reminder_attachment_by_index_endpoint(reminder_id: int, index: int):
+    """Download attached file by index."""
+    return await download_reminder_attachment_controller(reminder_id, index=index)
+
+
+@router.get("/custom-reminders/{reminder_id}/attachments/{index}/preview")
+async def preview_custom_reminder_attachment_endpoint(reminder_id: int, index: int):
+    """Preview image or document inline in browser by attachment index."""
+    return await preview_reminder_attachment_controller(reminder_id, index=index)
+
+
+@router.post("/custom-reminders/{reminder_id}/open-folder")
+async def open_custom_reminder_folder_endpoint(reminder_id: int):
+    """Open dedicated reminder folder in File Explorer on Windows."""
+    return await open_reminder_folder_controller(reminder_id)
 
 
 @router.get("/custom-reminders/project-files")

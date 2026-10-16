@@ -1,8 +1,10 @@
-"""Service managing personal reminders, custom scheduled tasks, and file attachments."""
+"""Service managing personal reminders, custom scheduled tasks, dedicated folders, and multi-file attachments."""
 
+import json
 import logging
 import os
 import shutil
+import subprocess
 from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -12,7 +14,7 @@ from app.database import get_db_connection
 
 logger = logging.getLogger(__name__)
 
-# Thư mục lưu trữ các file đính kèm nhắc nhở riêng
+# Base folder for personal reminders
 REMINDERS_DIR = WORKING_DIR / "Ho So Du An" / "Nhac Nho"
 
 WEEKDAYS_VI = [
@@ -25,11 +27,30 @@ WEEKDAYS_VI = [
     "Chủ Nhật",
 ]
 
+IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"}
+
 
 def ensure_reminders_dir() -> Path:
     """Ensure Ho So Du An/Nhac Nho folder exists."""
     REMINDERS_DIR.mkdir(parents=True, exist_ok=True)
     return REMINDERS_DIR
+
+
+def get_reminder_folder(reminder_id: int) -> Path:
+    """Get dedicated folder path for a specific reminder."""
+    folder = ensure_reminders_dir() / f"reminder_{reminder_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder
+
+
+def format_size_human(size_bytes: int) -> str:
+    """Format file size in KB or MB."""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1048576:
+        return f"{round(size_bytes / 1024, 1)} KB"
+    else:
+        return f"{round(size_bytes / 1048576, 2)} MB"
 
 
 def parse_date_to_iso(date_str: str) -> str:
@@ -51,11 +72,7 @@ def get_day_of_week_vi(dt: date) -> str:
 
 
 def format_due_string(due_date_str: str, due_time_str: str = "09:00") -> Tuple[str, str, int, bool, bool, bool]:
-    """Calculate date relations, day of week, and readable display text.
-    
-    Returns:
-        (formatted_full, timing_badge_text, days_diff, is_today, is_overdue, is_upcoming)
-    """
+    """Calculate date relations, day of week, and readable display text."""
     iso_date = parse_date_to_iso(due_date_str)
     today = datetime.now().date()
     try:
@@ -112,15 +129,15 @@ def get_custom_reminders_list(
 
     if search_query and search_query.strip():
         q = f"%{search_query.strip()}%"
-        query += " AND (title LIKE ? OR description LIKE ? OR attachment_name LIKE ?)"
-        params.extend([q, q, q])
+        query += " AND (title LIKE ? OR description LIKE ? OR attachment_name LIKE ? OR attachments LIKE ?)"
+        params.extend([q, q, q, q])
 
     query += " ORDER BY CASE WHEN status = 'PENDING' THEN 0 ELSE 1 END, due_date ASC, due_time ASC, id DESC"
 
     cursor.execute(query, tuple(params))
     rows = cursor.fetchall()
 
-    # Also calculate global statistics
+    # Calculate global statistics
     cursor.execute("SELECT status, due_date FROM custom_reminders")
     all_rows = cursor.fetchall()
     conn.close()
@@ -165,26 +182,76 @@ def get_custom_reminders_list(
         item["is_overdue"] = is_overdue if item.get("status") != "COMPLETED" else False
         item["is_upcoming"] = is_upcoming
 
-        # Check attachment
-        att_path_str = item.get("attachment_path") or ""
-        att_exists = False
-        att_size = item.get("attachment_size") or 0
-        att_ext = ""
-        if att_path_str:
-            p = Path(att_path_str)
-            att_exists = p.is_file()
-            if att_exists:
-                att_size = p.stat().st_size
-                att_ext = p.suffix.lstrip(".").lower()
+        # Parse attachments JSON
+        raw_attach = item.get("attachments") or "[]"
+        attachments_list: List[Dict[str, Any]] = []
+        try:
+            parsed = json.loads(raw_attach) if isinstance(raw_attach, str) else raw_attach
+            if isinstance(parsed, list):
+                attachments_list = parsed
+        except Exception:
+            attachments_list = []
 
-        item["attachment_exists"] = att_exists
-        item["attachment_size"] = att_size
-        size_human = f"{round(att_size / 1024, 1)} KB" if att_size < 1048576 else f"{round(att_size / 1048576, 2)} MB"
-        item["attachment_size_formatted"] = size_human
-        item["attachment_size_human"] = size_human
-        item["attachment_ext"] = att_ext
-        item["download_url"] = f"/api/v1/custom-reminders/{item['id']}/download" if att_exists else ""
-        item["is_linked_from_project"] = bool("Ho So Du An" in att_path_str and "Nhac Nho" not in att_path_str)
+        # If attachments_list is empty but legacy attachment_path exists, backfill it
+        legacy_path = item.get("attachment_path") or ""
+        if not attachments_list and legacy_path:
+            p_leg = Path(legacy_path)
+            ext = p_leg.suffix.lstrip(".").lower()
+            sz = item.get("attachment_size") or (p_leg.stat().st_size if p_leg.is_file() else 0)
+            attachments_list.append({
+                "name": item.get("attachment_name") or p_leg.name,
+                "path": str(p_leg),
+                "size": sz,
+                "size_human": format_size_human(sz),
+                "ext": ext,
+                "is_image": ext in IMAGE_EXTENSIONS,
+                "is_uploaded": "Nhac Nho" in str(p_leg),
+                "exists": p_leg.is_file(),
+            })
+
+        # Enrich attachment items with exists, download and preview URLs
+        for idx, att in enumerate(attachments_list):
+            p_att = Path(att.get("path", ""))
+            att_exists = p_att.is_file()
+            att["exists"] = att_exists
+            ext = att.get("ext") or p_att.suffix.lstrip(".").lower()
+            att["ext"] = ext
+            att["is_image"] = ext in IMAGE_EXTENSIONS
+            att["download_url"] = f"/api/v1/custom-reminders/{item['id']}/attachments/{idx}/download"
+            att["preview_url"] = f"/api/v1/custom-reminders/{item['id']}/attachments/{idx}/preview"
+
+        item["attachments_list"] = attachments_list
+        item["attachments_count"] = len(attachments_list)
+
+        # Primary attachment backward compatibility
+        if attachments_list:
+            first = attachments_list[0]
+            item["attachment_name"] = first.get("name", "")
+            item["attachment_path"] = first.get("path", "")
+            item["attachment_size"] = first.get("size", 0)
+            item["attachment_size_formatted"] = first.get("size_human", "")
+            item["attachment_size_human"] = first.get("size_human", "")
+            item["attachment_ext"] = first.get("ext", "")
+            item["attachment_exists"] = first.get("exists", False)
+            item["download_url"] = first.get("download_url", "")
+            item["is_linked_from_project"] = not first.get("is_uploaded", False)
+        else:
+            item["attachment_name"] = ""
+            item["attachment_path"] = ""
+            item["attachment_size"] = 0
+            item["attachment_size_formatted"] = ""
+            item["attachment_size_human"] = ""
+            item["attachment_ext"] = ""
+            item["attachment_exists"] = False
+            item["download_url"] = ""
+            item["is_linked_from_project"] = False
+
+        # Dedicated folder check
+        f_path = item.get("folder_path")
+        if not f_path:
+            f_path = str(ensure_reminders_dir() / f"reminder_{item['id']}")
+            item["folder_path"] = f_path
+        item["folder_exists"] = Path(f_path).is_dir()
 
         reminders.append(item)
 
@@ -195,6 +262,35 @@ def get_custom_reminders_list(
     }
 
 
+def get_sidebar_due_stats() -> Dict[str, Any]:
+    """Calculate count of pending reminders due today or overdue for the red sidebar alert."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT due_date FROM custom_reminders WHERE status = 'PENDING'")
+    rows = cursor.fetchall()
+    conn.close()
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_count = 0
+    overdue_count = 0
+
+    for r in rows:
+        d_str = parse_date_to_iso(r["due_date"])
+        if d_str == today_str:
+            today_count += 1
+        elif d_str < today_str:
+            overdue_count += 1
+
+    total_due = today_count + overdue_count
+    return {
+        "status": "success",
+        "today_count": today_count,
+        "overdue_count": overdue_count,
+        "total_due": total_due,
+        "has_due": total_due > 0,
+    }
+
+
 def create_custom_reminder(
     title: str,
     due_date: str,
@@ -202,11 +298,13 @@ def create_custom_reminder(
     due_time: str = "09:00",
     priority: str = "NORMAL",
     category: str = "GENERAL",
+    uploaded_files: Optional[List[Tuple[str, bytes]]] = None,
+    linked_file_paths: Optional[List[str]] = None,
     file_bytes: Optional[bytes] = None,
     file_name: Optional[str] = None,
     existing_file_path: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Create and persist a new custom reminder with optional attachment."""
+    """Create and persist a new custom reminder with its dedicated folder and multi-file attachments."""
     if not title or not title.strip():
         raise ValueError("Tiêu đề nhắc nhở không được để trống.")
 
@@ -216,47 +314,105 @@ def create_custom_reminder(
     if clean_priority not in ("LOW", "NORMAL", "HIGH", "URGENT"):
         clean_priority = "NORMAL"
 
-    att_name = ""
-    att_path_str = ""
-    att_size = 0
-
-    # 1. New file upload
-    if file_bytes and file_name:
-        folder = ensure_reminders_dir()
-        safe_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{Path(file_name).name}"
-        dest_path = folder / safe_name
-        dest_path.write_bytes(file_bytes)
-        att_name = Path(file_name).name
-        att_path_str = str(dest_path)
-        att_size = len(file_bytes)
-    # 2. Link existing project file
-    elif existing_file_path and existing_file_path.strip():
-        p = Path(existing_file_path.strip())
-        if p.is_file():
-            att_name = p.name
-            att_path_str = str(p)
-            att_size = p.stat().st_size
-
+    # Step 1: Insert preliminary record to obtain ID
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO custom_reminders (
             title, description, due_date, due_time, priority, category, status,
-            attachment_name, attachment_path, attachment_size
-        ) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)
-    """, (
-        title.strip(), description.strip(), iso_due_date, clean_time, clean_priority,
-        category, att_name, att_path_str, att_size
-    ))
+            attachment_name, attachment_path, attachment_size, folder_path, attachments
+        ) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', '', '', 0, '', '[]')
+    """, (title.strip(), description.strip(), iso_due_date, clean_time, clean_priority, category))
     conn.commit()
     new_id = cursor.lastrowid
+
+    # Step 2: Create dedicated folder for this reminder
+    reminder_folder = get_reminder_folder(new_id)
+
+    attachments_list: List[Dict[str, Any]] = []
+
+    # Handle legacy single upload if passed
+    if file_bytes and file_name:
+        if uploaded_files is None:
+            uploaded_files = []
+        uploaded_files.append((file_name, file_bytes))
+
+    # Handle legacy single linked path if passed
+    if existing_file_path and existing_file_path.strip():
+        if linked_file_paths is None:
+            linked_file_paths = []
+        linked_file_paths.append(existing_file_path.strip())
+
+    # Step 3: Save uploaded files directly into reminder_folder
+    if uploaded_files:
+        for fname, fbytes in uploaded_files:
+            if not fname or not fbytes:
+                continue
+            clean_fname = Path(fname).name
+            dest_file = reminder_folder / clean_fname
+            # If exists, avoid overwrite by prefixing timestamp
+            if dest_file.exists():
+                dest_file = reminder_folder / f"{datetime.now().strftime('%H%M%S')}_{clean_fname}"
+            dest_file.write_bytes(fbytes)
+            ext = dest_file.suffix.lstrip(".").lower()
+            sz = len(fbytes)
+            attachments_list.append({
+                "name": dest_file.name,
+                "path": str(dest_file),
+                "size": sz,
+                "size_human": format_size_human(sz),
+                "ext": ext,
+                "is_image": ext in IMAGE_EXTENSIONS,
+                "is_uploaded": True,
+            })
+
+    # Step 4: Add external linked files (from anywhere on PC or Ho So Du An)
+    if linked_file_paths:
+        for lpath in linked_file_paths:
+            if not lpath or not str(lpath).strip():
+                continue
+            p = Path(str(lpath).strip())
+            if p.is_file():
+                ext = p.suffix.lstrip(".").lower()
+                sz = p.stat().st_size
+                attachments_list.append({
+                    "name": p.name,
+                    "path": str(p),
+                    "size": sz,
+                    "size_human": format_size_human(sz),
+                    "ext": ext,
+                    "is_image": ext in IMAGE_EXTENSIONS,
+                    "is_uploaded": False,
+                })
+
+    # Prepare primary attachment fields for backward compatibility
+    primary_name = attachments_list[0]["name"] if attachments_list else ""
+    primary_path = attachments_list[0]["path"] if attachments_list else ""
+    total_size = sum(a.get("size", 0) for a in attachments_list)
+
+    cursor.execute("""
+        UPDATE custom_reminders SET
+            attachment_name = ?,
+            attachment_path = ?,
+            attachment_size = ?,
+            folder_path = ?,
+            attachments = ?
+        WHERE id = ?
+    """, (
+        primary_name, primary_path, total_size,
+        str(reminder_folder), json.dumps(attachments_list, ensure_ascii=False),
+        new_id
+    ))
+    conn.commit()
     conn.close()
 
     return {
         "status": "success",
         "message": "Đã tạo lời nhắc nhở thành công!",
         "reminder_id": new_id,
-        "attachment_name": att_name,
+        "folder_path": str(reminder_folder),
+        "attachments_count": len(attachments_list),
+        "attachment_name": primary_name,
     }
 
 
@@ -268,12 +424,15 @@ def update_custom_reminder(
     due_time: Optional[str] = None,
     priority: Optional[str] = None,
     category: Optional[str] = None,
+    uploaded_files: Optional[List[Tuple[str, bytes]]] = None,
+    linked_file_paths: Optional[List[str]] = None,
     file_bytes: Optional[bytes] = None,
     file_name: Optional[str] = None,
     existing_file_path: Optional[str] = None,
     remove_attachment: bool = False,
+    removed_file_indices: Optional[List[int]] = None,
 ) -> Dict[str, Any]:
-    """Update details or attachment of an existing reminder."""
+    """Update details, add/remove attachments in dedicated reminder folder."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM custom_reminders WHERE id = ?", (reminder_id,))
@@ -290,39 +449,95 @@ def update_custom_reminder(
     new_priority = (priority or current.get("priority") or "NORMAL").upper()
     new_category = category or current.get("category") or "GENERAL"
 
-    att_name = current.get("attachment_name") or ""
-    att_path_str = current.get("attachment_path") or ""
-    att_size = current.get("attachment_size") or 0
+    # Dedicated folder
+    reminder_folder = Path(current.get("folder_path") or get_reminder_folder(reminder_id))
+    reminder_folder.mkdir(parents=True, exist_ok=True)
 
+    # Parse existing attachments
+    raw_attach = current.get("attachments") or "[]"
+    attachments_list: List[Dict[str, Any]] = []
+    try:
+        parsed = json.loads(raw_attach) if isinstance(raw_attach, str) else raw_attach
+        if isinstance(parsed, list):
+            attachments_list = parsed
+    except Exception:
+        attachments_list = []
+
+    # If remove_attachment is requested, remove all
     if remove_attachment:
-        att_name = ""
-        att_path_str = ""
-        att_size = 0
-    elif file_bytes and file_name:
-        folder = ensure_reminders_dir()
-        safe_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{Path(file_name).name}"
-        dest_path = folder / safe_name
-        dest_path.write_bytes(file_bytes)
-        att_name = Path(file_name).name
-        att_path_str = str(dest_path)
-        att_size = len(file_bytes)
-    elif existing_file_path and existing_file_path.strip():
-        p = Path(existing_file_path.strip())
-        if p.is_file():
-            att_name = p.name
-            att_path_str = str(p)
-            att_size = p.stat().st_size
+        attachments_list = []
+    elif removed_file_indices:
+        # Remove specific items by index
+        attachments_list = [att for idx, att in enumerate(attachments_list) if idx not in removed_file_indices]
+
+    # Handle legacy single file args
+    if file_bytes and file_name:
+        if uploaded_files is None:
+            uploaded_files = []
+        uploaded_files.append((file_name, file_bytes))
+
+    if existing_file_path and existing_file_path.strip():
+        if linked_file_paths is None:
+            linked_file_paths = []
+        linked_file_paths.append(existing_file_path.strip())
+
+    # Add new uploaded files
+    if uploaded_files:
+        for fname, fbytes in uploaded_files:
+            if not fname or not fbytes:
+                continue
+            clean_fname = Path(fname).name
+            dest_file = reminder_folder / clean_fname
+            if dest_file.exists():
+                dest_file = reminder_folder / f"{datetime.now().strftime('%H%M%S')}_{clean_fname}"
+            dest_file.write_bytes(fbytes)
+            ext = dest_file.suffix.lstrip(".").lower()
+            sz = len(fbytes)
+            attachments_list.append({
+                "name": dest_file.name,
+                "path": str(dest_file),
+                "size": sz,
+                "size_human": format_size_human(sz),
+                "ext": ext,
+                "is_image": ext in IMAGE_EXTENSIONS,
+                "is_uploaded": True,
+            })
+
+    # Add new linked files
+    if linked_file_paths:
+        for lpath in linked_file_paths:
+            if not lpath or not str(lpath).strip():
+                continue
+            p = Path(str(lpath).strip())
+            if p.is_file():
+                ext = p.suffix.lstrip(".").lower()
+                sz = p.stat().st_size
+                attachments_list.append({
+                    "name": p.name,
+                    "path": str(p),
+                    "size": sz,
+                    "size_human": format_size_human(sz),
+                    "ext": ext,
+                    "is_image": ext in IMAGE_EXTENSIONS,
+                    "is_uploaded": False,
+                })
+
+    primary_name = attachments_list[0]["name"] if attachments_list else ""
+    primary_path = attachments_list[0]["path"] if attachments_list else ""
+    total_size = sum(a.get("size", 0) for a in attachments_list)
 
     cursor.execute("""
         UPDATE custom_reminders SET
             title = ?, description = ?, due_date = ?, due_time = ?,
             priority = ?, category = ?, attachment_name = ?,
             attachment_path = ?, attachment_size = ?,
+            folder_path = ?, attachments = ?,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
     """, (
         new_title, new_desc, new_due_date, new_due_time,
-        new_priority, new_category, att_name, att_path_str, att_size,
+        new_priority, new_category, primary_name, primary_path, total_size,
+        str(reminder_folder), json.dumps(attachments_list, ensure_ascii=False),
         reminder_id
     ))
     conn.commit()
@@ -331,7 +546,8 @@ def update_custom_reminder(
     return {
         "status": "success",
         "message": "Đã cập nhật lời nhắc thành công!",
-        "reminder_id": reminder_id
+        "reminder_id": reminder_id,
+        "attachments_count": len(attachments_list),
     }
 
 
@@ -364,31 +580,122 @@ def toggle_custom_reminder_status(reminder_id: int) -> Dict[str, Any]:
     }
 
 
-def delete_custom_reminder(reminder_id: int, delete_file: bool = False) -> bool:
-    """Delete a custom reminder and optionally unlink attachment file."""
+def delete_custom_reminder(reminder_id: int, delete_files: bool = False) -> bool:
+    """Delete a custom reminder and optionally unlink files and delete its dedicated folder.
+    
+    If delete_files is True:
+        Deletes the reminder's dedicated folder (e.g. reminder_{id}/) and any files uploaded into it.
+        SAFEGUARD: Does NOT delete files linked from other directories (e.g. Ho So Du An/Hop Dong).
+    If delete_files is False:
+        Deletes the database record, keeps all files and folder intact on disk.
+    """
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT attachment_path FROM custom_reminders WHERE id = ?", (reminder_id,))
+    cursor.execute("SELECT folder_path, attachment_path, attachments FROM custom_reminders WHERE id = ?", (reminder_id,))
     row = cursor.fetchone()
     if not row:
         conn.close()
         return False
 
-    att_path = row["attachment_path"]
-    if delete_file and att_path:
-        p = Path(att_path)
-        # SAFEGUARD: only delete files physically located in Ho So Du An/Nhac Nho
-        if p.exists() and p.is_file() and "nhac nho" in str(p).lower():
-            try:
-                p.unlink(missing_ok=True)
-                logger.info("Deleted reminder attachment: %s", p)
-            except Exception as e:
-                logger.warning("Could not delete reminder attachment %s: %s", p, e)
+    folder_path_str = row["folder_path"]
+    attachments_json = row["attachments"] or "[]"
+
+    if delete_files:
+        # 1. Delete dedicated folder if it exists and is inside Nhac Nho
+        if folder_path_str:
+            p_folder = Path(folder_path_str)
+            if p_folder.exists() and p_folder.is_dir() and "nhac nho" in str(p_folder).lower():
+                try:
+                    shutil.rmtree(p_folder, ignore_errors=True)
+                    logger.info("Deleted dedicated reminder folder: %s", p_folder)
+                except Exception as e:
+                    logger.warning("Could not delete reminder folder %s: %s", p_folder, e)
+
+        # 2. Check legacy attachment_path
+        leg_path = row["attachment_path"]
+        if leg_path:
+            p_leg = Path(leg_path)
+            if p_leg.exists() and p_leg.is_file() and "nhac nho" in str(p_leg).lower():
+                try:
+                    p_leg.unlink(missing_ok=True)
+                except Exception:
+                    pass
 
     cursor.execute("DELETE FROM custom_reminders WHERE id = ?", (reminder_id,))
     conn.commit()
     conn.close()
     return True
+
+
+def get_attachment_by_index(reminder_id: int, index: int) -> Tuple[Path, str, str]:
+    """Retrieve Path, filename, and mime type for an attachment by index."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT attachment_name, attachment_path, attachments FROM custom_reminders WHERE id = ?", (reminder_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        raise ValueError(f"Không tìm thấy lời nhắc với ID {reminder_id}")
+
+    raw_attach = row["attachments"] or "[]"
+    attachments_list: List[Dict[str, Any]] = []
+    try:
+        parsed = json.loads(raw_attach) if isinstance(raw_attach, str) else raw_attach
+        if isinstance(parsed, list):
+            attachments_list = parsed
+    except Exception:
+        attachments_list = []
+
+    # If index is within list
+    if 0 <= index < len(attachments_list):
+        item = attachments_list[index]
+        p = Path(item["path"])
+        if not p.is_file():
+            raise FileNotFoundError(f"Tệp tin '{item['name']}' không còn tồn tại trên máy tính.")
+        return p, item["name"], item.get("ext", "")
+
+    # Fallback to legacy attachment
+    if index == 0 and row["attachment_path"]:
+        p = Path(row["attachment_path"])
+        if p.is_file():
+            return p, row["attachment_name"] or p.name, p.suffix.lstrip(".").lower()
+
+    raise IndexError(f"Không tìm thấy tệp đính kèm số {index} cho lời nhắc này.")
+
+
+def open_folder_in_os(reminder_id: int) -> Dict[str, Any]:
+    """Open the dedicated reminder folder in Windows Explorer."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT folder_path FROM custom_reminders WHERE id = ?", (reminder_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        raise ValueError("Lời nhắc không tồn tại.")
+
+    folder_str = row["folder_path"] or str(get_reminder_folder(reminder_id))
+    folder = Path(folder_str)
+    folder.mkdir(parents=True, exist_ok=True)
+
+    try:
+        if os.name == "nt":
+            os.startfile(str(folder))
+        else:
+            subprocess.Popen(["xdg-open", str(folder)])
+        return {
+            "status": "success",
+            "message": f"Đã mở thư mục trên máy tính: {folder.name}",
+            "folder_path": str(folder),
+        }
+    except Exception as exc:
+        logger.error("Error opening folder %s: %s", folder, exc)
+        return {
+            "status": "error",
+            "message": f"Không thể tự động mở thư mục: {exc}",
+            "folder_path": str(folder),
+        }
 
 
 def get_available_project_documents() -> List[Dict[str, Any]]:
@@ -417,7 +724,7 @@ def get_available_project_documents() -> List[Dict[str, Any]]:
                     "file_name": p.name,
                     "file_path": str(p),
                     "file_size": fsize,
-                    "file_size_formatted": f"{round(fsize / 1024, 1)} KB" if fsize < 1048576 else f"{round(fsize / 1048576, 2)} MB",
+                    "file_size_formatted": format_size_human(fsize),
                     "file_ext": p.suffix.lstrip(".").lower(),
                     "category": category,
                     "category_label": category_label,

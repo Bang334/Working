@@ -56,11 +56,13 @@
       <span>Biên Bản Nghiệm Thu</span>
     </a>
 
-    <a href="/reminders" class="nav-item {% if active_tab == 'reminders' %}active{% endif %}" {% if active_tab == 'reminders' %}aria-current="page"{% endif %}>
-      <span class="nav-icon" aria-hidden="true">
+    <a href="/reminders" class="nav-item {% if active_tab == 'reminders' %}active{% endif %}" {% if active_tab == 'reminders' %}aria-current="page"{% endif %} id="navItemReminders" title="Đề nghị thanh toán, nhắc nợ & lịch hẹn cá nhân">
+      <span class="nav-icon" aria-hidden="true" style="position: relative;">
         <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span class="nav-unread-dot" id="sidebarReminderDot" style="display: none;" title="Có lịch nhắc cần xử lý"></span>
       </span>
       <span>Đề Nghị TT & Nhắc Nợ</span>
+      <span class="sidebar-unread-badge" id="sidebarReminderBadge" style="display: none;">0</span>
     </a>
 
     <a href="/liquidation" class="nav-item {% if active_tab == 'liquidation' %}active{% endif %}" {% if active_tab == 'liquidation' %}aria-current="page"{% endif %}>
