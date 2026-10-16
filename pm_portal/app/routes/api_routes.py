@@ -273,7 +273,6 @@ from app.database import (
     get_all_documents_by_type,
     get_db_connection,
     delete_contract_dossier,
-    clear_all_contracts,
     activate_payment_milestone,
     reset_payment_milestone,
     mark_milestone_paid,
@@ -407,16 +406,6 @@ async def delete_contract_endpoint(contract_code: str):
     }
 
 
-
-@router.post("/dossier/contracts/clear-all")
-async def clear_all_contracts_endpoint():
-    """Clear all dummy/test contracts from database for a clean slate."""
-    deleted_count = clear_all_contracts()
-    return {
-        "status": "success",
-        "deleted_count": deleted_count,
-        "message": f"Đã xóa toàn bộ {deleted_count} hợp đồng mẫu/rác. Hệ thống đã sẵn sàng cho dữ liệu thực tế!"
-    }
 
 
 @router.get("/dossier/documents")

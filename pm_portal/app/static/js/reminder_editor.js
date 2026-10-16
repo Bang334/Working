@@ -837,32 +837,7 @@ const ReminderEditor = {
     }
   },
 
-  async onClearAllDummyContracts() {
-    const confirmed = confirm(
-      "⚠️ CẢNH BÁO: Thao tác này sẽ XÓA TOÀN BỘ hợp đồng và đợt thanh toán hiện có trong cơ sở dữ liệu để bạn bắt đầu tạo các hợp đồng thực tế mới!\n\nBạn có chắc chắn muốn dọn dẹp dữ liệu rác không?"
-    );
-    if (!confirmed) return;
 
-    try {
-      const res = await fetch("/api/v1/dossier/contracts/clear-all", {
-        method: "POST"
-      });
-      const data = await res.json();
-      if (res.ok && data.status === "success") {
-        if (window.showToast) {
-          window.showToast(`Đã dọn dẹp thành công ${data.deleted_count} hợp đồng mẫu!`, "success");
-        } else {
-          alert(`Đã dọn dẹp thành công ${data.deleted_count} hợp đồng mẫu!`);
-        }
-        this.currentGeneratedFile = "";
-        await this.loadSavedContracts();
-      } else {
-        alert(data.message || "Không thể dọn dẹp dữ liệu.");
-      }
-    } catch (err) {
-      alert("Lỗi khi dọn dẹp dữ liệu: " + err.message);
-    }
-  },
 
   openContractDossierModal(contractCode) {
     const c = this.cachedContracts.find(item => item.contract_code === contractCode);
