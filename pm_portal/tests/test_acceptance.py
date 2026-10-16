@@ -42,6 +42,8 @@ class TestAcceptanceModule(unittest.TestCase):
     """Test suite for Acceptance Module (Biên Bản Nghiệm Thu & Kiểm Tra Thiết Bị)."""
 
     def setUp(self):
+        self.patcher_index = patch("app.database.index_single_document")
+        self.mock_index_doc = self.patcher_index.start()
         self.sample_payload = {
             "tieu_de_viet": "BIÊN BẢN KIỂM TRA & NGHIỆM THU THIẾT BỊ SAU SỬA CHỮA",
             "tieu_de_trung": "維修設備檢查及驗收記錄",
@@ -116,6 +118,21 @@ class TestAcceptanceModule(unittest.TestCase):
             "ghi_chu_3": "Chi tiết kết quả kiểm tra & linh kiện thay thế / 檢驗結果與更換零件明細:\n   - STT 1, 4, 5, 6: Không phát hiện lỗi phát sinh thêm (No error founds) / 檢查未發現異常。\n   - STT 2 (EF550RA4LAWBHI677): Xử lý cụm Barcode / 檢修條碼掃描模組。\n   - STT 3 (RFR900NA55RSWLBA565): Thay thế Mounting Adapter / 更換轉接支架。",
             "tao_cac_sheet_anh": False
         }
+
+    def tearDown(self):
+        self.patcher_index.stop()
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            from app.database import get_db_connection
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM documents WHERE file_path LIKE '%Temp%' OR file_path LIKE '%tmp%'")
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
 
     def test_01_acceptance_page_render(self):
         """Verify the acceptance UI page renders with HTTP 200."""

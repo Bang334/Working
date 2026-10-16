@@ -734,6 +734,8 @@ def get_contract_dossier_detail(identifier: str) -> Dict[str, Any]:
     for d in db_docs:
         fpath = Path(d.get("file_path") or "")
         exists = fpath.is_file()
+        if not exists:
+            continue
         fsize = d.get("file_size") or (fpath.stat().st_size if exists else 0)
         size_str = f"{round(fsize / 1024, 1)} KB" if fsize else ""
         

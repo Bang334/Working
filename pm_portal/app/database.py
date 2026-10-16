@@ -294,14 +294,23 @@ def get_contracts_dossier() -> List[Dict[str, Any]]:
             if m.get("status") in ("URGENT", "WAITING"):
                 has_waiting = True
 
-        # Fetch linked documents
+        # Fetch linked documents (only documents whose physical files exist on disk)
         cursor.execute("""
             SELECT id, doc_type, doc_name, file_name, file_path, file_size, file_format, description 
             FROM documents 
             WHERE contract_code = ?
             ORDER BY doc_type ASC
         """, (c_code,))
-        documents = [dict(d) for d in cursor.fetchall()]
+        raw_documents = [dict(d) for d in cursor.fetchall()]
+        documents = []
+        for d in raw_documents:
+            fp_str = d.get("file_path") or ""
+            if fp_str and Path(fp_str).is_file():
+                try:
+                    d["file_size"] = Path(fp_str).stat().st_size
+                except Exception:
+                    pass
+                documents.append(d)
 
         c_dict["milestones"] = milestones
         c_dict["documents"] = documents
@@ -606,15 +615,24 @@ def update_contract_status(
 
 
 def get_all_documents_by_type(doc_type: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Return all indexed documents, optionally filtered by type."""
+    """Return all indexed documents whose files exist on disk, optionally filtered by type."""
     conn = get_db_connection()
     cursor = conn.cursor()
     if doc_type:
         cursor.execute("SELECT * FROM documents WHERE doc_type = ? ORDER BY id DESC", (doc_type,))
     else:
         cursor.execute("SELECT * FROM documents ORDER BY doc_type ASC, id DESC")
-    docs = [dict(d) for d in cursor.fetchall()]
+    raw_docs = [dict(d) for d in cursor.fetchall()]
     conn.close()
+    docs = []
+    for d in raw_docs:
+        fp_str = d.get("file_path") or ""
+        if fp_str and Path(fp_str).is_file():
+            try:
+                d["file_size"] = Path(fp_str).stat().st_size
+            except Exception:
+                pass
+            docs.append(d)
     return docs
 
 
