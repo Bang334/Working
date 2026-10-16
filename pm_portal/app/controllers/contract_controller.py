@@ -70,9 +70,9 @@ def download_contract_file_controller(file_name: str) -> FileResponse:
     """Controller to stream the generated DOCX file for browser download."""
     clean_name = os.path.basename(file_name)
     candidate_paths = [
-        OUTPUTS_DIR / clean_name,
-        WORKING_DIR / "outputs" / "hop_dong" / clean_name,
         WORKING_DIR / "Ho So Du An" / "Hop Dong" / clean_name,
+        WORKING_DIR / "outputs" / "hop_dong" / clean_name,
+        OUTPUTS_DIR / clean_name,
     ]
 
     target_path = None

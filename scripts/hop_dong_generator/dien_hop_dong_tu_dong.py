@@ -19,7 +19,7 @@ import re
 import json
 import argparse
 from copy import deepcopy
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 import docx
 from docx import Document
@@ -413,6 +413,51 @@ def set_content_control_text(doc, tag_value: str, new_text: str) -> bool:
     return False
 
 
+def resolve_chinese_project_title(
+    ten_du_an_cn: str,
+    ten_du_an_vn: str,
+    hang_muc: Optional[List[Dict[str, Any]]] = None
+) -> str:
+    """
+    Xác định tên dự án / báo giá tiếng Trung chuẩn mực cho hợp đồng song ngữ.
+    Đảm bảo 100% luôn có tên tiếng Trung kết thúc bằng '報價單', không dùng danh sách hardcode.
+    """
+    cn = str(ten_du_an_cn or "").strip()
+    if cn:
+        if "報價" in cn:
+            return cn
+        return f"{cn} 報價單"
+
+    # Lọc toàn bộ tên sản phẩm để đưa cho AI khái quát hóa tên dự án ngắn gọn
+    if hang_muc:
+        prod_names = [
+            str(hm.get("ten_san_pham", "") or hm.get("ten_hang_muc", "")).strip()
+            for hm in hang_muc
+            if str(hm.get("ten_san_pham", "") or hm.get("ten_hang_muc", "")).strip()
+        ]
+        if prod_names:
+            try:
+                # Gọi AI tổng hợp tên dự án ngắn gọn song ngữ từ danh sách sản phẩm
+                from app.services.ai_service import summarize_project_title_with_ai
+                ai_result = summarize_project_title_with_ai(prod_names)
+                ai_cn = str(ai_result.get("ten_du_an_trung", "")).strip()
+                if ai_cn:
+                    return ai_cn if "報價" in ai_cn else f"{ai_cn} 報價單"
+            except Exception:
+                pass
+
+            # Nếu không gọi được AI, trích xuất cụm tên hệ thống có sẵn trong tên sản phẩm
+            for pname in prod_names:
+                cjk_match = re.search(r"([\u4e00-\u9fffA-Za-z0-9\s\-_]+系統|[\u4e00-\u9fffA-Za-z0-9\s\-_]+廠區)", pname)
+                if cjk_match:
+                    extracted = cjk_match.group(1).strip()
+                    return extracted if "報價" in extracted else f"{extracted} 報價單"
+
+    # Fallback tự nhiên không hardcode từ khóa
+    clean_vn = re.sub(r"^(báo giá triển khai|báo giá|dự án|hệ thống)\s*", "", str(ten_du_an_vn or "").strip(), flags=re.IGNORECASE)
+    return f"{clean_vn} 報價單" if clean_vn else "專案系統報價單"
+
+
 # ==============================================================================
 # 3. ĐIỀN HỢP ĐỒNG BẢO TOÀN LAYOUT 100%
 # ==============================================================================
@@ -484,14 +529,16 @@ def fill_contract(
     tien_chu_viet = number_to_vietnamese_words(clean_num)
     tien_chu_trung = number_to_chinese_words(clean_num)
     
+
+
     # Cập nhật đúng dòng MST nằm trong textbox của Bên A trước khi sửa dòng đại diện.
     party_a_tax_updated = update_party_a_tax_line(doc, mst_a, dai_dien_a)
-    chinese_project_reference = ""
-    if ten_du_an_cn:
-        chinese_project_reference = (
-            f"雙方就 {ten_du_an_cn} 內容達成共識，並同意簽訂本合約，"
-            "共同遵守執行合約內容如下:"
-        )
+    hang_muc_list = data.get("hang_muc", [])
+    proj_cn_title = resolve_chinese_project_title(ten_du_an_cn, ten_du_an_vn, hang_muc_list)
+    chinese_project_reference = (
+        f"雙方就 {proj_cn_title} 內容達成共識，並同意簽訂本合約，"
+        "共同遵守執行合約內容如下:"
+    )
     set_content_control_text(doc, "goog_rdk_5", chinese_project_reference)
 
     party_a_start = next(
@@ -532,18 +579,15 @@ def fill_contract(
                     rep_text = f"MST 稅號: {mst_a}\n" + rep_text
                 set_paragraph_text_preserve_font(p, rep_text)
 
-        # Căn cứ báo giá tiếng Trung. Bản DOCX chuyển từ DOC không còn content
-        # control goog_rdk_5 nên cần cập nhật trực tiếp paragraph tương ứng.
-        elif txt.startswith("雙方就") and "內容達成共識" in txt:
+        # Căn cứ báo giá tiếng Trung. Luôn đảm bảo hiển thị chuẩn song ngữ 1:1 như mẫu gốc
+        elif ("雙方就" in txt) and ("內容達成共識" in txt):
             set_paragraph_text_preserve_font(p, chinese_project_reference)
             
-        # Căn cứ Báo giá
+        # Căn cứ Báo giá tiếng Việt
         elif "Hai bên đã thống nhất thỏa thuận dựa trên nội dung Báo giá" in txt:
             quotation_name = ten_du_an_vn
             if not quotation_name.casefold().startswith("báo giá"):
                 quotation_name = f"Báo giá triển khai {quotation_name}"
-            if ten_du_an_cn:
-                quotation_name += f" ({ten_du_an_cn})"
             ref_text = f"Hai bên đã thống nhất thỏa thuận dựa trên nội dung {quotation_name}, và ký kết hợp đồng này. Hai bên cùng cam kết tuân thủ và thực hiện các điều khoản nội dung hợp đồng như sau:"
             set_paragraph_text_preserve_font(p, ref_text)
             

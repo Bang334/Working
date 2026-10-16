@@ -293,12 +293,17 @@
 
       <div class="form-grid-2">
         <div class="form-group">
-          <label class="form-label">專案名稱 (繁體中文 / Tiếng Trung)</label>
-          <input type="text" id="fieldProjectCn" class="form-control" placeholder="Nhập tên dự án bằng tiếng Trung (Ví dụ: MES Lite 系統導入專案)">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <label class="form-label" style="margin-bottom: 0;">專案名稱 (繁體中文 / Tiếng Trung)</label>
+            <button type="button" class="btn btn-outline btn-sm" onclick="ContractEditor.autoSummarizeProjectFromItems()" style="font-size: 0.72rem; padding: 0.15rem 0.5rem; height: 26px; display: inline-flex; align-items: center; gap: 0.3rem; border-color: #93c5fd; color: #1d4ed8; background: #eff6ff;" title="AI tự động lọc sản phẩm và đặt tên dự án song ngữ ngắn gọn">
+              <span>✨ AI Khái Quát Từ Sản Phẩm</span>
+            </button>
+          </div>
+          <input type="text" id="fieldProjectCn" class="form-control" placeholder="Tự động từ sản phẩm hoặc nhập (Ví dụ: MES Lite 系統報價單)">
         </div>
         <div class="form-group">
           <label class="form-label">Tên Dự Án (Tiếng Việt) <span class="badge-req">*</span></label>
-          <input type="text" id="fieldProjectVn" class="form-control" placeholder="Nhập tên dự án bằng tiếng Việt">
+          <input type="text" id="fieldProjectVn" class="form-control" placeholder="Nhập tên dự án (Ví dụ: Hệ thống MES Lite, Hạ tầng mạng...)">
         </div>
       </div>
     </div>

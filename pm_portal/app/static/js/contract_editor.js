@@ -666,5 +666,58 @@ const ContractEditor = {
     } finally {
       hideLoading();
     }
+  },
+
+  /**
+   * Lọc toàn bộ tên sản phẩm từ bảng để đưa cho AI khái quát hóa tên dự án ngắn gọn (Hệ thống..., Hạ tầng...)
+   */
+  async autoSummarizeProjectFromItems() {
+    const tbody = document.getElementById("itemsTableBody");
+    if (!tbody) return;
+    const names = Array.from(tbody.querySelectorAll(".item-name-input"))
+      .map(el => el.value.trim())
+      .filter(Boolean);
+
+    if (!names.length) {
+      if (window.showToast) {
+        window.showToast("Vui lòng nhập ít nhất 1 sản phẩm trong bảng để AI đặt tên dự án!", "warning");
+      } else {
+        alert("Vui lòng nhập ít nhất 1 sản phẩm trong bảng để AI đặt tên dự án!");
+      }
+      return;
+    }
+
+    try {
+      if (window.showLoading) window.showLoading("AI đang phân tích sản phẩm và khái quát hóa tên dự án...");
+      const res = await fetch("/api/v1/contracts/ai-project-title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product_names: names })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === "success" && data.data) {
+        if (data.data.ten_du_an_viet) {
+          const vEl = document.getElementById("fieldProjectVn");
+          if (vEl) vEl.value = data.data.ten_du_an_viet;
+        }
+        if (data.data.ten_du_an_trung) {
+          const cEl = document.getElementById("fieldProjectCn");
+          if (cEl) cEl.value = data.data.ten_du_an_trung;
+        }
+        if (window.showToast) {
+          window.showToast(`AI đã tạo tên dự án: "${data.data.ten_du_an_viet}"!`, "success");
+        }
+      } else {
+        if (window.showToast) {
+          window.showToast("Không thể tạo tên dự án qua AI.", "error");
+        }
+      }
+    } catch (err) {
+      if (window.showToast) {
+        window.showToast(`Lỗi AI: ${err.message}`, "error");
+      }
+    } finally {
+      if (window.hideLoading) window.hideLoading();
+    }
   }
 };

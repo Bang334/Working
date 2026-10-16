@@ -59,7 +59,7 @@ QUY TẮC CỐT LÕI:
   },
   "du_an": {
     "ten_du_an_viet": "Tên dự án tiếng Việt",
-    "ten_du_an_trung": "Tên dự án tiếng Trung nếu có"
+    "ten_du_an_trung": "Tên dự án/báo giá bằng tiếng Trung (Phồn thể, BẮT BUỘC có - nếu bản gốc chỉ có tiếng Việt thì dịch chính xác sang tiếng Trung, ví dụ: 'Hệ thống MES Lite' -> 'MES Lite 系統' hoặc 'MES Lite 系統導入專案報價單')"
   },
   "hang_muc": [
     {
@@ -311,3 +311,91 @@ def _enrich_contract_calculations(data: Dict[str, Any]) -> None:
         pct = float(inst.get("phan_tram", 0))
         inst_amount = int(total_val * pct / 100.0)
         inst["so_tien"] = format_currency_vnd(inst_amount)
+
+
+def summarize_project_title_with_ai(
+    product_names: List[str],
+    api_key: str = None,
+    preferred_model: str = None
+) -> Dict[str, str]:
+    """
+    Sử dụng Gemini AI để phân tích toàn bộ danh sách sản phẩm và khái quát hóa
+    thành đúng 1 tên dự án / báo giá ngắn gọn song ngữ (Việt - Trung):
+    - Tiếng Việt: Bắt đầu bằng 'Hệ thống...', 'Hạ tầng...', hoặc 'Giải pháp...'
+    - Tiếng Trung: Ngắn gọn (Phồn thể) và BẮT BUỘC kết thúc bằng '報價單'.
+    """
+    if not product_names:
+        return {"ten_du_an_viet": "", "ten_du_an_trung": ""}
+
+    cleaned_names = [str(n).strip() for n in product_names if str(n).strip()]
+    if not cleaned_names:
+        return {"ten_du_an_viet": "", "ten_du_an_trung": ""}
+
+    items_text = "\n".join(f"- {name}" for name in cleaned_names)
+
+    prompt = f"""
+Bạn là chuyên gia phân tích kỹ thuật và soạn thảo hợp đồng song ngữ Việt - Trung cho doanh nghiệp.
+Dưới đây là danh sách toàn bộ các sản phẩm, thiết bị, dịch vụ hoặc phần mềm trong báo giá/hợp đồng:
+\"\"\"
+{items_text}
+\"\"\"
+
+Nhiệm vụ của bạn:
+Phân tích toàn bộ danh sách sản phẩm trên và TỰ ĐỘNG KHÁI QUÁT HÓA thành đúng 1 tên dự án/báo giá ngắn gọn, súc tích và trang trọng theo chuẩn doanh nghiệp:
+1. "ten_du_an_viet": Tên tiếng Việt ngắn gọn, BẮT BUỘC bắt đầu bằng "Hệ thống...", "Hạ tầng...", "Gói thiết bị..." hoặc "Giải pháp..." (Ví dụ: "Hệ thống MES Lite", "Hạ tầng mạng kết nối máy móc toàn xưởng", "Hệ thống camera giám sát và an ninh", "Hệ thống quản lý kho thông minh WMS"...)
+2. "ten_du_an_trung": Tên tiếng Trung (Phồn thể) tương ứng ngắn gọn và BẮT BUỘC kết thúc bằng "報價單" (Ví dụ: "MES Lite 系統報價單", "機聯網網路佈建報價單", "智慧廠區監控系統報價單", "WMS 智慧倉庫管理系統報價單"...)
+
+Chỉ trả về DUY NHẤT một khối JSON hợp lệ theo định dạng sau, không kèm bất kỳ giải thích nào:
+{{
+  "ten_du_an_viet": "Hệ thống...",
+  "ten_du_an_trung": "...報價單"
+}}
+"""
+
+    keys_to_try = [api_key] if api_key else ([DEFAULT_GEMINI_KEY] + [k for k in DEFAULT_GEMINI_KEYS if k != DEFAULT_GEMINI_KEY])
+    models_to_try = []
+    if preferred_model and preferred_model in CANDIDATE_MODELS:
+        models_to_try.append(preferred_model)
+    for m in CANDIDATE_MODELS:
+        if m not in models_to_try:
+            models_to_try.append(m)
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.1,
+            "responseMimeType": "application/json"
+        }
+    }
+
+    for key in keys_to_try:
+        for model in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"}
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    text = resp_data["candidates"][0]["content"]["parts"][0]["text"]
+                    clean_text = re.sub(r"^```(?:json)?\s*", "", text.strip())
+                    clean_text = re.sub(r"\s*```$", "", clean_text).strip()
+                    res_json = json.loads(clean_text)
+                    if isinstance(res_json, dict) and res_json.get("ten_du_an_viet"):
+                        return {
+                            "ten_du_an_viet": str(res_json.get("ten_du_an_viet", "")).strip(),
+                            "ten_du_an_trung": str(res_json.get("ten_du_an_trung", "")).strip()
+                        }
+            except Exception as e:
+                logger.warning("Gemini model %s failed for project title summarization: %s", model, e)
+                continue
+
+    # Fallback tự nhiên nếu không kết nối được AI
+    first_item = cleaned_names[0]
+    base_name = first_item.split("\n")[0].split("-")[0].strip()
+    return {
+        "ten_du_an_viet": f"Hệ thống {base_name}",
+        "ten_du_an_trung": f"{base_name} 系統報價單"
+    }

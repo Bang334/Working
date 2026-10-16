@@ -73,10 +73,36 @@ def prepare_contract_data(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         ben_a["chuc_vu_trung"] = "總經理"
     data["ben_a"] = ben_a
 
-    # Ensure Dự Án
+    # Ensure Dự Án: Nếu thiếu tên dự án, lọc tên sản phẩm đưa cho AI khái quát hóa ngắn gọn (Hệ thống..., Hạ tầng...)
     du_an = data.get("du_an", {})
-    if not du_an.get("ten_du_an_viet"):
-        du_an["ten_du_an_viet"] = "Triển khai phần mềm và thiết bị IoT"
+    ten_vn = str(du_an.get("ten_du_an_viet", "")).strip()
+    ten_cn = str(du_an.get("ten_du_an_trung", "")).strip()
+
+    hang_muc = data.get("hang_muc", [])
+    if (not ten_vn or not ten_cn) and hang_muc:
+        prod_names = [
+            str(hm.get("ten_san_pham", "") or hm.get("ten_hang_muc", "")).strip()
+            for hm in hang_muc
+            if str(hm.get("ten_san_pham", "") or hm.get("ten_hang_muc", "")).strip()
+        ]
+        if prod_names:
+            try:
+                from app.services.ai_service import summarize_project_title_with_ai
+                ai_res = summarize_project_title_with_ai(prod_names)
+                if not ten_vn and ai_res.get("ten_du_an_viet"):
+                    ten_vn = ai_res["ten_du_an_viet"]
+                if not ten_cn and ai_res.get("ten_du_an_trung"):
+                    ten_cn = ai_res["ten_du_an_trung"]
+            except Exception as ai_err:
+                pass
+
+    if not ten_vn:
+        ten_vn = "Hệ thống thiết bị và phần mềm"
+    if not ten_cn:
+        ten_cn = "軟硬體系統設備報價單"
+
+    du_an["ten_du_an_viet"] = ten_vn
+    du_an["ten_du_an_trung"] = ten_cn
     data["du_an"] = du_an
 
     # Calculate item list totals and verify
@@ -150,24 +176,11 @@ def generate_contract_docx(data: Dict[str, Any]) -> Dict[str, Any]:
     company_name = sanitized_data["ben_a"].get("ten_cong_ty", "KHACH_HANG")
     contract_no = sanitized_data.get("so_hop_dong", "")
     filename = generate_contract_filename(company_name, contract_no)
-    default_output_path = OUTPUTS_DIR / filename
 
-    # Check for custom output folder (default: E:\Working\Ho So Du An\Hop Dong)
-    default_project_dir = WORKING_DIR / "Ho So Du An" / "Hop Dong"
-    custom_dir = (data.get("custom_output_dir") or data.get("output_dir") or "").strip()
-    if not custom_dir:
-        custom_dir = str(default_project_dir)
-
-    target_custom_path = None
-    if custom_dir:
-        try:
-            custom_folder = Path(custom_dir)
-            custom_folder.mkdir(parents=True, exist_ok=True)
-            target_custom_path = custom_folder / filename
-        except Exception as err:
-            svc_logger.warning("Could not prepare custom output folder %s: %s", custom_dir, err)
-
-    output_path = target_custom_path if target_custom_path else default_output_path
+    # Vị trí lưu DUY NHẤT theo yêu cầu người dùng: E:\Working\Ho So Du An\Hop Dong
+    hop_dong_dir = WORKING_DIR / "Ho So Du An" / "Hop Dong"
+    hop_dong_dir.mkdir(parents=True, exist_ok=True)
+    output_path = hop_dong_dir / filename
 
     # Execute core Zero-Layout-Distortion fill engine
     fill_result = fill_contract(
@@ -177,15 +190,6 @@ def generate_contract_docx(data: Dict[str, Any]) -> Dict[str, Any]:
     )
 
     actual_file = Path(fill_result.get("output_path", output_path))
-
-    # Keep a copy in standard OUTPUTS_DIR so web downloads always work seamlessly
-    if target_custom_path and actual_file.exists() and actual_file != default_output_path:
-        try:
-            OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(actual_file, default_output_path)
-        except Exception as copy_err:
-            svc_logger.warning("Could not sync to default outputs dir: %s", copy_err)
-
     preview_html = generate_contract_preview_html(sanitized_data)
 
     # Index document in SQLite documents table so link and path are persisted
@@ -226,21 +230,10 @@ def save_contract_to_database(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     
     svc_logger = logging.getLogger(__name__)
 
-    # 1. Generate official Word DOCX
+    # 1. Generate official Word DOCX (placed directly into Ho So Du An/Hop Dong/)
     docx_result = generate_contract_docx(raw_data)
     sanitized = docx_result["contract_data"]
-    file_path = Path(docx_result["file_path"])
-
-    # 2. Copy DOCX to official project folder: "Ho So Du An/Hop Dong/"
-    hop_dong_dir = WORKING_DIR / "Ho So Du An" / "Hop Dong"
-    os.makedirs(hop_dong_dir, exist_ok=True)
-    target_docx = hop_dong_dir / file_path.name
-    try:
-        shutil.copy2(file_path, target_docx)
-        saved_docx_path = target_docx
-    except Exception as err:
-        svc_logger.warning("Could not copy docx to Ho So Du An: %s", err)
-        saved_docx_path = file_path
+    saved_docx_path = Path(docx_result["file_path"])
 
     # 3. Extract contract details
     contract_code = sanitized.get("so_hop_dong", "").strip()

@@ -232,9 +232,9 @@ def generate_contract_preview_html(data: Dict[str, Any]) -> str:
 
         <!-- Căn cứ hợp đồng -->
         <div class="contract-clause">
-            <p class="clause-preamble-cn cjk-text">雙方就 {ten_du_an_cn or ten_du_an_vn} 報價內容達成共識，並同意簽訂本合約，共同遵守執行合約內容如下:</p>
+            <p class="clause-preamble-cn cjk-text">雙方就 {ten_du_an_cn if ('報價' in ten_du_an_cn) else (f'{ten_du_an_cn} 報價單' if ten_du_an_cn else (f'{ten_du_an_vn} 報價單'))} 內容達成共識，並同意簽訂本合約，共同遵守執行合約內容如下:</p>
             <p class="clause-preamble">
-                Hai bên đã thống nhất thỏa thuận dựa trên nội dung <strong>Báo giá triển khai {ten_du_an_vn}</strong>{f' ({ten_du_an_cn})' if ten_du_an_cn else ''}, và ký kết hợp đồng này. Hai bên cùng cam kết tuân thủ và thực hiện các điều khoản nội dung hợp đồng như sau:
+                Hai bên đã thống nhất thỏa thuận dựa trên nội dung <strong>{ten_du_an_vn if ten_du_an_vn.casefold().startswith('báo giá') else f'Báo giá triển khai {ten_du_an_vn}'}</strong>, và ký kết hợp đồng này. Hai bên cùng cam kết tuân thủ và thực hiện các điều khoản nội dung hợp đồng như sau:
             </p>
         </div>
 

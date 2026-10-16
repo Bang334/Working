@@ -104,6 +104,17 @@ async def parse_contract_file_with_ai(
     )
     return parse_raw_contract_text_controller(request)
 
+@router.post("/contracts/ai-project-title")
+async def summarize_project_title_endpoint(payload: Dict[str, Any]):
+    """Summarize project title in VN and CN concisely based on product names."""
+    from app.services.ai_service import summarize_project_title_with_ai
+    prod_names = payload.get("product_names", [])
+    result = summarize_project_title_with_ai(prod_names)
+    return {
+        "status": "success",
+        "data": result
+    }
+
 
 @router.get("/contracts/list")
 async def list_contracts_endpoint():
