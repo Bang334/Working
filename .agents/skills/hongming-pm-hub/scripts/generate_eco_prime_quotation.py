@@ -3,22 +3,24 @@
 =============================================================================
 HONG MING GLOBAL & ECO PRIME - STANDARD QUOTATION GENERATOR (CHUẨN 100% MẪU GỐC)
 =============================================================================
-Cập nhật theo chỉ đạo mới nhất của Sếp:
-"要加上施工費用 與 輔助材料" (Phải thêm Chi phí thi công VÀ Vật tư phụ)
+Cập nhật nội dung tham khảo chuẩn mực theo ảnh Sếp đưa:
+1. Hạng mục 7: Cáp mạng Cat6, cáp RS485 & Vật tư phụ (輔助材料).
+2. Hạng mục 8: Chi phí thi công (施工費) với nội dung chi tiết chuyên nghiệp:
+   - Cài đặt hệ thống 系統設定
+   - Lắp đặt phần cứng 4 trạm biến áp 4座變電站硬體安裝
+   - Hiệu chỉnh chức năng & liên động Modbus CC2051 功能調適與通訊聯調
+   - Phí quản lý, vận chuyển 管理、運費
+   - Thiết kế bản vẽ hoàn công 設計、竣工圖費用
+   - Chi phí đi lại, giàn giáo, dụng cụ an toàn 交通費、鷹架、工安具...
 
-Cấu trúc gồm 8 hạng mục:
-- 6 Hạng mục thiết bị phần cứng chính (PM210-4-V, CT-1000RV, CT-2000RV, CC2051, PW, Switch).
-- Hạng mục 7: Vật tư phụ trọn gói (輔助材料 - Cáp RS485 UL2464 24AWG, cáp Cat.5e, ống ghen, đầu cosse).
-- Hạng mục 8: Chi phí thi công, đấu nối & cấu hình nghiệm thu (施工費用).
-
-Quy chuẩn màu sắc chuẩn mực 100%:
-- Toàn bộ 8 hạng mục: Font chữ màu đen chuẩn mực, thanh lịch.
-- Cột F (Đơn giá USD) và Cột J (Giá vốn USD): Để trống cho Sếp tự điền.
+Form chuẩn ECO PRIME:
+- Toàn bộ 8 hạng mục chữ màu đen rõ ràng, thanh lịch.
+- Cột F (Đơn giá USD) & Cột J (Giá vốn USD) để trống cho Sếp tự điền.
 - Hàng 22, 23, 24: Số tiền Tạm tính, Thuế VAT 8%, Tổng cộng chữ màu XANH DƯƠNG (#0000FF) bold.
 - Hàng 25, 26: Khối chữ ký xác nhận khách hàng chữ màu NÂU VÀNG (#9C6500) bold.
 - Hàng 27 (Điều khoản 2): Đoạn "交貨後保固一年" và "Bảo hành 1 năm..." chữ màu XANH DƯƠNG (#0000FF) bold.
 - Hàng 28 (Điều khoản 3 - Thanh toán): Toàn bộ chữ màu ĐỎ RỰC (#FF0000) bold.
-- Giữ nguyên 100% màu nền theme gốc của workbook (Theme 6 tint 0.8 dịu mắt tự nhiên).
+- Giữ nguyên màu nền theme gốc của workbook (Theme 6 tint 0.8 dịu mắt tự nhiên).
 - Khóa chặt vùng in $A$1:$H$28 trên 1 trang A4 dọc duy nhất, scale 38%, không loang viền ngoài.
 =============================================================================
 """
@@ -67,7 +69,7 @@ def copy_cell_style(src_cell, dst_cell):
         dst_cell.protection = copy(src_cell.protection)
         dst_cell.alignment = copy(src_cell.alignment)
 
-def generate_pouhui_with_installation_and_accessories(template_path, output_path):
+def generate_pouhui_with_reference_format(template_path, output_path):
     wb = openpyxl.load_workbook(template_path, data_only=False)
     ws = wb['BHT']
     ws.title = 'PouHui'
@@ -89,7 +91,7 @@ def generate_pouhui_with_installation_and_accessories(template_path, output_path
     ws['A12'].value = "1) Giải pháp nâng cấp hệ thống đo đếm điện năng và giám sát 4 trạm biến áp cao thế 普惠醫工4座高壓變電站電能計量與能耗監控系統方案"
     ws['H12'].value = 26130
 
-    # 3. Danh mục 8 Hạng mục: 6 Thiết bị + 1 Vật tư phụ (輔助材料) + 1 Chi phí thi công (施工費用)
+    # 3. Danh mục 8 Hạng mục: 6 Thiết bị + 1 Vật tư phụ (輔助材料) + 1 Chi phí thi công (施工費)
     items = [
         {
             "stt": 1,
@@ -116,8 +118,8 @@ def generate_pouhui_with_installation_and_accessories(template_path, output_path
             "stt": 4,
             "name": "Gateway thu thập dữ liệu CC2051\nCC2051 工業級資料收集閘道器",
             "category": "Gateway thu thập dữ liệu\n數據採集網關",
-            "desc": "Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway), cổng RS-485 Modbus RTU thu thập tín hiệu từ các đồng hồ đo điện PM210, chuyển đổi sang Modbus TCP / MQTT qua cổng mạng RJ45 Ethernet, truyền dữ liệu liên tục về hệ thống EMS trung tâm.\nCC2051工業級邊緣計算與資料收集閘道器, 具備RS-485 Modbus RTU接口採集PM210電表數據, 經由RJ45以太網轉換為Modbus TCP/MQTT協議, 即時上傳至中央能源管理系統 (EMS)。",
-            "qty": 2, "unit": "BỘ", "tax_rate": 0.08
+            "desc": "Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway), cổng RS-485 Modbus RTU thu thập tín hiệu từ 4 đồng hồ đo điện PM210-4-V của 4 trạm biến áp, chuyển đổi sang Modbus TCP / MQTT qua cổng mạng RJ45 Ethernet kết nối LAN Switch về EMS trung tâm.\nCC2051工業級邊緣計算與資料收集閘道器, 具備RS-485 Modbus RTU接口採集4座變電站PM210電表數據, 經由RJ45以太網轉換為Modbus TCP/MQTT協議, 經由LAN Switch即時上傳至中央能源管理系統 (EMS)。",
+            "qty": 1, "unit": "BỘ", "tax_rate": 0.08
         },
         {
             "stt": 5,
@@ -135,17 +137,17 @@ def generate_pouhui_with_installation_and_accessories(template_path, output_path
         },
         {
             "stt": 7,
-            "name": "Cáp truyền thông RS485 & Vật tư phụ trọn gói\nRS485隔離通訊線及全套安裝輔材",
-            "category": "Vật tư phụ & Cáp mạng\n工程輔材 (輔助材料)",
-            "desc": "Cáp truyền thông chống nhiễu chuyên dụng UL2464 24AWG 2P (vỏ bọc chống nhiễu kép), cáp mạng Cat.5e/Cat.6 chống nhiễu UTP/FTP, ống luồn bảo vệ chống cháy, đầu cosse bọc cách điện, dây tiếp địa, cầu chì bảo vệ và phụ kiện đấu nối trọn gói.\nUL2464 24AWG 2P 工業隔離屏蔽通訊線、Cat.5e/Cat.6 屏蔽網線、阻燃保護套管、冷壓絕緣端子、接地線、保護保險絲及全套配線輔材。",
-            "qty": 1, "unit": "GÓI", "tax_rate": 0.08
+            "name": "Cáp mạng Cat6, cáp RS485 & Vật tư phụ\n網絡線 Cat.6、RS485通訊線及安裝輔材",
+            "category": "Vật tư phụ\n輔助材料",
+            "desc": "Bao gồm nội dung 內容包含:\n- Cáp mạng Cat6: 網絡線 Category 6 UTP Cable, 4-Pair\n- Cáp truyền thông chống nhiễu chuyên dụng RS485 (UL2464 24AWG 2P 隔離通訊線)\n- Ống luồn bảo vệ chống cháy, dây tiếp địa, cầu chì bảo vệ 阻燃保護套管、接地線、保險絲\n- Đầu cosse bọc cách điện, nhãn đánh dấu dây cáp và toàn bộ phụ kiện đấu nối 冷壓端子、電纜號碼管及全套配線輔材。",
+            "qty": 1, "unit": "SET", "tax_rate": 0.08
         },
         {
             "stt": 8,
-            "name": "Chi phí thi công, đấu nối & cấu hình nghiệm thu\n現場安裝、接線、系統調試與技術移交",
-            "category": "Dịch vụ kỹ thuật\n工程服務 (施工費用)",
-            "desc": "Nhân công kỹ thuật thi công lắp đặt tại 4 trạm biến áp nhà máy Pou Hui: định vị lắp đặt đồng hồ, luồn cuộn biến dòng Rogowski, kéo rải cáp truyền thông, đấu nối nguồn, cài đặt địa chỉ ID Modbus, kiểm tra truyền nhận dữ liệu qua Gateway CC2051 lên hệ thống, nghiệm thu và hướng dẫn vận hành.\n普惠工廠4座高壓變電站現場施工: 電表固定安裝、羅氏線圈套接、通訊線布放、電源接線、Modbus通信參數設定、CC2051網關聯調、系統驗收測試及操作移交。",
-            "qty": 1, "unit": "GÓI", "tax_rate": 0.08
+            "name": "Chi phí thi công\n施工費",
+            "category": "Chi phí thi công\n施工費",
+            "desc": "Bao gồm nội dung 內容包含:\n- Cài đặt hệ thống 系統設定\n- Lắp đặt phần cứng 4 trạm biến áp 4座高壓變電站硬體安裝\n- Hiệu chỉnh chức năng & liên động Modbus CC2051 功能調適與通訊聯調\n- Phí quản lý, vận chuyển 管理、運費\n- Thiết kế bản vẽ hoàn công 設計、竣工圖費用\n- Chi phí đi lại, giàn giáo, dụng cụ an toàn 交通費、鷹架、工安器具...",
+            "qty": 1, "unit": "SET", "tax_rate": 0.08
         }
     ]
 
@@ -233,10 +235,9 @@ def generate_pouhui_with_installation_and_accessories(template_path, output_path
     ws.merge_cells(start_row=blank_row, start_column=1, end_row=blank_row, end_column=8)
 
     # 7. Khối Tổng Tiền: Tạm tính (22), Thuế VAT 8% (23), Tổng cộng (24)
-    # Giữ nguyên style mẫu gốc, các số tiền ở G và H có MÀU XANH DƯƠNG BOLD
     font_totals_label = Font(name="Microsoft YaHei", size=12.0, bold=True, color="000000")
     font_totals_blue = Font(name="Arial", size=13.0, bold=True, color="0000FF")
-    theme_peach_fill = copy(ws.cell(21, 6).fill)
+    theme_peach_fill = copy(ws.cell(21, 6).fill)  # Kế thừa fill theme 6 tint 0.8 gốc
 
     r_sub = 22
     ws.row_dimensions[r_sub].height = 38.0
@@ -380,7 +381,7 @@ def generate_pouhui_with_installation_and_accessories(template_path, output_path
     ws.cell(r_n1, 4).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
     ws.merge_cells(start_row=r_n1, start_column=4, end_row=r_n1, end_column=8)
 
-    # Điều khoản 2 (D27:H27 - RICH TEXT CHUẨN MẪU GỐC)
+    # Điều khoản 2 (D27:H27 - RICH TEXT CHUẨN MẪU GỐC VỚI ĐOẠN XANH DƯƠNG #0000FF)
     rt_d27 = CellRichText(
         TextBlock(InlineFont(b=True, sz=11, rFont='Microsoft YaHei', color=Color(theme=1)), "2. 報價有效期限：2026/11/21 止，報價簽回視同專案確認，不可任意終止、取消本專案；"),
         TextBlock(InlineFont(b=True, sz=11, rFont='Microsoft YaHei', color=Color(rgb="FF0000FF")), "交貨後保固一年"),
@@ -426,7 +427,7 @@ def generate_pouhui_with_installation_and_accessories(template_path, output_path
 
     try:
         wb.save(output_path)
-        print(f"[OK] Đã lưu thành công file chuẩn 100% tại: {output_path}")
+        print(f"[OK] Đã lưu thành công: {output_path}")
     except PermissionError:
         alt = output_path.replace(".xlsx", "_v2.xlsx")
         wb.save(alt)
@@ -437,6 +438,6 @@ if __name__ == "__main__":
     out1 = r"E:\Working\ChuaHieu\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx"
     out2 = r"E:\Working\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx"
 
-    print("Đang tạo file Báo giá Pou Hui đầy đủ Thiết bị + Vật tư phụ + Thi công chuẩn 100%...")
-    generate_pouhui_with_installation_and_accessories(tmpl, out1)
-    generate_pouhui_with_installation_and_accessories(tmpl, out2)
+    print("Đang tạo file Báo giá Pou Hui chuẩn tham khảo...")
+    generate_pouhui_with_reference_format(tmpl, out1)
+    generate_pouhui_with_reference_format(tmpl, out2)

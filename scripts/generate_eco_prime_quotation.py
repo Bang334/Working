@@ -118,8 +118,8 @@ def generate_pouhui_with_reference_format(template_path, output_path):
             "stt": 4,
             "name": "Gateway thu thập dữ liệu CC2051\nCC2051 工業級資料收集閘道器",
             "category": "Gateway thu thập dữ liệu\n數據採集網關",
-            "desc": "Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway), cổng RS-485 Modbus RTU thu thập tín hiệu từ các đồng hồ đo điện PM210, chuyển đổi sang Modbus TCP / MQTT qua cổng mạng RJ45 Ethernet, truyền dữ liệu liên tục về hệ thống EMS trung tâm.\nCC2051工業級邊緣計算與資料收集閘道器, 具備RS-485 Modbus RTU接口採集PM210電表數據, 經由RJ45以太網轉換為Modbus TCP/MQTT協議, 即時上傳至中央能源管理系統 (EMS)。",
-            "qty": 2, "unit": "BỘ", "tax_rate": 0.08
+            "desc": "Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway), cổng RS-485 Modbus RTU thu thập tín hiệu từ 4 đồng hồ đo điện PM210-4-V của 4 trạm biến áp, chuyển đổi sang Modbus TCP / MQTT qua cổng mạng RJ45 Ethernet kết nối LAN Switch về EMS trung tâm.\nCC2051工業級邊緣計算與資料收集閘道器, 具備RS-485 Modbus RTU接口採集4座變電站PM210電表數據, 經由RJ45以太網轉換為Modbus TCP/MQTT協議, 經由LAN Switch即時上傳至中央能源管理系統 (EMS)。",
+            "qty": 1, "unit": "BỘ", "tax_rate": 0.08
         },
         {
             "stt": 5,

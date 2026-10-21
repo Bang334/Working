@@ -28,9 +28,9 @@ Khi người dùng yêu cầu thực hiện một nhiệm vụ, hãy kích hoạ
   - Báo giá chuẩn ECO PRIME (Đồng hồ điện, Gateway CC2051, biến dòng Rogowski): Mẫu phôi chuẩn bất biến `E:\Working\Bieu Mau\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx` và script tạo tự động 1:1 `scripts/generate_eco_prime_quotation.py`.
 - **Quy tắc bắt buộc:**
   1. Thể hiện song ngữ: Tiếng Việt và Tiếng Trung Phồn thể.
-  2. Bóc tách rõ danh mục thiết bị từ sơ đồ thiết kế. TUYỆT ĐỐI KHÔNG tự ý bịa thêm chi phí thi công nếu đề bài không yêu cầu.
+  2. Bóc tách rõ danh mục thiết bị từ sơ đồ thiết kế. Bám sát 100% bản vẽ sơ đồ nguyên lý (Zero Deviation from Schematic Drawing), tuyệt đối không tự suy diễn hoặc tùy tiện tăng giảm số lượng Gateway hay thiết bị (trên bản vẽ vẽ 1 Gateway thì bóc tách đúng 1 Gateway). TUYỆT ĐỐI KHÔNG tự ý bịa thêm chi phí thi công nếu đề bài không yêu cầu.
   3. Tuân thủ 100% màu sắc chuẩn: Chữ thiết bị màu đen; Hàng bảo hành (Điều khoản 2) có đoạn chữ xanh dương; Hàng thanh toán (Điều khoản 3) toàn bộ chữ màu đỏ rực; Khối chữ ký (A24:A25) chữ màu nâu vàng `#9C6500`; Số tiền Tạm tính, VAT, Tổng cộng chữ màu xanh dương `#0000FF` bold; Nền theme chuẩn 6 tint 0.8.
-  4. Cột đơn giá bán (cột F) và giá vốn (cột J) để trống cho Sếp tự điền. Vùng in `$A$1:$H$27` khít chặt trên 1 trang A4.
+  4. Cột đơn giá bán (cột F) và giá vốn (cột J) để trống cho Sếp tự điền. Vùng in `$A$1:$H$28` khít chặt trên 1 trang A4 đứng, scale 38%, không loang viền ngoài.
 
 ### Workflow 2: Soạn Thảo & Rà Soát Hợp Đồng Mua Bán (Contract / 買賣合約)
 - **Mục tiêu:** Soạn thảo hợp đồng bán hàng thiết bị hoặc hợp đồng trọn gói triển khai dự án cho khách hàng FDI Đài Loan/Trung Quốc.

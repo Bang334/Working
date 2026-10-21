@@ -62,4 +62,6 @@ Tài liệu này định nghĩa bối cảnh doanh nghiệp, vai trò trách nhi
         - Điều khoản 3 (Thanh toán): Toàn bộ chữ màu đỏ rực `#FF0000` bold.
         - Màu nền theme: Giữ nguyên màu theme 6 tint 0.8 gốc của workbook, không dùng mã màu cam đậm nhân tạo.
      3. *Cột đơn giá:* Cột F (Giá bán USD) và Cột J (Giá vốn xuất xưởng USD) để trống (`None`) để Sếp tự điền.
-     4. *Khổ in:* Khóa chặt vùng in `$A$1:$H$27`, PageBreakPreview, Zoom 60%, Scale 38%, không loang viền ngoài.
+     4. *Khổ in:* Khóa chặt vùng in `$A$1:$H$28`, PageBreakPreview, Zoom 60%, Scale 38%, không loang viền ngoài.
+     5. *Bám sát 100% bản vẽ sơ đồ nguyên lý (Zero Deviation from Schematic Drawing):* Phân tích chính xác số lượng thiết bị từ sơ đồ đơn tuyến, TUYỆT ĐỐI KHÔNG tự suy diễn hoặc tùy tiện tăng giảm số lượng (ví dụ: trên bản vẽ vẽ 1 Gateway kết nối 4 trạm biến áp qua vòng RS485 thì bóc tách đúng 1 Gateway, không tự ý sửa thành 2). Mọi prompt AI và code bóc tách phải trung thành tuyệt đối với bản vẽ.
+
