@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/eco_prime_quotation.css?v=1.0">
+{% endblock %}
+
+{% block content %}
+<div class="workspace-single eco-prime-workspace">
+
+  <!-- Top Action & Navigation Bar -->
+  <div class="eco-quickbar">
+    <div class="eco-quickbar-left">
+      <span class="badge-pill blue">Báo Giá ECO PRIME</span>
+      <span class="badge-pill green">AI Vision Phân Tích Sơ Đồ Nguyên Lý</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">
+        Tải ảnh sơ đồ điện 1 sợi hoặc bản vẽ trạm biến áp, AI bóc tách chính xác 100% thiết bị và xuất file Excel chuẩn mẫu gốc của Sếp.
+      </span>
+    </div>
+
+    <div class="eco-quickbar-right">
+      <button type="button" class="btn btn-outline btn-sm" onclick="EcoPrimeApp.loadSampleData()" title="Nạp nhanh mẫu thử nghiệm dự án Pou Hui 4 trạm biến áp">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>🎯 Điền Mẫu POU HUI</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="EcoPrimeApp.resetForm()" title="Làm mới form để nhập sơ đồ mới">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        <span>Làm Mới</span>
+      </button>
+
+      <button type="button" class="btn btn-primary btn-sm" id="btnExportExcel" onclick="EcoPrimeApp.exportExcel()" title="Xuất file Excel bảo toàn 100% định dạng, màu sắc và công thức sống">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>📥 Xuất File Excel ECO PRIME (.xlsx)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 1: AI Vision Dropzone & Sơ đồ Nguyên Lý -->
+  <div class="eco-vision-card" id="visionDropCard">
+    <div class="eco-vision-header">
+      <div class="eco-vision-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="color: #2563eb;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>1. Tải Lên Bản Vẽ Sơ Đồ Nguyên Lý / Ảnh Chụp Trạm Biến Áp</span>
+        <span class="badge-pill blue" style="font-size: 0.72rem;">Gemini Multimodal Vision</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="aiModelSelect" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Model AI:</label>
+        <select id="aiModelSelect" class="form-control" style="font-size: 0.78rem; padding: 2px 8px; height: 28px; width: auto;">
+          {% for m in models %}
+          <option value="{{ m }}" {% if m == default_model %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="schematicFileInput" accept="image/png, image/jpeg, image/webp, application/pdf" style="display: none;" onchange="EcoPrimeApp.handleFileSelect(event)">
+
+    <!-- Drag & Drop Zone -->
+    <div class="eco-dropzone" id="ecoDropzone" onclick="document.getElementById('schematicFileInput').click()">
+      <svg class="eco-dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      <div>
+        <div style="font-size: 0.95rem; font-weight: 600; color: #1e293b;">
+          Kéo thả ảnh sơ đồ điện vào đây, hoặc <span style="color: #2563eb; text-decoration: underline;">nhấn để duyệt file</span>
+        </div>
+        <div style="font-size: 0.78rem; color: #64748b; margin-top: 0.25rem;">
+          Hỗ trợ ảnh sơ đồ 1 sợi (Single-line diagram), bản vẽ CAD chụp màn hình, ảnh PDF hoặc ảnh chụp tủ điện (PNG, JPG, WEBP, PDF).
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Preview Area -->
+    <div class="eco-preview-img-container" id="previewContainer">
+      <img id="schematicPreviewImg" src="" alt="Sơ đồ nguyên lý">
+      <div class="eco-preview-img-overlay">
+        <button type="button" class="btn btn-sm btn-secondary" onclick="EcoPrimeApp.clearImage(event)" title="Xóa ảnh để chọn lại">
+          <span>❌ Xóa Ảnh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Optional Customer Hint & Analyze Button -->
+    <div style="display: flex; gap: 0.75rem; margin-top: 1rem; align-items: flex-end; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 250px;">
+        <label for="customerHintInput" style="font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 0.25rem; display: block;">
+          Tên công ty mua (Tùy chọn - Nếu để trống AI sẽ tự tìm trên ảnh hoặc để trống cho bạn tự điền):
+        </label>
+        <input type="text" id="customerHintInput" class="form-control" placeholder="Ví dụ: CÔNG TY TNHH VIỆT NAM PHỔ HUỆ Y TẾ CÔNG NGHỆ (POU HUI)...">
+      </div>
+
+      <button type="button" id="btnAnalyzeSchematic" class="btn btn-ai" onclick="EcoPrimeApp.analyzeSchematic()" style="height: 38px;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <span id="analyzeBtnText">⚡ AI Phân Tích Sơ Đồ & Bóc Tách BOM</span>
+      </button>
+    </div>
+
+    <!-- Substation Detection & Summary Box -->
+    <div id="detectionResultsBox" style="display: none; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.06);">
+      <div style="font-size: 0.84rem; font-weight: 700; color: #1e40af; margin-bottom: 0.4rem;">
+        🔍 Kết Quả Nhận Diện Trạm Biến Áp (Bám sát 100% bản vẽ):
+      </div>
+      <div class="substation-tags-container" id="substationTags"></div>
+      <div id="aiSummaryText" style="font-size: 0.8rem; color: #475569; margin-top: 0.5rem; background: rgba(255,255,255,0.7); padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0;"></div>
+    </div>
+  </div>
+
+  <!-- Card 2: Thông tin Người mua & Tiêu đề Báo giá -->
+  <div class="eco-card">
+    <div class="eco-card-header">
+      <div class="eco-card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>2. Thông Tin Khách Hàng (Người Mua) & Dự Án</span>
+      </div>
+      <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">
+        (Các trường có thể để trống nếu khách hàng chưa cung cấp thông tin)
+      </span>
+    </div>
+
+    <div class="eco-form-grid">
+      <div class="form-group">
+        <label for="customerName" style="font-size: 0.78rem; font-weight: 600;">Tên công ty khách hàng (Bên mua):</label>
+        <input type="text" id="customerName" class="form-control" placeholder="CÔNG TY TNHH VIỆT NAM PHỔ HUỆ Y TẾ CÔNG NGHỆ (POU HUI)">
+      </div>
+
+      <div class="form-group">
+        <label for="customerDept" style="font-size: 0.78rem; font-weight: 600;">Bộ phận phụ trách:</label>
+        <input type="text" id="customerDept" class="form-control" value="Ban Quản lý Dự án & Cơ điện 機電與專案部">
+      </div>
+
+      <div class="form-group">
+        <label for="customerContact" style="font-size: 0.78rem; font-weight: 600;">Người liên hệ:</label>
+        <input type="text" id="customerContact" class="form-control" placeholder="(Họ và tên người nhận báo giá)">
+      </div>
+
+      <div class="form-group">
+        <label for="customerPhone" style="font-size: 0.78rem; font-weight: 600;">Số điện thoại:</label>
+        <input type="text" id="customerPhone" class="form-control" placeholder="Số điện thoại khách hàng">
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="customerAddress" style="font-size: 0.78rem; font-weight: 600;">Địa chỉ nhà máy:</label>
+        <input type="text" id="customerAddress" class="form-control" placeholder="Địa chỉ lắp đặt tại nhà máy">
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="quoteTitle" style="font-size: 0.78rem; font-weight: 600;">Tiêu đề Báo giá song ngữ (Ô A9):</label>
+        <input type="text" id="quoteTitle" class="form-control" value="Báo giá hệ thống đo đếm điện năng 4 trạm biến áp 高壓變電站電能計量系統硬體報價訂購確認單">
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="projectSolution" style="font-size: 0.78rem; font-weight: 600;">Dòng giải pháp (Ô A12):</label>
+        <input type="text" id="projectSolution" class="form-control" value="1) Giải pháp nâng cấp hệ thống đo đếm điện năng và giám sát 4 trạm biến áp cao thế 普惠醫工4座高壓變電站電能計量與能耗監控系統方案">
+      </div>
+
+      <div class="form-group">
+        <label for="quoteDate" style="font-size: 0.78rem; font-weight: 600;">Ngày báo giá (DD/MM/YYYY):</label>
+        <input type="text" id="quoteDate" class="form-control" placeholder="21/10/2026">
+      </div>
+
+      <div class="form-group">
+        <label for="exchangeRate" style="font-size: 0.78rem; font-weight: 600;">Tỷ giá quy đổi (VND/USD):</label>
+        <input type="number" id="exchangeRate" class="form-control" value="26130">
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3: Bảng Danh Mục Thiết Bị & Vật Tư (BOM Table) -->
+  <div class="eco-card">
+    <div class="eco-card-header">
+      <div class="eco-card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>3. Danh Mục Thiết Bị, Vật Tư Phụ & Thi Công (BOM Chuẩn ECO PRIME)</span>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="EcoPrimeApp.addItemRow()">
+          <span>➕ Thêm Dòng Thiết Bị</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Notice Box for Formulas & Blank Price -->
+    <div class="eco-formula-notice" style="margin-bottom: 1rem;">
+      <svg class="icon" style="width: 22px; height: 22px; flex-shrink: 0;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div>
+        <strong>Quy tắc biểu mẫu của Sếp:</strong> Cột Đơn giá USD (Cột F) và Giá vốn USD (Cột J) mặc định để trống sẵn. Khi Sếp mở file Excel gõ giá vào, toàn bộ Thành tiền USD, Thành tiền VND, Tạm tính, Thuế VAT 8% và Tổng cộng sẽ tự động nhảy số theo công thức sống!
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="eco-table-wrapper">
+      <table class="eco-table" id="ecoItemsTable">
+        <thead>
+          <tr>
+            <th style="width: 45px; text-align: center;">STT</th>
+            <th style="width: 240px;">Tên thiết bị (Việt - Trung)</th>
+            <th style="width: 170px;">Chủng loại (Việt - Trung)</th>
+            <th>Quy cách kỹ thuật & Mô tả chi tiết</th>
+            <th style="width: 75px; text-align: center;">Số lượng</th>
+            <th style="width: 65px; text-align: center;">ĐVT</th>
+            <th style="width: 80px; text-align: center;">Thuế VAT</th>
+            <th style="width: 100px; text-align: center;">Đơn giá USD</th>
+            <th style="width: 50px; text-align: center;">Xóa</th>
+          </tr>
+        </thead>
+        <tbody id="ecoItemsBody">
+          <!-- Rows will be injected via JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 4: Điều Khoản Hợp Đồng & Thanh Toán Chuẩn -->
+  <div class="eco-card">
+    <div class="eco-card-header">
+      <div class="eco-card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>4. Điều Khoản Hiệu Lực, Bảo Hành & Thanh Toán</span>
+      </div>
+    </div>
+
+    <div class="eco-form-grid">
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label style="font-size: 0.78rem; font-weight: 600;">
+          Điều khoản 2: Thời hạn hiệu lực & Bảo hành (Tự động chèn chữ xanh dương bold 1 năm):
+        </label>
+        <div style="font-size: 0.8rem; color: #334155; background: #f8fafc; padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+          Hiệu lực 30 ngày kể từ ngày báo giá. Ký và gửi lại báo giá xem như xác nhận dự án; <strong style="color: #0000FF;">Bảo hành 1 năm kể từ ngày giao hàng (交貨後保固一年)</strong>.
+        </div>
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="paymentTermsInput" style="font-size: 0.78rem; font-weight: 600; color: #dc2626;">
+          Điều khoản 3: Thanh toán (Màu ĐỎ RỰC #FF0000 bold trong file Excel):
+        </label>
+        <input type="text" id="paymentTermsInput" class="form-control" value="3. 付款方式 : 訂金 35%、 交貨 55%、驗收 10% TT3" style="color: #dc2626; font-weight: 700;">
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Action Bar -->
+  <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+    <button type="button" class="btn btn-primary" onclick="EcoPrimeApp.exportExcel()" style="padding: 0.6rem 1.5rem; font-size: 0.95rem;">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>📥 Tải File Báo Giá Excel ECO PRIME (.xlsx)</span>
+    </button>
+  </div>
+
+</div>
+
+<script src="/static/js/eco_prime_quotation.js?v=1.0"></script>
+{% endblock %}

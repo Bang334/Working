@@ -1,0 +1,290 @@
+/* ECO PRIME Quotation & AI Vision Styling */
+
+.eco-prime-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 3rem;
+}
+
+.eco-quickbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  padding: 0.85rem 1.25rem;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.eco-quickbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.eco-quickbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* AI Vision Dropzone Card */
+.eco-vision-card {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(5, 150, 105, 0.04) 100%);
+  border: 1.5px dashed var(--border-color, #cbd5e1);
+  border-radius: 14px;
+  padding: 1.5rem;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.eco-vision-card.drag-over {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  transform: scale(1.005);
+}
+
+.eco-vision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.eco-vision-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.eco-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.2rem 1.5rem;
+  border-radius: 10px;
+  background: var(--bg-card, #ffffff);
+  border: 1px dashed #94a3b8;
+  cursor: pointer;
+  text-align: center;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.eco-dropzone:hover {
+  border-color: #2563eb;
+  background: #f8fafc;
+}
+
+.eco-dropzone-icon {
+  width: 48px;
+  height: 48px;
+  color: #2563eb;
+}
+
+.eco-preview-img-container {
+  max-width: 100%;
+  max-height: 280px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  display: none;
+  position: relative;
+  background: #000000;
+}
+
+.eco-preview-img-container img {
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: contain;
+}
+
+.eco-preview-img-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Substation Detection Tags */
+.substation-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.substation-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.substation-tag.ct-2000 {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+/* Form Sections */
+.eco-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.eco-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border-color, #f1f5f9);
+}
+
+.eco-card-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.eco-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+/* Items Table */
+.eco-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.eco-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.eco-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  padding: 0.75rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.eco-table td {
+  padding: 0.65rem 0.6rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.eco-table tr:hover {
+  background: #f8fafc;
+}
+
+.eco-table textarea.item-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.82rem;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 4px;
+  padding: 4px;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.eco-table textarea.item-input:focus {
+  background: #ffffff;
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.eco-table input.item-num {
+  width: 70px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  text-align: center;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 4px;
+  padding: 4px;
+  transition: all 0.2s;
+}
+
+.eco-table input.item-num:focus {
+  background: #ffffff;
+  border-color: #3b82f6;
+  outline: none;
+}
+
+.price-blank-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: 4px;
+  font-style: italic;
+}
+
+/* Excel Formula Notice Box */
+.eco-formula-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+/* Loading overlay */
+.eco-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

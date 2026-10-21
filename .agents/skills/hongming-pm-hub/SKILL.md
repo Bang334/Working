@@ -31,6 +31,17 @@ Khi người dùng yêu cầu thực hiện một nhiệm vụ, hãy kích hoạ
   2. Bóc tách rõ danh mục thiết bị từ sơ đồ thiết kế. Bám sát 100% bản vẽ sơ đồ nguyên lý (Zero Deviation from Schematic Drawing), tuyệt đối không tự suy diễn hoặc tùy tiện tăng giảm số lượng Gateway hay thiết bị (trên bản vẽ vẽ 1 Gateway thì bóc tách đúng 1 Gateway). TUYỆT ĐỐI KHÔNG tự ý bịa thêm chi phí thi công nếu đề bài không yêu cầu.
   3. Tuân thủ 100% màu sắc chuẩn: Chữ thiết bị màu đen; Hàng bảo hành (Điều khoản 2) có đoạn chữ xanh dương; Hàng thanh toán (Điều khoản 3) toàn bộ chữ màu đỏ rực; Khối chữ ký (A24:A25) chữ màu nâu vàng `#9C6500`; Số tiền Tạm tính, VAT, Tổng cộng chữ màu xanh dương `#0000FF` bold; Nền theme chuẩn 6 tint 0.8.
   4. Cột đơn giá bán (cột F) và giá vốn (cột J) để trống cho Sếp tự điền. Vùng in `$A$1:$H$28` khít chặt trên 1 trang A4 đứng, scale 38%, không loang viền ngoài.
+- **Tính năng Web Portal ECO PRIME (AI Vision Sơ Đồ Điện -> Báo Giá Excel Chuẩn 1:1):**
+  - **Đường dẫn truy cập:** `/eco-prime-quotations` (hoặc `/eco-prime`).
+  - **Cấu trúc thư mục module tách biệt (Folder Separation - Dễ bảo trì & tìm kiếm):**
+    * *Data Models:* `pm_portal/app/models/eco_prime_models.py` (Pydantic models cho thiết bị, báo giá và payload).
+    * *AI Vision Service:* `pm_portal/app/services/eco_prime/eco_prime_ai_service.py` (Gemini Multimodal Vision phân tích sơ đồ đơn tuyến, đếm trạm biến áp, cáp XLPE, chọn CT-1000RV/CT-2000RV, bám sát 100% bản vẽ không tăng giảm Gateway).
+    * *Excel Generator Service:* `pm_portal/app/services/eco_prime/eco_prime_excel_service.py` (Tạo file `.xlsx` chuẩn 1:1 từ phôi mẫu gốc, công thức sống, Rich Text bảo hành, màu đỏ thanh toán).
+    * *Controller API:* `pm_portal/app/controllers/eco_prime_controller.py` (`/api/eco-prime/analyze-schematic`, `/api/eco-prime/upload-and-analyze`, `/api/eco-prime/export-excel`, `/api/eco-prime/sample-data`).
+    * *Giao diện HTML:* `pm_portal/app/templates/eco_prime_quotation_page.html` (Kéo thả ảnh sơ đồ, tag nhận diện trạm biến áp, form thông tin linh hoạt có hoặc để trống, bảng BOM tương tác).
+    * *Client Script & CSS:* `pm_portal/app/static/js/eco_prime_quotation.js` & `pm_portal/app/static/css/eco_prime_quotation.css`.
+    * *Kiểm thử tự động:* `pm_portal/tests/test_eco_prime.py`.
+
 
 ### Workflow 2: Soạn Thảo & Rà Soát Hợp Đồng Mua Bán (Contract / 買賣合約)
 - **Mục tiêu:** Soạn thảo hợp đồng bán hàng thiết bị hoặc hợp đồng trọn gói triển khai dự án cho khách hàng FDI Đài Loan/Trung Quốc.

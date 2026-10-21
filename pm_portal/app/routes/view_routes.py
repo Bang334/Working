@@ -91,6 +91,24 @@ async def quotations_page(request: Request):
     )
 
 
+@router.get("/eco-prime", response_class=HTMLResponse)
+@router.get("/eco-prime-quotation", response_class=HTMLResponse)
+@router.get("/eco-prime-quotations", response_class=HTMLResponse)
+async def eco_prime_quotation_page(request: Request):
+    """ECO PRIME AI Schematic & Quotation Generator Page."""
+    return templates.TemplateResponse(
+        "eco_prime_quotation_page.html",
+        {
+            "request": request,
+            "active_tab": "eco_prime_quotations",
+            "models": CANDIDATE_MODELS,
+            "default_model": DEFAULT_MODEL,
+            "page_title": "Báo Giá ECO PRIME · AI Phân Tích Sơ Đồ Nguyên Lý"
+        }
+    )
+
+
+
 @router.get("/delivery", response_class=HTMLResponse)
 async def delivery_page(request: Request):
     """Stock-out and equipment handover minutes view."""

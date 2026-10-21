@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.routes.api_routes import router as api_router
 from app.routes.view_routes import router as view_router
+from app.controllers.eco_prime_controller import router as eco_prime_router
 from app.database import init_db
 
 APP_DIR = Path(__file__).resolve().parent
@@ -43,6 +44,8 @@ async def add_no_cache_headers(request: Request, call_next):
 # Include routers
 app.include_router(view_router)
 app.include_router(api_router)
+app.include_router(eco_prime_router)
+
 
 
 @app.on_event("startup")
