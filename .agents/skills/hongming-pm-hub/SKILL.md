@@ -194,3 +194,21 @@ Khi lưu file vào thư mục người dùng (ví dụ Downloads):
    - `generate_smart_factory_quotation.py`: Cho các dự án nhà máy thông minh tích hợp ERP/Server.
    - `generate_cx_repair_acceptance.py`: Cho các biên bản nghiệm thu thiết bị sửa chữa CX Technology.
 3. **Nguyên tắc lưu kho:** Mọi script sau khi tạo phải được lưu trữ vĩnh viễn trong thư mục `.agents/skills/hongming-pm-hub/scripts/` và đồng bộ sang thư mục Global (`C:\Users\BANG\.gemini\config\skills\hongming-pm-hub\scripts\`). Khi người dùng đưa dữ liệu mới cho một mẫu tương tự, Agent chỉ cần tái sử dụng script đã có hoặc nhân bản ra để điều chỉnh, không được xóa đi.
+
+## 6. QUY CHUẨN BIỂU MẪU BÁO GIÁ ECO PRIME (ECO PRIME 報價單)
+
+1. **File phôi mẫu gốc bất biến:** `E:\Working\Bieu Mau\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx` (nhân bản từ `ECO PRIME_BHT Báo Giá Đồng Hồ Điện_24-07-2026.xlsx`).
+2. **Script tạo tự động 1:1 cố định:** `E:\Working\scripts\generate_eco_prime_quotation.py` (đồng bộ tại `hongming-pm-hub/scripts/generate_eco_prime_quotation.py`).
+3. **Quy tắc bắt buộc khi tạo báo giá ECO PRIME:**
+   - **Bám sát 100% bản vẽ sơ đồ nguyên lý (Zero Deviation from Schematic Drawing):** Phân tích chính xác số lượng thiết bị từ sơ đồ đơn tuyến, TUYỆT ĐỐI KHÔNG tự suy diễn hoặc tùy tiện tăng giảm số lượng (ví dụ: trên bản vẽ vẽ 1 Gateway kết nối 4 trạm biến áp qua vòng RS485 thì bóc tách đúng 1 Gateway, không tự ý sửa thành 2). Mọi prompt AI và code bóc tách phải trung thành tuyệt đối với bản vẽ.
+   - **Gộp bộ nguồn PW vào Gateway CC2051 (Bundle Rule):** Bộ nguồn 24VDC (電源供應器) chỉ cần 1 cái và **BẮT BUỘC ĐƯỢC GỘP CHUNG VÀO DÒNG GATEWAY CC2051** vì nhà cung cấp bán kèm trọn gói với nhau (`Gateway thu thập dữ liệu CC2051 (kèm bộ nguồn 24VDC) / CC2051 工業級資料收集閘道器 (含24VDC電源供應器)`).
+   - **Cấu trúc 7 hạng mục hoàn hảo 1:1:** Nhờ gộp PW vào CC2051, toàn bộ danh mục gồm đồng hồ, biến dòng, CC2051 kèm PW, LAN switch, vật tư phụ và chi phí thi công có đúng **7 hạng mục**, trùng khớp 1:1 với 7 dòng (`Row 13:19`) của file phôi mẫu gốc, không cần chèn thêm dòng, giữ nguyên bảng tổng tiền tại `Row 21:23`, vùng in `$A$1:$H$27`.
+   - **Quy chuẩn màu sắc 100% mẫu gốc:**
+     - 7 hạng mục thiết bị: Font chữ màu đen chuẩn mực, không dùng màu xanh.
+     - Khối chữ ký (A24:A25): Chữ màu nâu vàng `#9C6500` bold.
+     - Số tiền Tạm tính, VAT 8%, Tổng cộng (G21:H23): Chữ màu xanh dương `#0000FF` bold.
+     - Điều khoản 2 (Bảo hành): Đoạn `交貨後保固一年` và `Bảo hành 1 năm kể từ ngày giao hàng.` có màu xanh dương `#0000FF` bold.
+     - Điều khoản 3 (Thanh toán): Toàn bộ chữ màu đỏ rực `#FF0000` bold.
+     - Màu nền theme: Giữ nguyên màu theme 6 tint 0.8 gốc của workbook, không dùng mã màu cam đậm nhân tạo.
+   - **Cột đơn giá:** Cột F (Giá bán USD) và Cột J (Giá vốn xuất xưởng USD) để trống (`None`) để Sếp tự điền.
+   - **Khổ in & Sheet View:** Khóa chặt vùng in `$A$1:$H$27`, PageBreakPreview, Zoom 60%, Scale 38%, freeze_panes A13, không loang viền ngoài.

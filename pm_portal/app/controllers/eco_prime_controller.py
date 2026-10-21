@@ -123,34 +123,27 @@ async def get_sample_data():
         ),
         EcoPrimeItem(
             stt=4,
-            name="Gateway thu thập dữ liệu CC2051\nCC2051 工業級資料收集閘道器",
-            category="Gateway thu thập dữ liệu\n數據採集網關",
-            desc="Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway), cổng RS-485 Modbus RTU thu thập tín hiệu từ 4 đồng hồ đo điện PM210-4-V của 4 trạm biến áp, chuyển đổi sang Modbus TCP / MQTT qua cổng mạng RJ45 Ethernet kết nối LAN Switch về EMS trung tâm.\nCC2051工業級邊緣計算與資料收集閘道器, 具備RS-485 Modbus RTU接口採集4座變電站PM210電表數據, 經由RJ45以太網轉換為Modbus TCP/MQTT協議, 經由LAN Switch即時上傳至中央能源管理系統 (EMS)。",
+            name="Gateway thu thập dữ liệu CC2051 (kèm bộ nguồn 24VDC)\nCC2051 工業級資料收集閘道器 (含24VDC電源供應器)",
+            category="Gateway & Nguồn\n數據閘道器及電源",
+            desc="Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway) kèm bộ nguồn công nghiệp Din-rail 24VDC chuyên dụng, cổng RS-485 Modbus RTU thu thập tín hiệu từ 4 đồng hồ đo điện PM210-4-V của 4 trạm biến áp, chuyển đổi sang Modbus TCP / MQTT qua cổng mạng RJ45 Ethernet kết nối LAN Switch về EMS trung tâm.\nCC2051工業級邊緣計算與資料收集閘道器 (含專用導軌式24VDC開關電源供應器), 具備RS-485 Modbus RTU接口採集4座變電站PM210電表數據, 經由RJ45以太網轉換為Modbus TCP/MQTT協議, 經由LAN Switch即時上傳至中央能源管理系統 (EMS)。",
             qty=1, unit="BỘ", tax_rate=0.08
         ),
         EcoPrimeItem(
             stt=5,
-            name="Bộ nguồn công nghiệp 24VDC (PW)\n工業級電源供應器 (PW)",
-            category="Nguồn cấp công nghiệp\n電源供應器",
-            desc="Bộ nguồn công nghiệp gắn Din-rail Meanwell/tương đương, điện áp vào dải rộng AC 85~265V, đầu ra DC 24V ổn định, chống sét lan truyền và quá tải, cấp nguồn liên tục cho Gateway CC2051 và đồng hồ PM210. 1 bộ / trạm biến áp.\n工業級導軌式開關電源供應器, 寬電壓輸入 AC 85~265V, 輸出 DC 24V 穩定電源, 具備過載與防雷保護, 為 PM210 電表及 CC2051 閘道器供電。每座變電站1台。",
-            qty=4, unit="BỘ", tax_rate=0.08
-        ),
-        EcoPrimeItem(
-            stt=6,
             name="Bộ chia mạng công nghiệp 5-Port\n工業級5埠乙太網交換機 (LAN SWITCH)",
             category="Thiết bị mạng\n網絡設備",
-            desc="Switch mạng công nghiệp 5 cổng RJ45 10/100Mbps gắn thanh ray, vỏ kim loại chuẩn công nghiệp chống nhiễu điện từ, kết nối truyền dữ liệu từ các Gateway CC2051 về mạng nội bộ LAN nhà máy.\n工業級5埠 10/100Mbps 導軌式交換機, 金屬抗干擾外殼, 適用於工廠高壓變電站環境, 將 CC2051 網關連接至廠區局域網 (LAN)。",
+            desc="Switch mạng công nghiệp 5 cổng RJ45 10/100Mbps gắn thanh ray, vỏ kim loại chuẩn công nghiệp chống nhiễu điện từ, kết nối truyền dữ liệu từ Gateway CC2051 về mạng nội bộ LAN nhà máy.\n工業級5埠 10/100Mbps 導軌式交換機, 金屬抗干擾外殼, 適用於工廠高壓變電站環境, 將 CC2051 網關連接至廠區局域網 (LAN)。",
             qty=1, unit="BỘ", tax_rate=0.08
         ),
         EcoPrimeItem(
-            stt=7,
+            stt=6,
             name="Cáp mạng Cat6, cáp RS485 & Vật tư phụ\n網絡線 Cat.6、RS485通訊線及安裝輔材",
             category="Vật tư phụ\n輔助材料",
             desc="Bao gồm nội dung 內容包含:\n- Cáp mạng Cat6: 網絡線 Category 6 UTP Cable, 4-Pair\n- Cáp truyền thông chống nhiễu chuyên dụng RS485 (UL2464 24AWG 2P 隔離通訊線)\n- Ống luồn bảo vệ chống cháy, dây tiếp địa, cầu chì bảo vệ 阻燃保護套管、接地線、保險絲\n- Đầu cosse bọc cách điện, nhãn đánh dấu dây cáp và toàn bộ phụ kiện đấu nối 冷壓端子、電纜號碼管及全套配線輔材。",
             qty=1, unit="SET", tax_rate=0.08
         ),
         EcoPrimeItem(
-            stt=8,
+            stt=7,
             name="Chi phí thi công\n施工費",
             category="Chi phí thi công\n施工費",
             desc="Bao gồm nội dung 內容包含:\n- Cài đặt hệ thống 系統設定\n- Lắp đặt phần cứng 4 trạm biến áp 4座高壓變電站硬體安裝\n- Hiệu chỉnh chức năng & liên động Modbus CC2051 功能調適與通訊聯調\n- Phí quản lý, vận chuyển 管理、運費\n- Thiết kế bản vẽ hoàn công 設計、竣工圖費用\n- Chi phí đi lại, giàn giáo, dụng cụ an toàn 交通費、鷹架、工安器具...",

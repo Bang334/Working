@@ -116,34 +116,27 @@ def generate_pouhui_with_reference_format(template_path, output_path):
         },
         {
             "stt": 4,
-            "name": "Gateway thu thập dữ liệu CC2051\nCC2051 工業級資料收集閘道器",
-            "category": "Gateway thu thập dữ liệu\n數據採集網關",
-            "desc": "Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway), cổng RS-485 Modbus RTU thu thập tín hiệu từ 4 đồng hồ đo điện PM210-4-V của 4 trạm biến áp, chuyển đổi sang Modbus TCP / MQTT qua cổng mạng RJ45 Ethernet kết nối LAN Switch về EMS trung tâm.\nCC2051工業級邊緣計算與資料收集閘道器, 具備RS-485 Modbus RTU接口採集4座變電站PM210電表數據, 經由RJ45以太網轉換為Modbus TCP/MQTT協議, 經由LAN Switch即時上傳至中央能源管理系統 (EMS)。",
+            "name": "Gateway thu thập dữ liệu CC2051 (kèm bộ nguồn 24VDC)\nCC2051 工業級資料收集閘道器 (含24VDC電源供應器)",
+            "category": "Gateway & Nguồn\n數據閘道器及電源",
+            "desc": "Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway) kèm bộ nguồn công nghiệp Din-rail 24VDC chuyên dụng, cổng RS-485 Modbus RTU thu thập tín hiệu từ 4 đồng hồ đo điện PM210-4-V của 4 trạm biến áp, chuyển đổi sang Modbus TCP / MQTT qua cổng mạng RJ45 Ethernet kết nối LAN Switch về EMS trung tâm.\nCC2051工業級邊緣計算與資料收集閘道器 (含專用導軌式24VDC開關電源供應器), 具備RS-485 Modbus RTU接口採集4座變電站PM210電表數據, 經由RJ45以太網轉換為Modbus TCP/MQTT協議, 經由LAN Switch即時上傳至中央能源管理系統 (EMS)。",
             "qty": 1, "unit": "BỘ", "tax_rate": 0.08
         },
         {
             "stt": 5,
-            "name": "Bộ nguồn công nghiệp 24VDC (PW)\n工業級電源供應器 (PW)",
-            "category": "Nguồn cấp công nghiệp\n電源供應器",
-            "desc": "Bộ nguồn công nghiệp gắn Din-rail Meanwell/tương đương, điện áp vào dải rộng AC 85~265V, đầu ra DC 24V ổn định, chống sét lan truyền và quá tải, cấp nguồn liên tục cho Gateway CC2051 và đồng hồ PM210. 1 bộ / trạm biến áp.\n工業級導軌式開關電源供應器, 寬電壓輸入 AC 85~265V, 輸出 DC 24V 穩定電源, 具備過載與防雷保護, 為 PM210 電表及 CC2051 閘道器供電。每座變電站1台。",
-            "qty": 4, "unit": "BỘ", "tax_rate": 0.08
-        },
-        {
-            "stt": 6,
             "name": "Bộ chia mạng công nghiệp 5-Port\n工業級5埠乙太網交換機 (LAN SWITCH)",
             "category": "Thiết bị mạng\n網絡設備",
-            "desc": "Switch mạng công nghiệp 5 cổng RJ45 10/100Mbps gắn thanh ray, vỏ kim loại chuẩn công nghiệp chống nhiễu điện từ, kết nối truyền dữ liệu từ các Gateway CC2051 về mạng nội bộ LAN nhà máy.\n工業級5埠 10/100Mbps 導軌式交換機, 金屬抗干擾外殼, 適用於工廠高壓變電站環境, 將 CC2051 網關連接至廠區局域網 (LAN)。",
+            "desc": "Switch mạng công nghiệp 5 cổng RJ45 10/100Mbps gắn thanh ray, vỏ kim loại chuẩn công nghiệp chống nhiễu điện từ, kết nối truyền dữ liệu từ Gateway CC2051 về mạng nội bộ LAN nhà máy.\n工業級5埠 10/100Mbps 導軌式交換機, 金屬抗干擾外殼, 適用於工廠高壓變電站環境, 將 CC2051 網關連接至廠區局域網 (LAN)。",
             "qty": 1, "unit": "BỘ", "tax_rate": 0.08
         },
         {
-            "stt": 7,
+            "stt": 6,
             "name": "Cáp mạng Cat6, cáp RS485 & Vật tư phụ\n網絡線 Cat.6、RS485通訊線及安裝輔材",
             "category": "Vật tư phụ\n輔助材料",
             "desc": "Bao gồm nội dung 內容包含:\n- Cáp mạng Cat6: 網絡線 Category 6 UTP Cable, 4-Pair\n- Cáp truyền thông chống nhiễu chuyên dụng RS485 (UL2464 24AWG 2P 隔離通訊線)\n- Ống luồn bảo vệ chống cháy, dây tiếp địa, cầu chì bảo vệ 阻燃保護套管、接地線、保險絲\n- Đầu cosse bọc cách điện, nhãn đánh dấu dây cáp và toàn bộ phụ kiện đấu nối 冷壓端子、電纜號碼管及全套配線輔材。",
             "qty": 1, "unit": "SET", "tax_rate": 0.08
         },
         {
-            "stt": 8,
+            "stt": 7,
             "name": "Chi phí thi công\n施工費",
             "category": "Chi phí thi công\n施工費",
             "desc": "Bao gồm nội dung 內容包含:\n- Cài đặt hệ thống 系統設定\n- Lắp đặt phần cứng 4 trạm biến áp 4座高壓變電站硬體安裝\n- Hiệu chỉnh chức năng & liên động Modbus CC2051 功能調適與通訊聯調\n- Phí quản lý, vận chuyển 管理、運費\n- Thiết kế bản vẽ hoàn công 設計、竣工圖費用\n- Chi phí đi lại, giàn giáo, dụng cụ an toàn 交通費、鷹架、工安器具...",
@@ -158,12 +151,12 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     for col_l, w in col_widths.items():
         ws.column_dimensions[col_l].width = w
 
-    # 4. Hủy các vùng merge cũ từ dòng 20 trở đi để tái lập chuẩn xác cho 8 dòng
+    # 4. Hủy các vùng merge cũ từ dòng 20 trở đi để tái lập chuẩn xác cho số dòng thực tế
     for rng in list(ws.merged_cells.ranges):
         if rng.min_row >= 20:
             ws.unmerge_cells(str(rng))
 
-    # 5. Ghi 8 dòng sản phẩm (Hàng 13 đến 20) - TOÀN BỘ CHỮ MÀU ĐEN CHUẨN MỰC
+    # 5. Ghi các dòng sản phẩm (Hàng 13 trở đi) - TOÀN BỘ CHỮ MÀU ĐEN CHUẨN MỰC
     font_black = Font(name="微軟正黑體", size=12.0, bold=False, color="000000")
 
     for idx, item in enumerate(items):
@@ -218,8 +211,9 @@ def generate_pouhui_with_reference_format(template_path, output_path):
         ws.cell(r, 14).value = f"=J{r}+L{r}+M{r}"
         ws.cell(r, 15).value = f"=N{r}*E{r}"
 
-    # 6. Hàng 以下空白 (Hàng 21)
-    blank_row = 21
+    # 6. Hàng 以下空白
+    num_items = len(items)
+    blank_row = 13 + num_items
     ws.row_dimensions[blank_row].height = 18.0
     for col_idx in range(1, 9):
         c = ws.cell(blank_row, col_idx)
@@ -234,12 +228,12 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     ws.cell(blank_row, 1).value = "以下空白"
     ws.merge_cells(start_row=blank_row, start_column=1, end_row=blank_row, end_column=8)
 
-    # 7. Khối Tổng Tiền: Tạm tính (22), Thuế VAT 8% (23), Tổng cộng (24)
+    # 7. Khối Tổng Tiền: Tạm tính, Thuế VAT 8%, Tổng cộng
     font_totals_label = Font(name="Microsoft YaHei", size=12.0, bold=True, color="000000")
     font_totals_blue = Font(name="Arial", size=13.0, bold=True, color="0000FF")
     theme_peach_fill = copy(ws.cell(21, 6).fill)  # Kế thừa fill theme 6 tint 0.8 gốc
 
-    r_sub = 22
+    r_sub = blank_row + 1
     ws.row_dimensions[r_sub].height = 38.0
     ws.cell(r_sub, 6).value = "Tạm tính 小計"
     ws.cell(r_sub, 6).fill = theme_peach_fill
@@ -247,7 +241,7 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     ws.cell(r_sub, 6).alignment = Alignment(horizontal="center", vertical="center")
     ws.cell(r_sub, 6).border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
-    ws.cell(r_sub, 7).value = "=SUM(G13:G20)"
+    ws.cell(r_sub, 7).value = f"=SUM(G13:G{12 + num_items})"
     ws.cell(r_sub, 7).font = font_totals_blue
     ws.cell(r_sub, 7).alignment = Alignment(horizontal="right", vertical="center")
     ws.cell(r_sub, 7).number_format = '"US$"#,##0.00_);\\("US$"#,##0.00\\)'
@@ -259,7 +253,7 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     ws.cell(r_sub, 8).number_format = '[$VND]\\ #,##0_);\\([$VND]\\ #,##0\\)'
     ws.cell(r_sub, 8).border = Border(left=Side(style='thin'), right=Side(style='medium'), top=Side(style='thin'), bottom=Side(style='thin'))
 
-    r_vat = 23
+    r_vat = r_sub + 1
     ws.row_dimensions[r_vat].height = 38.0
     ws.cell(r_vat, 6).value = "Thuế VAT 8% 增值稅"
     ws.cell(r_vat, 6).fill = theme_peach_fill
@@ -279,7 +273,7 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     ws.cell(r_vat, 8).number_format = '[$VND]\\ #,##0_);\\([$VND]\\ #,##0\\)'
     ws.cell(r_vat, 8).border = Border(left=Side(style='thin'), right=Side(style='medium'), top=Side(style='thin'), bottom=Side(style='thin'))
 
-    r_tot = 24
+    r_tot = r_vat + 1
     ws.row_dimensions[r_tot].height = 38.0
     ws.cell(r_tot, 6).value = "Tổng cộng 總金額"
     ws.cell(r_tot, 6).fill = theme_peach_fill
@@ -299,7 +293,7 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     ws.cell(r_tot, 8).number_format = '[$VND]\\ #,##0_);\\([$VND]\\ #,##0\\)'
     ws.cell(r_tot, 8).border = Border(left=Side(style='thin'), right=Side(style='medium'), top=Side(style='thin'), bottom=Side(style='medium'))
 
-    # Merge vùng trống A22:E24 bên trái
+    # Merge vùng trống bên trái các dòng tổng
     for r_m in range(r_sub, r_tot + 1):
         for c_m in range(1, 6):
             cell = ws.cell(r_m, c_m)
@@ -309,11 +303,11 @@ def generate_pouhui_with_reference_format(template_path, output_path):
             )
     ws.merge_cells(start_row=r_sub, start_column=1, end_row=r_tot, end_column=5)
 
-    # 8. Hàng 25: Tiêu đề Khách hàng (A25) & Ghi chú (D25)
-    r_hdr = 25
+    # 8. Tiêu đề Khách hàng & Ghi chú
+    r_hdr = r_tot + 1
     ws.row_dimensions[r_hdr].height = 24.0
 
-    # A25:C25: ※客戶確認 Xác nhận khách hàng (MÀU NÂU VÀNG #9C6500 BOLD)
+    # A:C: ※客戶確認 Xác nhận khách hàng (MÀU NÂU VÀNG #9C6500 BOLD)
     for c_idx in range(1, 4):
         c = ws.cell(r_hdr, c_idx)
         c.fill = theme_peach_fill
@@ -327,7 +321,7 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     ws.cell(r_hdr, 1).alignment = Alignment(horizontal="left", vertical="center")
     ws.merge_cells(start_row=r_hdr, start_column=1, end_row=r_hdr, end_column=3)
 
-    # D25:H25: ◆ 備註聲明
+    # D:H: ◆ 備註聲明
     for c_idx in range(4, 9):
         c = ws.cell(r_hdr, c_idx)
         c.fill = theme_peach_fill
@@ -341,16 +335,16 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     ws.cell(r_hdr, 4).alignment = Alignment(horizontal="left", vertical="center")
     ws.merge_cells(start_row=r_hdr, start_column=4, end_row=r_hdr, end_column=8)
 
-    # 9. Hàng 26, 27, 28: Khối Chữ ký (A26:C28) & 3 Điều khoản (D26:H28)
-    r_n1 = 26
-    r_n2 = 27
-    r_n3 = 28
+    # 9. Khối Chữ ký & 3 Điều khoản
+    r_n1 = r_hdr + 1
+    r_n2 = r_n1 + 1
+    r_n3 = r_n2 + 1
 
     ws.row_dimensions[r_n1].height = 54.0
     ws.row_dimensions[r_n2].height = 54.0
     ws.row_dimensions[r_n3].height = 58.0
 
-    # Khối chữ ký A26:C28 (MÀU NÂU VÀNG #9C6500 BOLD)
+    # Khối chữ ký A:C (MÀU NÂU VÀNG #9C6500 BOLD)
     for r_curr in [r_n1, r_n2, r_n3]:
         is_last = (r_curr == r_n3)
         for c_idx in range(1, 4):
@@ -375,24 +369,24 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     ws.cell(r_n1, 1).alignment = Alignment(horizontal="left", vertical="top")
     ws.merge_cells(start_row=r_n1, start_column=1, end_row=r_n3, end_column=3)
 
-    # Điều khoản 1 (D26:H26)
+    # Điều khoản 1
     ws.cell(r_n1, 4).value = "1. 以上報價交期：報價單簽回後，另日程安排後回覆；\n   Thời gian giao hàng của báo giá trên: sau khi báo giá được ký và gửi lại, lịch trình cụ thể sẽ được thông báo sau;"
     ws.cell(r_n1, 4).font = Font(name="Microsoft YaHei", size=10.5, bold=True, color="000000")
     ws.cell(r_n1, 4).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
     ws.merge_cells(start_row=r_n1, start_column=4, end_row=r_n1, end_column=8)
 
-    # Điều khoản 2 (D27:H27 - RICH TEXT CHUẨN MẪU GỐC VỚI ĐOẠN XANH DƯƠNG #0000FF)
-    rt_d27 = CellRichText(
+    # Điều khoản 2 (RICH TEXT VỚI ĐOẠN XANH DƯƠNG #0000FF)
+    rt_d2 = CellRichText(
         TextBlock(InlineFont(b=True, sz=11, rFont='Microsoft YaHei', color=Color(theme=1)), "2. 報價有效期限：2026/11/21 止，報價簽回視同專案確認，不可任意終止、取消本專案；"),
         TextBlock(InlineFont(b=True, sz=11, rFont='Microsoft YaHei', color=Color(rgb="FF0000FF")), "交貨後保固一年"),
         TextBlock(InlineFont(b=True, sz=11, rFont='Microsoft YaHei', color=Color(theme=1)), "\n    Thời hạn hiệu lực của báo giá: đến hết ngày 21/11/2026. Việc ký và gửi lại báo giá được xem là xác nhận dự án, \n    không được phép đơn phương chấm dứt hoặc hủy bỏ dự án này; "),
         TextBlock(InlineFont(b=True, sz=11, rFont='Microsoft YaHei', color=Color(rgb="FF0000FF")), "Bảo hành 1 năm kể từ ngày giao hàng.")
     )
-    ws.cell(r_n2, 4).value = rt_d27
+    ws.cell(r_n2, 4).value = rt_d2
     ws.cell(r_n2, 4).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
     ws.merge_cells(start_row=r_n2, start_column=4, end_row=r_n2, end_column=8)
 
-    # Điều khoản 3 (D28:H28 - TOÀN BỘ CHỮ MÀU ĐỎ RỰC #FF0000 BOLD)
+    # Điều khoản 3 (TOÀN BỘ CHỮ MÀU ĐỎ RỰC #FF0000 BOLD)
     ws.cell(r_n3, 4).value = "3. 付款方式 : 訂金 35%、 交貨 55%、驗收 10% TT30Day。\n     Điều khoản thanh toán:  [Đặt cọc: 35%, Khi giao hàng: 55%, Sau khi nghiệm thu: Thanh toán 10% còn lại theo điều khoản TT 30 ngày (TT30 Days).]"
     ws.cell(r_n3, 4).font = Font(name="Microsoft YaHei", size=10.5, bold=True, color="FF0000")
     ws.cell(r_n3, 4).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
@@ -400,7 +394,7 @@ def generate_pouhui_with_reference_format(template_path, output_path):
 
     # 10. Bảng giá vốn nội bộ (Cột N & O)
     ws.cell(r_sub, 14).value = "合計成本"
-    ws.cell(r_sub, 15).value = "=SUM(O13:O20)"
+    ws.cell(r_sub, 15).value = f"=SUM(O13:O{12 + num_items})"
 
     ws.cell(r_vat, 14).value = "利潤"
     ws.cell(r_vat, 15).value = f"=G{r_sub}-O{r_sub}"
@@ -414,7 +408,7 @@ def generate_pouhui_with_reference_format(template_path, output_path):
         for c_c in range(16, 20):
             ws.cell(r_c, c_c).value = None
 
-    # Khóa chặt vùng in 28 dòng trên 1 trang A4 duy nhất
+    # Khóa chặt vùng in đúng số dòng thực tế trên 1 trang A4 duy nhất
     ws.print_area = f"$A$1:$H${r_n3}"
     ws.views.sheetView[0].view = "pageBreakPreview"
     ws.views.sheetView[0].zoomScale = 60

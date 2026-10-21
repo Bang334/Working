@@ -18,7 +18,7 @@ def anyio_backend():
 
 @pytest.mark.anyio
 async def test_eco_prime_sample_data_endpoint():
-    """Kiểm tra endpoint sample-data trả về đủ 8 hạng mục và dữ liệu Pou Hui."""
+    """Kiểm tra endpoint sample-data trả về đúng 7 hạng mục (PW gộp vào CC2051) và dữ liệu Pou Hui."""
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
         resp = await client.get("/api/eco-prime/sample-data")
         assert resp.status_code == 200
@@ -26,11 +26,12 @@ async def test_eco_prime_sample_data_endpoint():
         assert data["success"] is True
         quote = data["data"]
         assert quote["customer_name"] == "CÔNG TY TNHH VIỆT NAM PHỔ HUỆ Y TẾ CÔNG NGHỆ (POU HUI)"
-        assert len(quote["items"]) == 8
+        assert len(quote["items"]) == 7
 
-        # Kiểm tra Gateway CC2051 có số lượng là 1 (chuẩn bản vẽ)
+        # Kiểm tra Gateway CC2051 gộp chung bộ nguồn PW có số lượng là 1 bộ
         gw = [it for it in quote["items"] if "CC2051" in it["name"]][0]
         assert gw["qty"] == 1
+        assert "電源" in gw["name"] or "nguồn" in gw["name"]
 
 
 def test_eco_prime_excel_generation():

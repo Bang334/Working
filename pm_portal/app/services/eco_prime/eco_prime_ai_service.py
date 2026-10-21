@@ -55,17 +55,16 @@ QUY TẮC BÓC TÁCH KỸ THUẬT:
    - Hạng mục 3: Biến dòng mềm Rogowski CT-2000RV (2000A) (三相羅氏比流器 CT-2000RV (2000A))
      + Dùng cho các trạm có dòng sơ cấp > 1000A (ví dụ trạm 750KVA/CT1200A, cáp 3 sợi/pha).
      + Số lượng = Số trạm thỏa mãn điều kiện này. Thuế suất: 0.20.
-   - Hạng mục 4: Gateway thu thập dữ liệu CC2051 (CC2051 工業級資料收集閘道器)
-     + Đếm chính xác số Gateway trên bản vẽ (thường là 1 bộ kết nối LAN Switch).
-   - Hạng mục 5: Bộ nguồn công nghiệp 24VDC (PW) (工業級電源供應器 (PW))
-     + Số lượng = Số trạm có ký hiệu PW (thường 1 bộ / trạm).
-   - Hạng mục 6: Bộ chia mạng công nghiệp 5-Port (LAN SWITCH) (工業級5埠乙太網交換機)
-     + Số lượng = Đếm theo ký hiệu LAN Switch trên bản vẽ (thường 1 bộ).
-   - Hạng mục 7: Cáp mạng Cat6, cáp RS485 & Vật tư phụ (網絡線 Cat.6、RS485通訊線及安裝輔材)
-     + Số lượng = 1 SET.
+   - Hạng mục 4: Gateway thu thập dữ liệu CC2051 (kèm bộ nguồn 24VDC) (CC2051 工業級資料收集閘道器 (含24VDC電源供應器))
+     + QUY TẮC BẮT BUỘC: Bộ nguồn công nghiệp (電源供應器 PW) chỉ cần 1 cái và ĐƯỢC GỘP CHUNG VÀO CÙNG MỤC VỚI CC2051 vì bán kèm trọn gói với nhau (電源供應器1個就可以，且跟CC2051合併，一起賣).
+     + Số lượng = Số Gateway trên bản vẽ (thường là 1 BỘ). Thuế suất: 0.08.
+   - Hạng mục 5: Bộ chia mạng công nghiệp 5-Port (LAN SWITCH) (工業級5埠乙太網交換機)
+     + Số lượng = Đếm theo ký hiệu LAN Switch trên bản vẽ (thường 1 BỘ). Thuế suất: 0.08.
+   - Hạng mục 6: Cáp mạng Cat6, cáp RS485 & Vật tư phụ (網絡線 Cat.6、RS485通訊線及安裝輔材)
+     + Số lượng = 1 SET. Thuế suất: 0.08.
      + Mô tả bao gồm: Cáp mạng Cat6 UTP 4-Pair, Cáp chống nhiễu RS485 UL2464 24AWG 2P, ống bảo vệ chống cháy, đầu cosse, nhãn đánh số cáp.
-   - Hạng mục 8: Chi phí thi công (施工費)
-     + Số lượng = 1 SET.
+   - Hạng mục 7: Chi phí thi công (施工費)
+     + Số lượng = 1 SET. Thuế suất: 0.08.
      + Mô tả bao gồm: Cài đặt hệ thống, Lắp đặt phần cứng N trạm, Hiệu chỉnh Modbus CC2051, Quản lý vận chuyển, Thiết kế bản vẽ hoàn công, Chi phí đi lại giàn giáo an toàn.
 
 4. Cột Đơn giá (USD):
@@ -122,9 +121,9 @@ QUY TẮC BÓC TÁCH KỸ THUẬT:
     },
     {
       "stt": 4,
-      "name": "Gateway thu thập dữ liệu CC2051\\nCC2051 工業級資料收集閘道器",
-      "category": "Gateway thu thập dữ liệu\\n數據採集網關",
-      "desc": "Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway)...\\nCC2051工業級邊緣計算與資料收集閘道器...",
+      "name": "Gateway thu thập dữ liệu CC2051 (kèm bộ nguồn 24VDC)\\nCC2051 工業級資料收集閘道器 (含24VDC電源供應器)",
+      "category": "Gateway & Nguồn\\n數據閘道器及電源",
+      "desc": "Bộ điều khiển/thu thập dữ liệu biên công nghiệp CC2051 (Edge Gateway) kèm bộ nguồn công nghiệp Din-rail 24VDC chuyên dụng...\\nCC2051工業級邊緣計算與資料收集閘道器 (含專用導軌式24VDC開關電源供應器)...",
       "qty": 1,
       "unit": "BỘ",
       "unit_price_usd": null,
@@ -132,16 +131,6 @@ QUY TẮC BÓC TÁCH KỸ THUẬT:
     },
     {
       "stt": 5,
-      "name": "Bộ nguồn công nghiệp 24VDC (PW)\\n工業級電源供應器 (PW)",
-      "category": "Nguồn cấp công nghiệp\\n電源供應器",
-      "desc": "Bộ nguồn công nghiệp gắn Din-rail Meanwell/tương đương DC 24V...\\n工業級導軌式開關電源供應器 DC 24V...",
-      "qty": 4,
-      "unit": "BỘ",
-      "unit_price_usd": null,
-      "tax_rate": 0.08
-    },
-    {
-      "stt": 6,
       "name": "Bộ chia mạng công nghiệp 5-Port\\n工業級5埠乙太網交換機 (LAN SWITCH)",
       "category": "Thiết bị mạng\\n網絡設備",
       "desc": "Switch mạng công nghiệp 5 cổng RJ45 10/100Mbps...\\n工業級5埠 10/100Mbps 導軌式交換機...",
@@ -151,7 +140,7 @@ QUY TẮC BÓC TÁCH KỸ THUẬT:
       "tax_rate": 0.08
     },
     {
-      "stt": 7,
+      "stt": 6,
       "name": "Cáp mạng Cat6, cáp RS485 & Vật tư phụ\\n網絡線 Cat.6、RS485通訊線及安裝輔材",
       "category": "Vật tư phụ\\n輔助材料",
       "desc": "Bao gồm nội dung 內容包含:\\n- Cáp mạng Cat6: 網絡線 Category 6 UTP Cable, 4-Pair\\n- Cáp truyền thông chống nhiễu chuyên dụng RS485 (UL2464 24AWG 2P)\\n- Ống luồn bảo vệ chống cháy, dây tiếp địa, cầu chì bảo vệ\\n- Đầu cosse bọc cách điện, nhãn đánh dấu dây cáp và phụ kiện đấu nối.",
@@ -161,7 +150,7 @@ QUY TẮC BÓC TÁCH KỸ THUẬT:
       "tax_rate": 0.08
     },
     {
-      "stt": 8,
+      "stt": 7,
       "name": "Chi phí thi công\\n施工費",
       "category": "Chi phí thi công\\n施工費",
       "desc": "Bao gồm nội dung 內容包含:\\n- Cài đặt hệ thống 系統設定\\n- Lắp đặt phần cứng các trạm biến áp\\n- Hiệu chỉnh chức năng & liên động Modbus CC2051\\n- Phí quản lý, vận chuyển 管理、運費\\n- Thiết kế bản vẽ hoàn công 設計、竣工圖費用\\n- Chi phí đi lại, giàn giáo, dụng cụ an toàn 交通費、鷹架、工安器具...",
@@ -171,7 +160,8 @@ QUY TẮC BÓC TÁCH KỸ THUẬT:
       "tax_rate": 0.08
     }
   ],
-  "ai_summary": "Phát hiện 4 trạm biến áp (Trạm 1, 2, 3: 630KVA dùng CT-1000RV; Trạm 4: 750KVA dùng CT-2000RV). Cả 4 trạm liên kết qua 1 đường RS485 duy nhất vào 1 Gateway CC2051 kết nối LAN Switch. Đã bóc tách đủ 8 hạng mục thiết bị, vật tư phụ và chi phí thi công."
+  "ai_summary": "Phát hiện 4 trạm biến áp (Trạm 1, 2, 3: 630KVA dùng CT-1000RV; Trạm 4: 750KVA dùng CT-2000RV). Cả 4 trạm liên kết qua 1 đường RS485 duy nhất vào 1 Gateway CC2051 (kèm bộ nguồn 24VDC) kết nối LAN Switch. Đã bóc tách đủ 7 hạng mục thiết bị, vật tư phụ và chi phí thi công chuẩn mực."
+}
 }
 CHỈ TRẢ VỀ DUY NHẤT ĐỊNH DẠNG JSON HỢP LỆ, TUYỆT ĐỐI KHÔNG BỌC TRONG CODE BLOCK HOẶC KÈM VĂN BẢN NGOÀI JSON.
 """

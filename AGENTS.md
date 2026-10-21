@@ -64,4 +64,5 @@ Tài liệu này định nghĩa bối cảnh doanh nghiệp, vai trò trách nhi
      3. *Cột đơn giá:* Cột F (Giá bán USD) và Cột J (Giá vốn xuất xưởng USD) để trống (`None`) để Sếp tự điền.
      4. *Khổ in:* Khóa chặt vùng in `$A$1:$H$28`, PageBreakPreview, Zoom 60%, Scale 38%, không loang viền ngoài.
      5. *Bám sát 100% bản vẽ sơ đồ nguyên lý (Zero Deviation from Schematic Drawing):* Phân tích chính xác số lượng thiết bị từ sơ đồ đơn tuyến, TUYỆT ĐỐI KHÔNG tự suy diễn hoặc tùy tiện tăng giảm số lượng (ví dụ: trên bản vẽ vẽ 1 Gateway kết nối 4 trạm biến áp qua vòng RS485 thì bóc tách đúng 1 Gateway, không tự ý sửa thành 2). Mọi prompt AI và code bóc tách phải trung thành tuyệt đối với bản vẽ.
+     6. *Gộp bộ nguồn PW vào Gateway CC2051 (Hardware Bundle Rule):* Bộ nguồn 24VDC (電源供應器) chỉ cần 1 cái và **BẮT BUỘC ĐƯỢC GỘP CHUNG VÀO DÒNG GATEWAY CC2051** vì được bán kèm trọn gói (`Gateway thu thập dữ liệu CC2051 (kèm bộ nguồn 24VDC) / CC2051 工業級資料收集閘道器 (含24VDC電源供應器)`). Nhờ đó, toàn bộ danh mục gồm thiết bị, vật tư phụ và thi công có đúng **7 hạng mục**, khớp chính xác 1:1 với 7 dòng (`Row 13:19`) của mẫu gốc, bảng tổng tiền tại `Row 21:23`, vùng in `$A$1:$H$27`.
 
