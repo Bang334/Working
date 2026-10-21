@@ -1738,7 +1738,25 @@ const ReminderEditor = {
       if (window.showToast) window.showToast("Không tìm thấy đường dẫn file.", "warning");
       return;
     }
-    await openSystemFileDirectly(this.lastExtractedExcelPath, btnEl);
+    if (typeof openSystemPath === "function") {
+      await openSystemPath(this.lastExtractedExcelPath, btnEl);
+    } else {
+      try {
+        const res = await fetch("/api/v1/system/open-path", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: this.lastExtractedExcelPath })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.status === "success") {
+          if (window.showToast) window.showToast(data.message, "success");
+        } else {
+          if (window.showToast) window.showToast(data.message || data.detail || "Không thể mở tệp trên máy tính.", "warning");
+        }
+      } catch (err) {
+        if (window.showToast) window.showToast(`Lỗi mở tệp: ${err.message}`, "error");
+      }
+    }
   },
 
   applyExtractedToEmailForm() {
@@ -2082,6 +2100,12 @@ async function deleteDossierDocument(docId, fileName, event) {
   } catch (err) {
     if (window.showToast) window.showToast(`Lỗi xóa tệp: ${err.message}`, "error");
   }
+}
+
+// Global aliases for opening local system files
+if (typeof window !== "undefined") {
+  window.openSystemPath = openSystemPath;
+  window.openSystemFileDirectly = openSystemPath;
 }
 
 

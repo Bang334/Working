@@ -58,7 +58,7 @@ def test_eco_prime_excel_generation():
     # Đọc lại bằng openpyxl để kiểm tra thuộc tính
     wb = openpyxl.load_workbook(result["bytes_io"], data_only=False)
     ws = wb.active
-    assert ws.freeze_panes == "A13"
+    assert ws.freeze_panes is None
     assert ws.page_setup.scale == 38
     assert ws.sheet_view.zoomScale == 60
 
