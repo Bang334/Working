@@ -703,15 +703,20 @@ const PaymentVoucherApp = {
       const result = await res.json();
 
       if (result.status === "success" && result.download_url) {
-        this.showToast("Xuất file Excel thành công! Đang tự động tải về...", "success");
+        this.showToast("Xuất file Excel thành công! Đang mở trực tiếp trên máy tính...", "success");
 
-        // Trigger automatic download
-        const a = document.createElement("a");
-        a.href = result.download_url;
-        a.download = result.file_name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        // Tự động mở file trực tiếp trên Windows nếu có đường dẫn
+        if (result.file_path) {
+          this.openFileOnSystem(result.file_path);
+        } else {
+          // Fallback tải về qua trình duyệt
+          const a = document.createElement("a");
+          a.href = result.download_url;
+          a.download = result.file_name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
 
         await this.loadHistory();
 
@@ -731,6 +736,47 @@ const PaymentVoucherApp = {
     } finally {
       this.showLoading(false);
     }
+  },
+
+  async openFileOnSystem(targetPath) {
+    if (!targetPath) {
+      this.showToast("Không tìm thấy đường dẫn tệp trên máy.", "warning");
+      return;
+    }
+    try {
+      this.showToast("Đang mở file trực tiếp trên máy tính...", "info");
+      const res = await fetch("/api/v1/system/open-path", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: targetPath })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.status === "success") {
+        this.showToast(data.message || "Đã mở file thành công trên máy tính!", "success");
+      } else {
+        this.showToast(data.message || data.detail || "Không thể mở file trên máy.", "warning");
+      }
+    } catch (err) {
+      this.showToast(`Lỗi mở tệp: ${err.message}`, "error");
+    }
+  },
+
+  openHistoryFile(voucherId) {
+    const item = this.state.history.find(h => h.id === voucherId);
+    if (!item) {
+      this.showToast("Không tìm thấy thông tin đơn thanh toán.", "warning");
+      return;
+    }
+    const path = item.file_path || (item.file_name ? `Ho So Du An/Don Xin Thanh Toan/${item.file_name}` : "");
+    if (!path) {
+      this.showToast("Không tìm thấy đường dẫn file trên máy cho đơn này.", "warning");
+      return;
+    }
+    this.openFileOnSystem(path);
+  },
+
+  openStorageFolder() {
+    this.openFileOnSystem("Ho So Du An/Don Xin Thanh Toan");
   },
 
   async loadHistory(search = "") {
@@ -806,8 +852,11 @@ const PaymentVoucherApp = {
         <td style="text-align: right; font-weight: 700; color: #16a34a;">${h.amount_formatted} đ</td>
         <td style="font-size: 0.8rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${this.escapeHtml(h.full_reason)}">${this.escapeHtml(h.full_reason)}</td>
         <td style="text-align: center; white-space: nowrap;">
-          <a href="${h.download_url}" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 0.74rem;" title="Tải file Excel">
-            📥 Excel
+          <button type="button" class="btn btn-primary btn-sm" onclick="PaymentVoucherApp.openHistoryFile(${h.id})" style="padding: 2px 7px; font-size: 0.74rem; background: #2563eb; color: #ffffff; border-color: #2563eb; font-weight: 600;" title="Mở trực tiếp file Excel trên máy tính bằng Excel/WPS">
+            📂 Mở
+          </button>
+          <a href="${h.download_url}" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 0.74rem;" title="Tải file Excel về máy (Downloads)">
+            📥 Tải
           </a>
           <button type="button" class="btn btn-secondary btn-sm" onclick="PaymentVoucherApp.reloadVoucherToForm(${h.id})" style="padding: 2px 7px; font-size: 0.74rem;" title="Nạp lại dữ liệu phiếu này lên form">
             📝 Nạp

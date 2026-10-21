@@ -568,6 +568,9 @@
           <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.clearHistorySearch()" style="font-size: 0.8rem; padding: 6px 12px;">
             Làm mới bộ lọc
           </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.openStorageFolder()" style="font-size: 0.8rem; padding: 6px 12px; color: var(--primary); border-color: var(--primary);" title="Mở thư mục lưu trữ Đơn Xin Thanh Toán trên ổ đĩa máy tính">
+            📁 Mở thư mục chứa
+          </button>
           <div id="historySummaryBadge" style="font-size: 0.82rem; font-weight: 600; color: var(--primary); padding: 5px 10px; background: rgba(37,99,235,0.06); border-radius: var(--radius-sm);">
             Đang tải dữ liệu...
           </div>
@@ -583,7 +586,7 @@
                 <th>Đơn Vị Thụ Hưởng</th>
                 <th style="text-align: right;">Số Tiền</th>
                 <th>Lý Do Thanh Toán</th>
-                <th style="text-align: center; width: 175px;">Thao Tác</th>
+                <th style="text-align: center; width: 235px;">Thao Tác</th>
               </tr>
             </thead>
             <tbody id="historyTableBody">
@@ -602,5 +605,5 @@
 </div>
 
 <!-- Payment Voucher JS -->
-<script src="/static/js/payment_voucher.js?v=1.2"></script>
+<script src="/static/js/payment_voucher.js?v=1.3"></script>
 {% endblock %}
