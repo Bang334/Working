@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/payment_voucher.css?v=1.2">
+{% endblock %}
+
+{% block content %}
+<div class="workspace-single voucher-workspace">
+
+  <!-- Quick Action & Navigation Bar -->
+  <div class="voucher-quickbar">
+    <div class="voucher-quickbar-left">
+      <span class="badge-pill blue">Đơn Xin Thanh Toán</span>
+      <span class="badge-pill green">浤詺付款申请单 · Mẫu Chuẩn 1:1</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">
+        Tự động ghi nhớ STK/Ngân hàng, AI trích xuất lý do thanh toán song ngữ Việt - Trung và xuất file Excel chuẩn 100%.
+      </span>
+    </div>
+
+    <div class="voucher-quickbar-right">
+      <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.openModal('beneficiariesModal')" title="Quản lý danh sách tài khoản thụ hưởng đã lưu">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>📖 Sổ Tay Tài Khoản (<span id="quickBenCount">{{ beneficiaries | length }}</span>)</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.openModal('historyModal')" title="Xem danh sách các phiếu đơn xin thanh toán đã lập">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>📑 Lịch Sử Phiếu</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" id="btnTogglePreview" onclick="PaymentVoucherApp.togglePreview()" title="Hiện/ẩn bản xem trước phiếu Excel để có thêm không gian làm việc">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span id="togglePreviewText">👁️ Xem Trước Excel</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.resetForm()" title="Làm mới form để nhập phiếu mới">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        <span>Làm Mới</span>
+      </button>
+
+      <button type="button" class="btn btn-primary btn-sm" onclick="PaymentVoucherApp.handleGenerateExcel()" title="Xuất file Excel bảo toàn 100% định dạng mẫu">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>📥 Xuất File Excel (.xlsx)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- AI Smart Extract Box -->
+  <div class="voucher-ai-card">
+    <div class="voucher-ai-header">
+      <div class="voucher-ai-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--primary);"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <span>AI Trích Xuất & Điền Phiếu Thanh Toán Nhanh</span>
+        <span class="badge-pill blue" style="font-size: 0.7rem;">Gemini AI</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="aiModelSelect" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Model AI:</label>
+        <select id="aiModelSelect" class="form-control" style="font-size: 0.78rem; padding: 2px 8px; height: 28px; width: auto;">
+          {% for m in models %}
+            <option value="{{ m }}" {% if m == default_model %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Hidden file input for AI -->
+    <input type="file" id="aiVoucherFileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.xlsx,.xls,.doc,.docx" style="display: none;" onchange="PaymentVoucherApp.handleFileSelected(this)">
+
+    <div class="form-group" style="margin-bottom: 0.65rem; position: relative;" id="voucherDropZone">
+      <textarea id="aiVoucherPromptInput" class="form-control" rows="3" placeholder="Dán văn bản, nhấn Ctrl+V dán ảnh, kéo thả tệp Biên bản nghiệm thu Word (.docx), Hóa đơn điện tử (PDF/Ảnh), Hợp đồng, Bảng tính Excel... để AI tự động bóc tách & lập phiếu thanh toán"></textarea>
+      
+      <div id="voucherDragOverlay" style="display: none; position: absolute; inset: 0; background: rgba(239, 246, 255, 0.94); border: 2px dashed #2563eb; border-radius: var(--radius-sm); align-items: center; justify-content: center; z-index: 10; pointer-events: none;">
+        <span style="font-weight: 700; color: #1d4ed8; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+          📥 Thả file Biên bản nghiệm thu Word (.docx), Hóa đơn PDF/Ảnh hoặc Excel vào đây để AI phân tích
+        </span>
+      </div>
+    </div>
+
+    <!-- Attached File Preview Bar -->
+    <div id="voucherAttachedFileContainer" style="display: none; margin-bottom: 0.75rem; padding: 0.55rem 0.85rem; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: var(--radius-sm); align-items: center; justify-content: space-between; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+        <div id="voucherFileThumb" style="width: 38px; height: 38px; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #cbd5e1; flex-shrink: 0;">
+          <!-- Thumbnail or icon -->
+        </div>
+        <div style="min-width: 0;">
+          <div style="font-weight: 700; font-size: 0.85rem; color: #166534; display: flex; align-items: center; gap: 0.45rem;">
+            <span id="voucherFileName" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px;"></span>
+            <span id="voucherFileTypeBadge" class="badge-pill green" style="font-size: 0.68rem; padding: 1px 6px;"></span>
+          </div>
+          <div style="font-size: 0.72rem; color: #15803d; margin-top: 1px;">
+            Dung lượng: <span id="voucherFileSize" style="font-weight: 600;"></span> · <span style="color: #166534; font-weight: 600;">Sẵn sàng phân tích</span>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.clearAttachedFile()" title="Hủy tệp này" style="color: #dc2626; border-color: #fca5a5; padding: 3px 8px; font-size: 0.75rem; background: #ffffff;">
+        ✕ Hủy tệp
+      </button>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('aiVoucherFileInput').click()" title="Chọn tệp Biên bản nghiệm thu (.docx), Hóa đơn PDF/Ảnh hoặc Excel từ máy tính" style="font-weight: 700; color: #1d4ed8; background: #eff6ff; border-color: #93c5fd;">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="color: #2563eb;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          <span>📎 Đính Kèm File (Word / PDF / Ảnh / Excel)</span>
+        </button>
+
+        <div class="voucher-quick-examples">
+          <span style="color: var(--text-muted); font-weight: 600;">💡 Thử mẫu nhanh:</span>
+          <span class="example-chip" onclick="PaymentVoucherApp.fillSamplePrompt('thaison')" style="background: rgba(37,99,235,0.08); border-color: #3b82f6; color: #1d4ed8; font-weight: 700;">THÁI SƠN (Nhiều HĐ)</span>
+          <span class="example-chip" onclick="PaymentVoucherApp.fillSamplePrompt('omg')">OMG Triển Lãm VIMF</span>
+          <span class="example-chip" onclick="PaymentVoucherApp.fillSamplePrompt('finepro')">FINEPRO Máy Dập</span>
+          <span class="example-chip" onclick="PaymentVoucherApp.fillSamplePrompt('vietnhat')">Việt Nhật Laptop</span>
+          <span class="example-chip" onclick="PaymentVoucherApp.fillSamplePrompt('dtt')">Cước Vận Chuyển DTT</span>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-primary" onclick="PaymentVoucherApp.handleAiExtract()" style="background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); border: none; font-weight: 700;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>AI Trích Xuất & Điền Phiếu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2-Column Main Workspace (Mặc định ẩn preview để tối đa không gian làm việc) -->
+  <div class="voucher-grid-layout preview-hidden" id="voucherGridLayout">
+
+    <!-- Left Column: Interactive Form -->
+    <div class="voucher-form-card">
+      
+      <!-- Section 1: Beneficiary & Bank Info -->
+      <div class="voucher-form-section-title">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span>1. Đơn Vị Thụ Hưởng & Tài Khoản Ngân Hàng (收款单位 · 账号)</span>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="selectBeneficiary" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.25rem; display: flex; justify-content: space-between;">
+          <span>Chọn từ Sổ tay tài khoản thường dùng:</span>
+          <a href="javascript:void(0)" onclick="PaymentVoucherApp.openModal('beneficiariesModal')" style="color: var(--primary); font-size: 0.78rem; text-decoration: none;">+ Thêm tài khoản mới</a>
+        </label>
+        <div class="beneficiary-select-group">
+          <select id="selectBeneficiary" class="form-control" style="font-weight: 600;">
+            <option value="">-- Chọn đơn vị thụ hưởng thường dùng --</option>
+            {% for b in beneficiaries %}
+              <option value="{{ b.id }}">{% if b.short_name %}[{{ b.short_name }}] {% endif %}{{ b.unit_name }} · {{ b.account_number }} ({{ b.bank_name }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="inputBeneficiaryName" style="font-size: 0.82rem; font-weight: 600;">Tên đơn vị thụ hưởng (收款单位):</label>
+        <input type="text" id="inputBeneficiaryName" class="form-control" value="CONG TY TNHH TO CHUC SU KIEN OMG" placeholder="Ví dụ: CONG TY TNHH TO CHUC SU KIEN OMG" style="font-weight: 700; color: #1e3a8a;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.75rem; margin-bottom: 1.15rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputAccountNumber" style="font-size: 0.82rem; font-weight: 600;">Số tài khoản (账号):</label>
+          <input type="text" id="inputAccountNumber" class="form-control" value="0071000764939" placeholder="Số tài khoản ngân hàng" style="font-family: monospace; font-weight: 700;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputBankName" style="font-size: 0.82rem; font-weight: 600;">Ngân hàng mở tài khoản (开户行):</label>
+          <input type="text" id="inputBankName" class="form-control" value="Vietcombank CN HCM" placeholder="Ví dụ: Vietcombank CN HCM">
+        </div>
+      </div>
+
+      <!-- Section 2: Code and Date -->
+      <div class="voucher-form-section-title">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>2. Mã Số Báo Đơn & Ngày Lập Phiếu (报单号 · 日期)</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 0.85fr 1.05fr 1.6fr; gap: 0.65rem; margin-bottom: 1.15rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputEmployeeCode" style="font-size: 0.82rem; font-weight: 600;">Mã NV (员工编号):</label>
+          <input type="text" id="inputEmployeeCode" class="form-control" value="HVM007" placeholder="HVM007" style="font-weight: 700; text-transform: uppercase;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputRequestDate" style="font-size: 0.82rem; font-weight: 600;">Ngày đề nghị (日期):</label>
+          <input type="date" id="inputRequestDate" class="form-control">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputReportCode" style="font-size: 0.82rem; font-weight: 600; display: flex; justify-content: space-between;">
+            <span>Mã báo đơn (报单号):</span>
+            <span id="seqBadge" style="font-size: 0.72rem; color: #16a34a; font-weight: normal;">Tự động</span>
+          </label>
+          <div style="display: flex; gap: 4px;">
+            <input type="text" id="inputReportCode" class="form-control" value="报单号：HVM007-20261020-1" placeholder="Ví dụ: 报单号：HVM007-20261020-1" style="font-weight: 700; flex: 1;">
+            <button type="button" class="btn btn-outline btn-sm" id="btnRefreshReportCode" title="Tự động tính mã báo đơn tiếp theo trong ngày theo mã NV" style="padding: 0 8px; font-size: 0.9rem;">🔄</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Amounts -->
+      <div class="voucher-form-section-title">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M17 10h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H7"/></svg>
+        <span>3. Số Tiền & Quy Đổi Ngoại Tệ (金额 · 币种 · 美元折算)</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1.3fr 0.7fr 1fr; gap: 0.75rem; margin-bottom: 0.65rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputAmount" style="font-size: 0.82rem; font-weight: 600;">Số tiền thanh toán (金额):</label>
+          <input type="text" id="inputAmount" class="form-control" value="42.346.800" placeholder="Nhập số tiền..." style="font-size: 1.1rem; font-weight: 700; color: #16a34a;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputCurrency" style="font-size: 0.82rem; font-weight: 600;">Đơn vị (币种):</label>
+          <select id="inputCurrency" class="form-control" style="font-weight: 700;">
+            <option value="VND" selected>VND</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputExchangeRate" style="font-size: 0.82rem; font-weight: 600;">Tỷ giá USD (折算汇率):</label>
+          <input type="number" id="inputExchangeRate" class="form-control" value="26000" step="100">
+        </div>
+      </div>
+
+      <!-- Amount in words summary box -->
+      <div style="background: rgba(0, 0, 0, 0.02); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; margin-bottom: 1.15rem; font-size: 0.8rem;">
+        <div style="margin-bottom: 0.25rem;">
+          <span style="color: var(--text-muted); font-weight: 600;">Bằng chữ tiếng Việt:</span>
+          <span id="textAmountWordsVi" style="font-weight: 700; color: var(--text-color);">Bốn mươi hai triệu ba trăm bốn mươi sáu nghìn tám trăm đồng chẵn</span>
+        </div>
+        <div style="margin-bottom: 0.25rem;">
+          <span style="color: var(--text-muted); font-weight: 600;">金额（大写）tiếng Trung:</span>
+          <span id="textAmountWordsZh" style="font-weight: 700; font-family: SimSun, serif; color: #b91c1c;">肆仟貳佰參拾肆萬陸仟捌佰元整</span>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); font-weight: 600;">Quy đổi tương đương:</span>
+          <span style="font-weight: 700; color: #2563eb;">≈ <span id="textAmountUsd">1,628.72</span> USD</span>
+        </div>
+      </div>
+
+      <!-- Breakdown Items Box (Nhiều hàng F8-F11 như mẫu THÁI SƠN) -->
+      <div style="background: rgba(37, 99, 235, 0.03); border: 1.5px dashed #93c5fd; border-radius: var(--radius-sm); padding: 0.75rem 0.85rem; margin-bottom: 1.15rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <span style="font-size: 0.82rem; font-weight: 700; color: #1e40af;">
+              📋 Kê chi tiết nhiều số HĐ / khoản chi con (Hàng F8 - F11 như mẫu THÁI SƠN):
+            </span>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" id="btnAddBreakdownRow" style="padding: 2px 8px; font-size: 0.76rem; border-color: #3b82f6; color: #1d4ed8;">
+            + Thêm khoản chi (Tối đa 4)
+          </button>
+        </div>
+        <div id="breakdownRowsContainer" style="display: flex; flex-direction: column; gap: 0.45rem;">
+          <!-- Breakdown rows rendered dynamically -->
+        </div>
+        <div id="breakdownEmptyNotice" style="font-size: 0.76rem; color: var(--text-muted); font-style: italic; margin-top: 0.25rem;">
+          (Dùng khi thanh toán gộp 2 đến 4 hóa đơn / khoản chi con. Khi nhập, ô G7 sẽ tự động mang công thức =SUM(G8:G...) và tổng tiền tự động cộng dồn).
+        </div>
+      </div>
+
+      <!-- Section 4: Reason for Payment -->
+      <div class="voucher-form-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.45rem;">
+          <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>4. Lý Do Thanh Toán Song Ngữ (付款原因 · The reason for payment)</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.handleTranslateReason()" title="Tự động dịch nội dung tiếng Việt sang tiếng Trung phồn thể chuẩn mực" style="font-size: 0.74rem; padding: 2px 7px;">
+          ✨ AI Dịch Song Ngữ Việt - Trung
+        </button>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.65rem;">
+        <label for="inputReasonVi" style="font-size: 0.82rem; font-weight: 600;">Nội dung tiếng Việt:</label>
+        <textarea id="inputReasonVi" class="form-control" rows="2" placeholder="Ví dụ: Thanh toán đợt 2 (50%) theo hợp đồng số VIMF BD26_HONG MING cho chi phí tham gia Triển lãm..."></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.15rem;">
+        <label for="inputReasonZh" style="font-size: 0.82rem; font-weight: 600;">Nội dung tiếng Trung Phồn thể (付款原因):</label>
+        <textarea id="inputReasonZh" class="form-control" rows="2" placeholder="Ví dụ: 依據合約編號 VIMF BD26_HONG MING，支付第2期款項（50%）..." style="font-family: SimSun, serif;"></textarea>
+      </div>
+
+      <!-- Section 5: Signatures -->
+      <div class="voucher-form-section-title">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>5. Nhân Sự Lập Phiếu & Phê Duyệt (制单 · 审核 · 经理)</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputPreparedBy" style="font-size: 0.82rem; font-weight: 600;">Người lập phiếu (制单 / Prepared by):</label>
+          <input type="text" id="inputPreparedBy" class="form-control" value="NGUYỄN SỸ KIM BẰNG" placeholder="Tên người lập phiếu">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="inputSupervisor" style="font-size: 0.82rem; font-weight: 600;">Đơn vị chủ quản (单位主管 / Supervisor):</label>
+          <input type="text" id="inputSupervisor" class="form-control" placeholder="Để trống hoặc ghi tên">
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary" onclick="PaymentVoucherApp.handleGenerateExcel()" style="flex: 1; padding: 0.75rem 1.25rem; font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>Xuất File Excel (.xlsx) Chuẩn 1:1</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Live Excel Sheet Simulation -->
+    <div class="excel-preview-container" id="excelPreviewContainer">
+      <div class="excel-preview-topbar">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-weight: 700; font-size: 0.88rem; color: #ffffff;">Bản Xem Trước Excel (Live Sheet)</span>
+          <span class="badge-pill blue" style="font-size: 0.7rem; background: #1e3a8a; color: #bfdbfe; border: 1px solid #3b82f6;">Trang 1 / A4</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.45rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.handleGenerateExcel()" title="Tải file Excel ngay" style="font-size: 0.76rem; background: #ffffff; color: #1e293b; border-color: #cbd5e1; padding: 2px 8px;">
+            📥 Xuất Excel
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.togglePreview(false)" title="Ẩn bản xem trước để có thêm không gian làm việc" style="font-size: 0.76rem; background: rgba(255,255,255,0.15); color: #ffffff; border-color: rgba(255,255,255,0.3); padding: 2px 8px;">
+            ✕ Đóng
+          </button>
+        </div>
+      </div>
+
+      <!-- Paper Simulation with Page Break Preview Blue Border & Page 1 Watermark -->
+      <div class="excel-sheet" id="excelSheetWrapper">
+        <div class="excel-watermark-page1">Page 1</div>
+
+        <div class="excel-sheet-header">
+          <div class="excel-title-main">浤詺付款申请单</div>
+          <div class="excel-title-sub">CÔNG TY TNHH TOÀN CẦU HONG MING</div>
+        </div>
+
+        <div class="excel-meta-row">
+          <div style="font-family: 'Times New Roman', serif;">
+            <span>=TODAY() (<span id="prevDate">2026/10/20</span>)</span>
+          </div>
+          <div style="font-weight: bold; font-family: DengXian, sans-serif;">
+            <span id="prevReportCode">报单号：HVM007-20261020-1</span>
+          </div>
+        </div>
+
+        <table class="excel-table">
+          <colgroup>
+            <col style="width: 19%;">
+            <col style="width: 37%;">
+            <col style="width: 22%;">
+            <col style="width: 15%;">
+            <col style="width: 7%;">
+          </colgroup>
+          <tbody>
+            <!-- Row 5 -->
+            <tr>
+              <td class="cell-label">
+                收款单位<br>
+                <span style="font-size: 8.5pt; font-family: 'Times New Roman';">The collection unit</span>
+              </td>
+              <td class="cell-val cell-bold cell-center" id="prevUnit" style="font-size: 10.5pt;">
+                CONG TY TNHH TO CHUC SU KIEN OMG
+              </td>
+              <td colspan="3" class="cell-label cell-center" style="font-family: SimSun, serif; font-size: 10.5pt;">
+                付款原因<br>
+                <span style="font-size: 8.5pt; font-family: 'Times New Roman';">The reason for payment</span>
+              </td>
+            </tr>
+
+            <!-- Row 6 -->
+            <tr>
+              <td class="cell-label">
+                账号<br>
+                <span style="font-size: 8.5pt; font-family: 'Times New Roman';">Account number</span>
+              </td>
+              <td class="cell-val cell-center" id="prevAccount" style="font-family: 'Times New Roman'; font-size: 10.5pt;">
+                0071000764939
+              </td>
+              <td colspan="3" class="cell-val cell-bold" id="prevReason" style="font-family: Calibri, 'Times New Roman', sans-serif; font-size: 9.5pt; line-height: 1.35; padding: 6px 8px; text-align: left; vertical-align: top;">
+                Thanh toán đợt 2 (50%) theo hợp đồng số VIMF BD26_HONG MING cho chi phí tham gia Triển lãm...
+              </td>
+            </tr>
+
+            <!-- Row 7 -->
+            <tr>
+              <td class="cell-label">
+                开户行<br>
+                <span style="font-size: 8.5pt; font-family: 'Times New Roman';">Open an account</span>
+              </td>
+              <td class="cell-val cell-center" id="prevBank" style="font-family: 'Times New Roman'; font-size: 10pt;">
+                Vietcombank CN HCM
+              </td>
+              <td class="cell-val cell-center" id="prevFormulaG7" style="font-size: 8.5pt; color: #64748b; font-family: monospace;"></td>
+              <td class="cell-val cell-right cell-bold" id="prevAmountCell" style="font-size: 10.5pt; color: #15803d;">
+                <span id="prevAmount">42,346,800</span>
+              </td>
+              <td class="cell-val cell-center" id="prevCurrency" style="font-size: 9pt;">VND</td>
+            </tr>
+
+            <!-- Rows 8-11: Sum capital left & Breakdown items right (F8-H11) -->
+            <tr>
+              <td rowspan="4" class="cell-label" style="font-size: 9.5pt;">
+                金额（大写）<br>
+                <span style="font-size: 8.5pt; font-family: 'Times New Roman';">Sum (capital)</span>
+              </td>
+              <td rowspan="4" class="cell-val cell-center cell-bold" id="prevWordsZh" style="font-family: SimSun, serif; font-size: 10.5pt; color: #991b1b; padding: 8px;">
+                肆仟貳佰參拾肆萬陸仟捌佰元整
+              </td>
+              <td class="cell-val cell-center" id="prevSubDesc0" style="font-size: 9pt; color: #1e3a8a; font-weight: 600;"></td>
+              <td class="cell-val cell-right" id="prevSubAmt0" style="font-size: 9.5pt; font-weight: 600;"></td>
+              <td class="cell-val cell-center" id="prevSubCurr0" style="font-size: 8.5pt;"></td>
+            </tr>
+            <tr>
+              <td class="cell-val cell-center" id="prevSubDesc1" style="font-size: 9pt; color: #1e3a8a; font-weight: 600;"></td>
+              <td class="cell-val cell-right" id="prevSubAmt1" style="font-size: 9.5pt; font-weight: 600;"></td>
+              <td class="cell-val cell-center" id="prevSubCurr1" style="font-size: 8.5pt;"></td>
+            </tr>
+            <tr>
+              <td class="cell-val cell-center" id="prevSubDesc2" style="font-size: 9pt; color: #1e3a8a; font-weight: 600;"></td>
+              <td class="cell-val cell-right" id="prevSubAmt2" style="font-size: 9.5pt; font-weight: 600;"></td>
+              <td class="cell-val cell-center" id="prevSubCurr2" style="font-size: 8.5pt;"></td>
+            </tr>
+            <tr>
+              <td class="cell-val cell-center" id="prevSubDesc3" style="font-size: 9pt; color: #1e3a8a; font-weight: 600;"></td>
+              <td class="cell-val cell-right" id="prevSubAmt3" style="font-size: 9.5pt; font-weight: 600;"></td>
+              <td class="cell-val cell-center" id="prevSubCurr3" style="font-size: 8.5pt;"></td>
+            </tr>
+
+            <!-- Row 12: Accessory & D12 -->
+            <tr>
+              <td rowspan="2" class="cell-label" style="font-size: 9.5pt;">
+                附件<br>
+                <span style="font-size: 8.5pt; font-family: 'Times New Roman';">Accessory</span>
+              </td>
+              <td rowspan="2" class="cell-val cell-center" id="prevAttachmentNote" style="font-size: 9pt; color: #64748b;">
+                -
+              </td>
+              <td class="cell-label cell-center" style="font-size: 9.5pt;">金额</td>
+              <td class="cell-val cell-right cell-bold" style="font-size: 10pt;">
+                <span id="prevD12">42,346,800</span>
+              </td>
+              <td class="cell-val cell-center" style="font-size: 9pt;">VND</td>
+            </tr>
+
+            <!-- Row 13: USD Equivalent -->
+            <tr>
+              <td class="cell-label cell-center" style="font-size: 9.5pt;">约</td>
+              <td class="cell-val cell-right cell-bold" style="font-size: 10pt;">
+                ≈ <span id="prevD13Usd">1,628.72</span>
+              </td>
+              <td class="cell-val cell-center" style="font-size: 9pt;">USD</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Signatures Table -->
+        <table class="excel-table" style="margin-bottom: 0;">
+          <colgroup>
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+          </colgroup>
+          <thead>
+            <tr class="excel-signature-row">
+              <td>
+                经理<br>Director
+              </td>
+              <td>
+                会计<br>Accountant
+              </td>
+              <td>
+                审核<br>Checker
+              </td>
+              <td>
+                单位主管<br>Supervisor
+              </td>
+              <td style="position: relative;">
+                制单<br>Prepared by
+                <div id="prevSignImgContainer" style="position: absolute; top: 22px; left: 50%; transform: translateX(-50%); pointer-events: none; width: 88px; height: 56px; display: flex; align-items: center; justify-content: center;">
+                  <img src="/static/img/signatures/signature_bang.png" alt="Chữ ký Nguyễn Sỹ Kim Bằng" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                </div>
+                <div class="excel-sign-person" id="prevSignPrepared">NGUYỄN SỸ KIM BẰNG</div>
+              </td>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal 1: Beneficiaries Directory Modal -->
+  <div class="hm-modal-overlay" id="beneficiariesModal" style="display: none;">
+    <div class="hm-modal-content">
+      <div class="hm-modal-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg class="icon" viewBox="0 0 24 24" width="20" height="20" style="color: var(--primary);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span style="font-weight: 700; font-size: 1.05rem;">Sổ Tay Tài Khoản Thụ Hưởng Thường Dùng</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.closeModal('beneficiariesModal')" style="padding: 2px 8px;">✕</button>
+      </div>
+
+      <div class="hm-modal-body">
+        
+        <!-- Add New Beneficiary Box -->
+        <div style="background: rgba(0, 0, 0, 0.02); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1.25rem;">
+          <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.65rem; color: var(--primary);">+ Thêm Tài Khoản Mới Vào Sổ Tay:</div>
+          <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 0.65rem; margin-bottom: 0.5rem;">
+            <input type="text" id="modalUnitName" class="form-control" placeholder="Tên đơn vị thụ hưởng (Bắt buộc)">
+            <input type="text" id="modalAccountNumber" class="form-control" placeholder="Số tài khoản (Bắt buộc)">
+            <input type="text" id="modalBankName" class="form-control" placeholder="Tên ngân hàng (Bắt buộc)">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1.8fr auto; gap: 0.65rem; align-items: center;">
+            <input type="text" id="modalShortName" class="form-control" placeholder="Tên viết tắt (VD: OMG)">
+            <input type="text" id="modalDefaultReason" class="form-control" placeholder="Lý do mẫu thường dùng">
+            <button type="button" class="btn btn-primary btn-sm" onclick="PaymentVoucherApp.saveNewBeneficiary()" style="white-space: nowrap; height: 38px;">
+              💾 Lưu Sổ Tay
+            </button>
+          </div>
+        </div>
+
+        <!-- Table List -->
+        <div class="table-responsive">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">STT</th>
+                <th>Tên Đơn Vị Thụ Hưởng</th>
+                <th>Số Tài Khoản</th>
+                <th>Ngân Hàng</th>
+                <th style="text-align: center;">Đã Dùng</th>
+                <th style="text-align: center; width: 100px;">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody id="beneficiariesTableBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="hm-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="PaymentVoucherApp.closeModal('beneficiariesModal')">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: History Modal -->
+  <div class="hm-modal-overlay" id="historyModal" style="display: none;">
+    <div class="hm-modal-content">
+      <div class="hm-modal-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg class="icon" viewBox="0 0 24 24" width="20" height="20" style="color: var(--primary);"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span style="font-weight: 700; font-size: 1.05rem;">Lịch Sử Các Đơn Xin Thanh Toán Đã Tạo</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.closeModal('historyModal')" style="padding: 2px 8px;">✕</button>
+      </div>
+
+      <div class="hm-modal-body">
+        <!-- Search and Filter Bar -->
+        <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+          <div style="position: relative; flex: 1; min-width: 260px;">
+            <input type="text" id="historySearchInput" class="form-control" placeholder="🔍 Tìm nhanh theo Mã báo đơn, Đơn vị thụ hưởng, Số TK, Lý do..." oninput="PaymentVoucherApp.handleHistorySearch(this.value)" style="padding-left: 2rem; font-size: 0.88rem;">
+            <span style="position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+              <svg class="icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.clearHistorySearch()" style="font-size: 0.8rem; padding: 6px 12px;">
+            Làm mới bộ lọc
+          </button>
+          <div id="historySummaryBadge" style="font-size: 0.82rem; font-weight: 600; color: var(--primary); padding: 5px 10px; background: rgba(37,99,235,0.06); border-radius: var(--radius-sm);">
+            Đang tải dữ liệu...
+          </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 55vh; overflow-y: auto;">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">STT</th>
+                <th>Số Báo Đơn</th>
+                <th>Ngày Lập</th>
+                <th>Đơn Vị Thụ Hưởng</th>
+                <th style="text-align: right;">Số Tiền</th>
+                <th>Lý Do Thanh Toán</th>
+                <th style="text-align: center; width: 175px;">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="hm-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="PaymentVoucherApp.closeModal('historyModal')">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Payment Voucher JS -->
+<script src="/static/js/payment_voucher.js?v=1.2"></script>
+{% endblock %}

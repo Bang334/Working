@@ -19,7 +19,7 @@ from app.utils.currency_helper import (
     number_to_vietnamese_words,
     parse_positive_integer,
 )
-from app.utils.file_helper import generate_contract_filename
+from app.utils.file_helper import generate_contract_filename, sanitize_filename
 
 # Ensure import path to dien_hop_dong_tu_dong
 hop_dong_dir = str(WORKING_DIR / "scripts" / "hop_dong_generator")
@@ -905,4 +905,168 @@ def find_matching_contract(raw_code: Optional[str]) -> Optional[Dict[str, Any]]:
 
     conn.close()
     return dict(row) if row else None
+
+
+def save_imported_contract(
+    contract_data: Dict[str, Any],
+    file_bytes: Optional[bytes] = None,
+    file_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """Save an existing imported contract from computer (DOCX, PDF, Excel, Image) into database."""
+    from app.database import get_db_connection
+    from app.utils.currency_helper import parse_positive_integer
+
+    # 1. Parse fields
+    contract_code = (contract_data.get("so_hop_dong") or "").strip()
+    if not contract_code:
+        now = datetime.now()
+        contract_code = f"HMV{now.strftime('%d%m%Y')}0001"
+
+    cust_vi = (contract_data.get("khach_hang_vi") or "").strip() or "Khách hàng doanh nghiệp"
+    cust_zh = (contract_data.get("khach_hang_zh") or "").strip()
+    proj_vi = (contract_data.get("ten_du_an_vi") or "").strip() or "Hợp đồng dự án Hong Ming"
+    proj_zh = (contract_data.get("ten_du_an_zh") or "").strip()
+    signed_date = (contract_data.get("ngay_ky") or "").strip() or datetime.now().strftime("%d/%m/%Y")
+    
+    total_amount_raw = contract_data.get("tong_gia_tri") or 0
+    total_amount = parse_positive_integer(total_amount_raw)
+
+    lead_eng = "Jenson Chang (張永吉)"
+    contact_email = "nguyensykimbang321@gmail.com"
+    contact_cc = "pm02@hongming-global.com, sales@hongming-global.com"
+    status = "Đang thực hiện - Chờ thu đợt 1"
+    notes = (contract_data.get("notes") or "").strip() or f"Hợp đồng có sẵn nhập từ tệp {file_name or ''}".strip()
+
+    # 2. Save uploaded file if provided
+    saved_file_path = None
+    saved_file_name = ""
+    file_format = ""
+    file_size = 0
+
+    if file_bytes and file_name:
+        hop_dong_dir = WORKING_DIR / "Ho So Du An" / "Hop Dong"
+        hop_dong_dir.mkdir(parents=True, exist_ok=True)
+        
+        safe_name = sanitize_filename(file_name)
+        saved_file_path = hop_dong_dir / safe_name
+        # Ghi file an toàn
+        saved_file_path.write_bytes(file_bytes)
+        saved_file_name = safe_name
+        file_format = saved_file_path.suffix.lstrip(".").lower()
+        file_size = len(file_bytes)
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 3. Insert or Update into contracts
+    cursor.execute("SELECT id FROM contracts WHERE contract_code = ?", (contract_code,))
+    existing = cursor.fetchone()
+
+    if existing:
+        contract_id = existing["id"]
+        cursor.execute("""
+            UPDATE contracts SET
+                customer_name_vi = ?, customer_name_zh = ?,
+                project_name_vi = ?, project_name_zh = ?,
+                lead_engineer = ?, signed_date = ?,
+                total_amount = ?, status = ?,
+                contact_email = ?, contact_cc = ?, notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (
+            cust_vi, cust_zh, proj_vi, proj_zh,
+            lead_eng, signed_date, total_amount, status,
+            contact_email, contact_cc, notes, contract_id
+        ))
+    else:
+        cursor.execute("""
+            INSERT INTO contracts (
+                contract_code, customer_name_vi, customer_name_zh,
+                project_name_vi, project_name_zh, lead_engineer,
+                signed_date, total_amount, paid_amount, currency,
+                status, contact_email, contact_cc, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 'VND', ?, ?, ?, ?)
+        """, (
+            contract_code, cust_vi, cust_zh, proj_vi, proj_zh,
+            lead_eng, signed_date, total_amount, status,
+            contact_email, contact_cc, notes
+        ))
+        contract_id = cursor.lastrowid
+
+    # 4. Insert Milestones
+    raw_milestones = contract_data.get("milestones") or []
+    cursor.execute("DELETE FROM payment_milestones WHERE contract_id = ? OR contract_code = ?", (contract_id, contract_code))
+
+    if not raw_milestones:
+        # Mặc định theo chuẩn công ty 30% - 60% - 10%
+        raw_milestones = [
+            {"dot": 1, "ten_dot": "Đợt 1", "phan_tram": 30, "dieu_kien_vi": "Sau khi ký kết hợp đồng, chuyển khoản T/T", "thoi_han_tt_ngay": 10},
+            {"dot": 2, "ten_dot": "Đợt 2", "phan_tram": 60, "dieu_kien_vi": "Sau khi hoàn thành lắp đặt hệ thống thiết bị", "thoi_han_tt_ngay": 30},
+            {"dot": 3, "ten_dot": "Đợt 3", "phan_tram": 10, "dieu_kien_vi": "Sau khi nghiệm thu đạt tiêu chuẩn và ký biên bản bàn giao (FAC)", "thoi_han_tt_ngay": 30},
+        ]
+
+    for idx, m in enumerate(raw_milestones, start=1):
+        dot_num = m.get("dot", idx)
+        ms_name = m.get("ten_dot") or f"Đợt {dot_num}"
+        pct = float(m.get("phan_tram") or 0)
+        ms_amt = parse_positive_integer(m.get("so_tien") or (total_amount * pct / 100))
+        cond = m.get("dieu_kien_vi") or f"Thanh toán Đợt {dot_num} ({pct}%)"
+        
+        term_days = int(m.get("thoi_han_tt_ngay") or 0)
+        # Nghiệp vụ thực tế: Đợt ký kết hợp đồng quy ước 10 ngày
+        is_first_sign = (idx == 1 or "ký" in cond.lower() or "tạm ứng" in cond.lower())
+        if term_days == 0 and is_first_sign:
+            term_days = 10
+
+        ms_status = "PENDING_TRIGGER"
+        ms_label = "Chờ đánh dấu điều kiện"
+        ms_action = f"Đánh dấu hoàn thành điều kiện {ms_name} để bắt đầu tính T/T {term_days} ngày"
+        due_str = None
+
+        cursor.execute("""
+            INSERT INTO payment_milestones (
+                contract_id, contract_code, milestone_name, percentage, amount,
+                trigger_condition, trigger_date, payment_term_days, triggered,
+                due_date, invoice_no, status, status_label,
+                action_required, paid_date
+            ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, 0, ?, 'Chưa xuất', ?, ?, ?, NULL)
+        """, (
+            contract_id, contract_code, ms_name, pct, ms_amt,
+            cond, term_days, due_str, ms_status, ms_label, ms_action
+        ))
+
+    # 5. Link Document if file was uploaded
+    if saved_file_path and saved_file_path.exists():
+        cursor.execute("DELETE FROM documents WHERE (contract_id = ? OR contract_code = ?) AND file_name = ?", (contract_id, contract_code, saved_file_name))
+        cursor.execute("""
+            INSERT INTO documents (
+                contract_id, contract_code, doc_type, doc_name, file_name,
+                file_path, file_size, file_format, description
+            ) VALUES (?, ?, 'HOP_DONG', ?, ?, ?, ?, ?, ?)
+        """, (
+            contract_id, contract_code, f"Hợp đồng có sẵn {contract_code}",
+            saved_file_name, str(saved_file_path), file_size, file_format,
+            f"Hợp đồng có sẵn tải từ máy tính ({cust_vi})"
+        ))
+
+    conn.commit()
+    conn.close()
+
+    download_url = f"/api/v1/contracts/download/{saved_file_name}" if saved_file_name else ""
+
+    return {
+        "status": "success",
+        "contract_id": contract_id,
+        "contract_code": contract_code,
+        "customer_name_vi": cust_vi,
+        "customer_name_zh": cust_zh,
+        "project_name_vi": proj_vi,
+        "project_name_zh": proj_zh,
+        "signed_date": signed_date,
+        "total_amount": total_amount,
+        "file_name": saved_file_name,
+        "download_url": download_url,
+        "milestones_count": len(raw_milestones)
+    }
+
 

@@ -990,14 +990,23 @@ async function loadAcceptanceFilesList() {
     }
 
     if (emptyState) emptyState.style.display = "none";
-    tbody.innerHTML = files.map((file, idx) => `
+    tbody.innerHTML = files.map((file, idx) => {
+      const isDocx = file.is_docx || file.file_name.endsWith(".docx");
+      const typeBadge = isDocx
+        ? `<span class="badge-pill blue" style="font-weight: 700; font-size: 0.72rem;">Word (.docx) - Lắp đặt</span>`
+        : `<span class="badge-pill green" style="font-weight: 700; font-size: 0.72rem;">Excel (.xlsx) - Sửa chữa</span>`;
+
+      const iconSvg = isDocx
+        ? `<svg style="width: 18px; height: 18px; color: #2563eb; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`
+        : `<svg style="width: 18px; height: 18px; color: #16a34a; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+
+      return `
       <tr>
         <td style="text-align: center; font-weight: 600; color: var(--text-muted);">${idx + 1}</td>
+        <td style="text-align: center;">${typeBadge}</td>
         <td>
           <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <svg style="width: 18px; height: 18px; color: #16a34a; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-            </svg>
+            ${iconSvg}
             <div>
               <div style="font-weight: 600; color: #0f172a; word-break: break-all;">${escapeHtml(file.file_name)}</div>
               <div style="font-size: 0.72rem; color: #64748b; font-family: monospace;">${escapeHtml(file.file_path)}</div>
@@ -1024,21 +1033,22 @@ async function loadAcceptanceFilesList() {
         </td>
         <td style="text-align: center;">
           <div style="display: flex; gap: 0.4rem; justify-content: center; align-items: center;">
-            <a href="${file.download_url}" download="${file.file_name}" class="btn btn-sm btn-success" title="Tải file Excel về máy">
+            <a href="${file.download_url}" download="${file.file_name}" class="btn btn-sm ${isDocx ? 'btn-primary' : 'btn-success'}" title="Tải file về máy">
               <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
               <span>Tải Xuống</span>
             </a>
-            <button type="button" class="btn btn-sm btn-outline" onclick="handleOpenAcceptanceFile('${escapeAttr(file.file_path)}')" title="Mở trực tiếp trên máy tính bằng Excel">
+            <button type="button" class="btn btn-sm btn-outline" onclick="handleOpenAcceptanceFile('${escapeAttr(file.file_path)}')" title="Mở trực tiếp trên máy tính">
               <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               <span>Mở File</span>
             </button>
           </div>
         </td>
       </tr>
-    `).join("");
+      `;
+    }).join("");
   } catch (err) {
     console.error("Lỗi nạp danh sách file nghiệm thu:", err);
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #dc2626; padding: 1.5rem;">Lỗi tải danh sách: ${escapeHtml(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #dc2626; padding: 1.5rem;">Lỗi tải danh sách: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
@@ -1089,4 +1099,791 @@ function escapeAttr(text) {
   if (!text) return "";
   return String(text).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
+
+
+// =========================================================================
+// TAB SWITCHER (INSTALLATION ACCEPTANCE VS REPAIR ACCEPTANCE)
+// =========================================================================
+
+function switchAcceptanceTab(tab) {
+  const btnInst = document.getElementById("tabBtnInstallation");
+  const btnRepair = document.getElementById("tabBtnRepair");
+  const contentInst = document.getElementById("tabContentInstallation");
+  const contentRepair = document.getElementById("tabContentRepair");
+
+  if (!btnInst || !btnRepair || !contentInst || !contentRepair) return;
+
+  if (tab === "installation") {
+    btnInst.style.background = "#1e40af";
+    btnInst.style.color = "#ffffff";
+    btnInst.style.borderColor = "#1d4ed8";
+    btnInst.style.boxShadow = "0 2px 6px rgba(30, 64, 175, 0.25)";
+
+    btnRepair.style.background = "#f8fafc";
+    btnRepair.style.color = "#475569";
+    btnRepair.style.borderColor = "#cbd5e1";
+    btnRepair.style.boxShadow = "none";
+
+    contentInst.style.display = "block";
+    contentRepair.style.display = "none";
+  } else {
+    btnRepair.style.background = "#16a34a";
+    btnRepair.style.color = "#ffffff";
+    btnRepair.style.borderColor = "#15803d";
+    btnRepair.style.boxShadow = "0 2px 6px rgba(22, 163, 74, 0.25)";
+
+    btnInst.style.background = "#f8fafc";
+    btnInst.style.color = "#475569";
+    btnInst.style.borderColor = "#cbd5e1";
+    btnInst.style.boxShadow = "none";
+
+    contentInst.style.display = "none";
+    contentRepair.style.display = "block";
+  }
+}
+
+
+// =========================================================================
+// INSTALLATION ACCEPTANCE MODULE (WORD .DOCX CHUẨN MẪU HONG MING)
+// =========================================================================
+
+window.currentInstallationData = null;
+let instDebounceTimer = null;
+
+async function initInstallationAcceptance() {
+  await loadInstallationContractsDropdown();
+  await handleLoadInstallationSampleData(false);
+}
+
+async function loadInstallationContractsDropdown() {
+  const select = document.getElementById("instContractSelect");
+  if (!select) return;
+
+  try {
+    const res = await fetch("/api/v1/contracts");
+    const json = await res.json();
+    if (res.ok && json.contracts) {
+      const opts = ['<option value="">-- Tự nhập thông tin hợp đồng mới --</option>'];
+      json.contracts.forEach(c => {
+        const code = c.contract_code || "";
+        const cust = c.customer_name_vi || "";
+        const proj = c.project_name_vi || "";
+        opts.push(`<option value="${escapeAttr(code)}">${escapeHtml(code)} — ${escapeHtml(cust)} (${escapeHtml(proj)})</option>`);
+      });
+      select.innerHTML = opts.join("");
+    }
+  } catch (err) {
+    console.warn("Không thể tải danh sách hợp đồng:", err);
+  }
+}
+
+async function onInstallationContractSelectChange(contractCode) {
+  if (!contractCode) return;
+  showLoading("Đang nạp dữ liệu hợp đồng " + contractCode + "...");
+  try {
+    const res = await fetch(`/api/v1/contracts/${encodeURIComponent(contractCode)}`);
+    const json = await res.json();
+    hideLoading();
+    if (res.ok && json.data) {
+      const c = json.data;
+      if (c.contract_code) document.getElementById("instSoHopDong").value = c.contract_code;
+      if (c.contract_date) document.getElementById("instNgayKyHopDong").value = c.contract_date;
+      if (c.total_amount_formatted) document.getElementById("instGiaTriHopDong").value = c.total_amount_formatted + " VNĐ";
+      if (c.project_name_vi) document.getElementById("instTenHeThong").value = c.project_name_vi;
+      if (c.project_name_zh) document.getElementById("instTenHeThongTrung").value = c.project_name_zh;
+
+      const benA = c.party_a || {};
+      if (benA.name_vi) document.getElementById("instTenBenA").value = benA.name_vi;
+      if (benA.name_zh) document.getElementById("instTenBenATrung").value = benA.name_zh;
+
+      showToast(`Đã liên kết dữ liệu hợp đồng ${contractCode}!`, "success");
+      handleInstallationFormChange();
+    }
+  } catch (err) {
+    hideLoading();
+    showToast("Lỗi nạp hợp đồng: " + err.message, "error");
+  }
+}
+
+async function handleLoadInstallationSampleData(showNotification = true) {
+  try {
+    const res = await fetch("/api/v1/acceptance/installation/sample-data");
+    const json = await res.json();
+    if (res.ok && json.data) {
+      populateInstallationForm(json.data);
+      if (showNotification) {
+        showToast("Đã nạp toàn bộ dữ liệu mẫu thực tế của CX Technology (HMV151020250001)!", "success");
+      }
+    }
+  } catch (err) {
+    console.error("Lỗi nạp dữ liệu mẫu:", err);
+  }
+}
+
+function populateInstallationForm(data) {
+  if (!data) return;
+  window.currentInstallationData = JSON.parse(JSON.stringify(data));
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || "";
+  };
+
+  setVal("instSoHopDong", data.so_hop_dong);
+  setVal("instSoBienBan", data.so_bien_ban);
+  setVal("instNgayKyHopDong", data.ngay_ky_hop_dong);
+  setVal("instNgayNghiemThu", data.ngay_nghiem_thu);
+  setVal("instGiaTriHopDong", data.gia_tri_hop_dong);
+  setVal("instTenHeThong", data.ten_he_thong);
+  setVal("instTenHeThongTrung", data.ten_he_thong_trung);
+
+  const benA = data.ben_a || {};
+  setVal("instTenBenA", benA.ten_cong_ty);
+  setVal("instTenBenATrung", benA.ten_tieng_trung);
+
+  setVal("instCanCuPhuLuc", data.can_cu_phu_luc);
+  setVal("instCanCuPhuLucTrung", data.can_cu_phu_luc_trung);
+  setVal("instCanCuKyThuat", data.can_cu_ky_thuat);
+  setVal("instCanCuKyThuatTrung", data.can_cu_ky_thuat_trung);
+
+  // Initialize payment stages if empty
+  if (!window.currentInstallationData.payment_stages || window.currentInstallationData.payment_stages.length === 0) {
+    window.currentInstallationData.payment_stages = [
+      {
+        stage_id: "stage_1",
+        stage_num: 1,
+        stage: "GIAI ĐOẠN 1\n第一期",
+        condition: "Sau khi ký kết hợp đồng\n簽約完成時",
+        rate: "40%",
+        amount: "93.600.000 VND",
+        selected: false
+      },
+      {
+        stage_id: "stage_2",
+        stage_num: 2,
+        stage: "GIAI ĐOẠN 2\n第二期",
+        condition: "Sau khi triển khai sản phẩm đưa vào sử dụng\n產品安裝後",
+        rate: "40%",
+        amount: "93.600.000 VND",
+        selected: true
+      },
+      {
+        stage_id: "stage_3",
+        stage_num: 3,
+        stage: "GIAI ĐOẠN 3\n第三期",
+        condition: "Khi nghiệm thu đạt tiêu chuẩn\n驗收合格時",
+        rate: "20%",
+        amount: "46.800.000 VND",
+        selected: true
+      }
+    ];
+  }
+
+  renderInstallationItems();
+  renderInstallationPaymentStages();
+  recalculateInstallationPaymentSummary();
+  handleRefreshInstallationPreview();
+}
+
+function renderInstallationItems() {
+  const container = document.getElementById("instItemsContainer");
+  const countBadge = document.getElementById("instItemCountBadge");
+  if (!container || !window.currentInstallationData) return;
+
+  const items = window.currentInstallationData.hang_muc || [];
+  if (countBadge) countBadge.textContent = items.length;
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 6px; color: #94a3b8; font-size: 0.85rem;">
+        Chưa có hạng mục nghiệm thu lắp đặt nào. Bấm "➕ Thêm Hạng Mục" ở trên.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = items.map((it, idx) => `
+    <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 0.9rem; position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span style="font-weight: 750; font-size: 0.82rem; color: #1e40af; display: flex; align-items: center; gap: 0.35rem;">
+          <span style="background: #dbeafe; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">${idx + 1}</span>
+          <span>Hạng mục #${idx + 1}</span>
+        </span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="removeInstallationItem(${idx})" style="color: #dc2626; border-color: #fca5a5; padding: 0.15rem 0.45rem; font-size: 0.75rem;" title="Xóa hạng mục này">
+          🗑️ Xóa
+        </button>
+      </div>
+
+      <div style="margin-bottom: 0.45rem;">
+        <label style="font-size: 0.74rem; font-weight: 600; color: #475569;">Tên Sản Phẩm / Module (Cột Tên sản phẩm):</label>
+        <input type="text" class="form-control form-control-sm" value="${escapeAttr(it.ten_san_pham)}" oninput="handleItemFieldChange(${idx}, 'ten_san_pham', this.value)" style="font-weight: 600;">
+      </div>
+
+      <div style="margin-bottom: 0.45rem;">
+        <label style="font-size: 0.74rem; font-weight: 600; color: #475569;">Nhóm Hạng Mục / Yêu Cầu Xác Nhận (項目類別):</label>
+        <textarea class="form-control form-control-sm" rows="1" oninput="handleItemFieldChange(${idx}, 'hang_muc', this.value)">${escapeHtml(it.hang_muc || "")}</textarea>
+      </div>
+
+      <div>
+        <label style="font-size: 0.74rem; font-weight: 600; color: #475569;">Nội Dung Sản Phẩm / Tính Năng Chi Tiết (產品內容):</label>
+        <textarea class="form-control form-control-sm" rows="2" oninput="handleItemFieldChange(${idx}, 'noi_dung', this.value)">${escapeHtml(it.noi_dung || "")}</textarea>
+      </div>
+    </div>
+  `).join("");
+}
+
+function addInstallationItem() {
+  if (!window.currentInstallationData) {
+    window.currentInstallationData = { hang_muc: [] };
+  }
+  const items = window.currentInstallationData.hang_muc || [];
+  const nextStt = items.length + 1;
+  items.push({
+    stt: nextStt,
+    ten_san_pham: `Hạng mục tính năng mới #${nextStt}`,
+    hang_muc: "Xác nhận triển khai / 需求確認",
+    noi_dung: "Đã hoàn thành lắp đặt, cấu hình và chạy thử đạt yêu cầu kỹ thuật.",
+    xac_nhan_lap_dat: "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入使用",
+    ket_qua_xac_nhan: "Đã nghiệm thu, xác nhận đạt yêu cầu và chính thức đưa vào sử dụng.\n驗收合格，確認正式投入使用。"
+  });
+  renderInstallationItems();
+  handleInstallationFormChange();
+}
+
+function removeInstallationItem(idx) {
+  if (!window.currentInstallationData || !window.currentInstallationData.hang_muc) return;
+  window.currentInstallationData.hang_muc.splice(idx, 1);
+  window.currentInstallationData.hang_muc.forEach((it, i) => it.stt = i + 1);
+  renderInstallationItems();
+  handleInstallationFormChange();
+}
+
+function handleItemFieldChange(idx, field, val) {
+  if (!window.currentInstallationData || !window.currentInstallationData.hang_muc) return;
+  if (window.currentInstallationData.hang_muc[idx]) {
+    window.currentInstallationData.hang_muc[idx][field] = val;
+    triggerDebouncedInstallationPreview();
+  }
+}
+
+// -------------------------------------------------------------
+// PAYMENT STAGES MANAGEMENT (BẢNG MỤC V & MỤC VI TỰ ĐỘNG CẬP NHẬT)
+// -------------------------------------------------------------
+
+function renderInstallationPaymentStages() {
+  const container = document.getElementById("instStagesContainer");
+  if (!container || !window.currentInstallationData) return;
+
+  const stages = window.currentInstallationData.payment_stages || [];
+  if (stages.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 1.25rem; background: #f8fafc; border-radius: 6px; color: #94a3b8; font-size: 0.85rem;">
+        Chưa có giai đoạn thanh toán nào. Bấm "➕ Thêm Đợt" ở trên.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = stages.map((st, idx) => {
+    const isSelected = !!st.selected;
+    const borderStyle = isSelected ? "border: 1.5px solid #2563eb; background: #eff6ff;" : "border: 1.5px solid #e2e8f0; background: #ffffff;";
+    const badgeColor = isSelected ? "background: #2563eb; color: #ffffff;" : "background: #f1f5f9; color: #64748b;";
+    const stageTitle = st.stage || `GIAI ĐOẠN ${idx + 1}`;
+    const condText = st.condition || "";
+    const rateVal = st.rate || "0%";
+    const amountVal = st.amount || "0 VND";
+
+    return `
+      <div style="${borderStyle} border-radius: 8px; padding: 0.75rem 0.9rem; transition: all 0.2s; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; gap: 0.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin: 0; font-weight: 750; font-size: 0.88rem; color: ${isSelected ? '#1e40af' : '#334155'};">
+            <input type="checkbox" style="width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer;" ${isSelected ? 'checked' : ''} onchange="toggleInstallationStageSelection(${idx}, this.checked)">
+            <span>${escapeHtml(stageTitle.replace('\n', ' / '))}</span>
+          </label>
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <span style="${badgeColor} padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 0.76rem;">${escapeHtml(rateVal)}</span>
+            <button type="button" class="btn btn-outline btn-sm" onclick="removeInstallationPaymentStage(${idx})" style="color: #dc2626; border-color: #fca5a5; padding: 0.1rem 0.4rem; font-size: 0.72rem;" title="Xóa đợt này">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.35rem;">
+          <div>
+            <label style="font-size: 0.72rem; font-weight: 600; color: #64748b;">Điều kiện thanh toán (Song ngữ Việt - Trung):</label>
+            <input type="text" class="form-control form-control-sm" value="${escapeAttr(condText)}" oninput="handleStageFieldChange(${idx}, 'condition', this.value)" style="font-size: 0.82rem;">
+          </div>
+          <div>
+            <label style="font-size: 0.72rem; font-weight: 600; color: #64748b;">Tỷ lệ (%):</label>
+            <input type="text" class="form-control form-control-sm" value="${escapeAttr(rateVal)}" oninput="handleStageFieldChange(${idx}, 'rate', this.value)" style="font-weight: 700; text-align: center; font-size: 0.82rem;">
+          </div>
+          <div>
+            <label style="font-size: 0.72rem; font-weight: 600; color: #64748b;">Số tiền (VND):</label>
+            <input type="text" class="form-control form-control-sm" value="${escapeAttr(amountVal)}" oninput="handleStageFieldChange(${idx}, 'amount', this.value)" style="font-weight: 700; color: #047857; text-align: right; font-size: 0.82rem;">
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function toggleInstallationStageSelection(idx, isChecked) {
+  if (!window.currentInstallationData?.payment_stages?.[idx]) return;
+  window.currentInstallationData.payment_stages[idx].selected = isChecked;
+  renderInstallationPaymentStages();
+  recalculateInstallationPaymentSummary();
+  handleInstallationFormChange();
+}
+
+function selectOnlyStage(stageNum) {
+  if (!window.currentInstallationData?.payment_stages) return;
+  window.currentInstallationData.payment_stages.forEach(st => {
+    const sName = (st.stage || "").toLowerCase();
+    const isMatch = st.stage_num === stageNum || String(st.stage_id) === String(stageNum) || sName.includes(`đoạn ${stageNum}`) || sName.includes(`đợt ${stageNum}`);
+    st.selected = isMatch;
+  });
+  renderInstallationPaymentStages();
+  recalculateInstallationPaymentSummary();
+  handleInstallationFormChange();
+  showToast(`Đã chọn riêng Giai đoạn ${stageNum}!`, "info");
+}
+
+function selectStagesCombined(stageNums) {
+  if (!window.currentInstallationData?.payment_stages) return;
+  window.currentInstallationData.payment_stages.forEach(st => {
+    let isMatch = false;
+    for (const num of stageNums) {
+      const sName = (st.stage || "").toLowerCase();
+      if (st.stage_num === num || String(st.stage_id) === String(num) || sName.includes(`đoạn ${num}`) || sName.includes(`đợt ${num}`)) {
+        isMatch = true;
+        break;
+      }
+    }
+    st.selected = isMatch;
+  });
+  renderInstallationPaymentStages();
+  recalculateInstallationPaymentSummary();
+  handleInstallationFormChange();
+  showToast(`Đã chọn kết hợp Giai đoạn ${stageNums.join(" & ")}!`, "info");
+}
+
+function addInstallationPaymentStage() {
+  if (!window.currentInstallationData) {
+    window.currentInstallationData = { payment_stages: [] };
+  }
+  const stages = window.currentInstallationData.payment_stages || [];
+  const nextNum = stages.length + 1;
+  const zhStages = ["第一期", "第二期", "第三期", "第四期", "第五期"];
+  const zhLabel = zhStages[nextNum - 1] || `第${nextNum}期`;
+
+  stages.push({
+    stage_id: String(nextNum),
+    stage_num: nextNum,
+    stage: `GIAI ĐOẠN ${nextNum}\n${zhLabel}`,
+    condition: "Nghiệm thu đạt tiêu chuẩn\n驗收合格時",
+    rate: "20%",
+    amount: "46.800.000 VND",
+    selected: true
+  });
+
+  renderInstallationPaymentStages();
+  recalculateInstallationPaymentSummary();
+  handleInstallationFormChange();
+}
+
+function removeInstallationPaymentStage(idx) {
+  if (!window.currentInstallationData?.payment_stages) return;
+  window.currentInstallationData.payment_stages.splice(idx, 1);
+  renderInstallationPaymentStages();
+  recalculateInstallationPaymentSummary();
+  handleInstallationFormChange();
+}
+
+function handleStageFieldChange(idx, field, val) {
+  if (!window.currentInstallationData?.payment_stages?.[idx]) return;
+  window.currentInstallationData.payment_stages[idx][field] = val;
+  recalculateInstallationPaymentSummary();
+  triggerDebouncedInstallationPreview();
+}
+
+function recalculateInstallationPaymentSummary() {
+  if (!window.currentInstallationData?.payment_stages) return;
+
+  const stages = window.currentInstallationData.payment_stages;
+  const selectedStages = stages.filter(st => st.selected);
+
+  const elStagesLabel = document.getElementById("instSummaryStagesLabel");
+  const elTotalAmount = document.getElementById("instSummaryTotalAmount");
+  const elWordsVN = document.getElementById("instSummaryWordsVN");
+  const elWordsTW = document.getElementById("instSummaryWordsTW");
+
+  if (selectedStages.length === 0) {
+    if (elStagesLabel) elStagesLabel.textContent = "Chưa chọn đợt nào";
+    if (elTotalAmount) elTotalAmount.textContent = "0 VND (0%)";
+    if (elWordsVN) elWordsVN.textContent = "Chưa chọn đợt thanh toán.";
+    if (elWordsTW) elWordsTW.textContent = "未選擇付款期別";
+    return;
+  }
+
+  let totalRate = 0;
+  let totalAmount = 0;
+  const stageLabels = [];
+
+  selectedStages.forEach(st => {
+    totalRate += parsePositiveInteger(st.rate);
+    totalAmount += parsePositiveInteger(st.amount);
+    const m = (st.stage || "").match(/(?:GIAI\s*ĐOẠN|ĐỢT)\s*([0-9]+)/i);
+    const num = m ? m[1] : (st.stage_num || "");
+    stageLabels.push(num ? `Giai đoạn ${num}` : st.stage.split('\n')[0]);
+  });
+
+  const stagesSummaryText = stageLabels.join(" & ") + ` (${totalRate}%)`;
+  const formattedAmount = formatCurrencyVnd(totalAmount);
+  const wordsVN = numberToVietnameseWords(totalAmount);
+  const wordsTW = numberToChineseWords(totalAmount);
+
+  if (elStagesLabel) elStagesLabel.textContent = stagesSummaryText;
+  if (elTotalAmount) elTotalAmount.textContent = `${formattedAmount} (${totalRate}%)`;
+  if (elWordsVN) elWordsVN.textContent = wordsVN;
+  if (elWordsTW) elWordsTW.textContent = wordsTW;
+
+  // Sync with form fields
+  const elGiaiDoanTT = document.getElementById("instGiaiDoanTT");
+  if (elGiaiDoanTT) {
+    if (selectedStages.length === 1) {
+      const cond = selectedStages[0].condition ? selectedStages[0].condition.split('\n')[0] : "";
+      elGiaiDoanTT.value = `${stageLabels[0]} (${cond ? cond + ' - ' : ''}${selectedStages[0].rate || totalRate + '%'})`;
+    } else {
+      elGiaiDoanTT.value = stagesSummaryText;
+    }
+  }
+
+  const elSoTienTT = document.getElementById("instSoTienTT");
+  if (elSoTienTT) elSoTienTT.value = formattedAmount;
+
+  const elSoTienChuVN = document.getElementById("instSoTienChuVN");
+  if (elSoTienChuVN) elSoTienChuVN.value = wordsVN;
+
+  const elSoTienChuTW = document.getElementById("instSoTienChuTW");
+  if (elSoTienChuTW) elSoTienChuTW.value = wordsTW;
+}
+
+// -------------------------------------------------------------
+// NUMBER TO WORDS HELPERS (VIETNAMESE & TRADITIONAL CHINESE)
+// -------------------------------------------------------------
+
+function parsePositiveInteger(val) {
+  if (typeof val === "number") return Math.floor(Math.abs(val));
+  const digits = String(val || "").replace(/[^\d]/g, "");
+  return digits ? parseInt(digits, 10) : 0;
+}
+
+function formatCurrencyVnd(amount) {
+  const val = parsePositiveInteger(amount);
+  return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " VND";
+}
+
+function numberToVietnameseWords(n) {
+  const val = parsePositiveInteger(n);
+  if (val === 0) return "Không đồng chẵn.";
+
+  const digits = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+  const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
+
+  function readThreeDigits(numStr, isFirst) {
+    const num = parseInt(numStr, 10);
+    const h = Math.floor(num / 100);
+    const t = Math.floor((num % 100) / 10);
+    const u = num % 10;
+    const parts = [];
+
+    if (h > 0 || !isFirst) {
+      parts.push(digits[h] + " trăm");
+    }
+
+    if (t === 0 && u !== 0) {
+      if (h > 0 || !isFirst) parts.push("lẻ");
+      parts.push(digits[u]);
+    } else if (t === 1) {
+      parts.push("mười");
+      if (u === 1) parts.push("một");
+      else if (u === 5) parts.push("lăm");
+      else if (u !== 0) parts.push(digits[u]);
+    } else if (t > 1) {
+      parts.push(digits[t] + " mươi");
+      if (u === 1) parts.push("mốt");
+      else if (u === 4) parts.push("tư");
+      else if (u === 5) parts.push("lăm");
+      else if (u !== 0) parts.push(digits[u]);
+    }
+
+    return parts.join(" ");
+  }
+
+  let s = val.toString();
+  const groups = [];
+  while (s.length > 3) {
+    groups.unshift(s.slice(-3));
+    s = s.slice(0, -3);
+  }
+  groups.unshift(s);
+
+  const res = [];
+  const totalGroups = groups.length;
+  for (let i = 0; i < totalGroups; i++) {
+    const g = groups[i];
+    if (parseInt(g, 10) === 0) continue;
+    const gWords = readThreeDigits(g, i === 0);
+    const unitIdx = totalGroups - 1 - i;
+    const unit = units[unitIdx] || "";
+    if (gWords) res.push(gWords + (unit ? " " + unit : ""));
+  }
+
+  let result = res.join(" ").trim();
+  if (!result) return "Không đồng chẵn.";
+  result = result.charAt(0).toUpperCase() + result.slice(1) + " đồng chẵn.";
+  return result;
+}
+
+function numberToChineseWords(n) {
+  const val = parsePositiveInteger(n);
+  if (val === 0) return "零越盾整";
+
+  const digits = ["零", "壹", "貳", "參", "肆", "伍", "陸", "柒", "捌", "玖"];
+  const units = ["", "拾", "佰", "仟"];
+  const bigUnits = ["", "萬", "億", "兆"];
+
+  let s = val.toString();
+  const groups = [];
+  while (s.length > 4) {
+    groups.unshift(s.slice(-4));
+    s = s.slice(0, -4);
+  }
+  groups.unshift(s);
+
+  const resultParts = [];
+  const totalGroups = groups.length;
+  for (let i = 0; i < totalGroups; i++) {
+    const gNum = parseInt(groups[i], 10);
+    if (gNum === 0) continue;
+    const gStr = i > 0 ? String(gNum).padStart(4, "0") : String(gNum);
+    let groupWords = "";
+    let zeroFlag = false;
+    const l = gStr.length;
+    for (let j = 0; j < l; j++) {
+      const digitVal = parseInt(gStr[j], 10);
+      const pos = l - 1 - j;
+      if (digitVal === 0) {
+        zeroFlag = true;
+      } else {
+        if (zeroFlag) {
+          groupWords += digits[0];
+          zeroFlag = false;
+        }
+        groupWords += digits[digitVal] + units[pos];
+      }
+    }
+    const bigUnitIdx = totalGroups - 1 - i;
+    groupWords += bigUnits[bigUnitIdx] || "";
+    resultParts.push(groupWords);
+  }
+
+  return "越南盾" + resultParts.join("") + "整";
+}
+
+function collectInstallationFormData() {
+  const getVal = (id) => (document.getElementById(id)?.value || "").trim();
+
+  const data = window.currentInstallationData ? JSON.parse(JSON.stringify(window.currentInstallationData)) : {};
+
+  data.so_hop_dong = getVal("instSoHopDong");
+  data.so_bien_ban = getVal("instSoBienBan");
+  data.ngay_ky_hop_dong = getVal("instNgayKyHopDong");
+  data.ngay_nghiem_thu = getVal("instNgayNghiemThu");
+  data.gia_tri_hop_dong = getVal("instGiaTriHopDong");
+  data.ten_he_thong = getVal("instTenHeThong");
+  data.ten_he_thong_trung = getVal("instTenHeThongTrung");
+
+  data.ben_a = data.ben_a || {};
+  data.ben_a.ten_cong_ty = getVal("instTenBenA");
+  data.ben_a.ten_tieng_trung = getVal("instTenBenATrung");
+
+  data.can_cu_phu_luc = getVal("instCanCuPhuLuc");
+  data.can_cu_phu_luc_trung = getVal("instCanCuPhuLucTrung");
+  data.can_cu_ky_thuat = getVal("instCanCuKyThuat");
+  data.can_cu_ky_thuat_trung = getVal("instCanCuKyThuatTrung");
+
+  data.giai_doan_thanh_toan = getVal("instGiaiDoanTT");
+  data.so_tien_thanh_toan = getVal("instSoTienTT");
+  data.so_tien_chu_vn = getVal("instSoTienChuVN");
+  data.so_tien_chu_tw = getVal("instSoTienChuTW");
+
+  // Include payment stages and selected indices
+  data.payment_stages = window.currentInstallationData?.payment_stages || [];
+  data.selected_stage_indices = [];
+  data.payment_stages.forEach((st, idx) => {
+    if (st.selected) data.selected_stage_indices.push(idx);
+  });
+
+  return data;
+}
+
+function handleInstallationFormChange() {
+  triggerDebouncedInstallationPreview();
+}
+
+function triggerDebouncedInstallationPreview() {
+  clearTimeout(instDebounceTimer);
+  instDebounceTimer = setTimeout(() => {
+    handleRefreshInstallationPreview();
+  }, 350);
+}
+
+async function handleRefreshInstallationPreview() {
+  const container = document.getElementById("instPreviewContainer");
+  if (!container) return;
+
+  const payload = collectInstallationFormData();
+  window.currentInstallationData = payload;
+
+  try {
+    const res = await fetch("/api/v1/acceptance/installation/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (res.ok && json.preview_html) {
+      container.innerHTML = json.preview_html;
+    }
+  } catch (err) {
+    console.error("Lỗi cập nhật xem trước:", err);
+  }
+}
+
+async function handleGenerateInstallationWord() {
+  const btn = document.getElementById("btnGenerateInstallationWord");
+  if (btn) btn.disabled = true;
+
+  showLoading("Đang xuất Biên bản nghiệm thu lắp đặt Word (.docx) chuẩn mẫu 1:1...");
+  const payload = collectInstallationFormData();
+
+  try {
+    const res = await fetch("/api/v1/acceptance/installation/generate-word", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    hideLoading();
+    if (btn) btn.disabled = false;
+
+    if (!res.ok || json.status !== "success") {
+      throw new Error(json.message || "Không thể tạo tài liệu Word.");
+    }
+
+    // Tự động tải file về máy
+    const downloadUrl = json.download_url;
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = json.file_name || "Bien_Ban_Nghiem_Thu_Lap_Dat.docx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    showToast(`Đã tạo và tải file Word thành công: ${json.file_name}`, "success");
+    // Làm mới danh sách tệp phía dưới
+    loadAcceptanceFilesList();
+
+  } catch (err) {
+    hideLoading();
+    if (btn) btn.disabled = false;
+    showToast("Lỗi xuất file Word: " + err.message, "error");
+  }
+}
+
+// -------------------------------------------------------------
+// FILE UPLOAD & AI PARSING HANDLERS
+// -------------------------------------------------------------
+
+function triggerInstallationFileInput() {
+  const input = document.getElementById("instAcceptanceFileInput");
+  if (input) input.click();
+}
+
+async function handleInstallationFileUpload(input) {
+  if (!input || !input.files || input.files.length === 0) return;
+  const file = input.files[0];
+
+  closeInstallationAIModal();
+  showLoading(`Đang trích xuất dữ liệu từ file "${file.name}" (AI bóc tách các giai đoạn thanh toán)...`);
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("/api/v1/acceptance/installation/upload-and-parse", {
+      method: "POST",
+      body: formData
+    });
+    const json = await res.json();
+    hideLoading();
+    input.value = ""; // Reset file input
+
+    if (!res.ok || json.status !== "success" || !json.data) {
+      throw new Error(json.message || "Không thể trích xuất dữ liệu từ file.");
+    }
+
+    populateInstallationForm(json.data);
+    showToast(json.message || `Đã trích xuất thành công dữ liệu từ file ${file.name}!`, "success");
+
+  } catch (err) {
+    hideLoading();
+    if (input) input.value = "";
+    showToast("Lỗi trích xuất file: " + err.message, "error");
+  }
+}
+
+function openInstallationAIModal() {
+  const modal = document.getElementById("installationAIModal");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeInstallationAIModal() {
+  const modal = document.getElementById("installationAIModal");
+  if (modal) modal.style.display = "none";
+}
+
+async function handleExecuteInstallationAI() {
+  const rawText = document.getElementById("instAIRawText")?.value.trim();
+  if (!rawText) {
+    showToast("Vui lòng dán văn bản đầu vào để AI phân tích.", "warning");
+    return;
+  }
+
+  closeInstallationAIModal();
+  showLoading("Gemini AI đang phân tích và bóc tách dữ liệu nghiệm thu lắp đặt...");
+
+  try {
+    const res = await fetch("/api/v1/acceptance/installation/ai-parse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ raw_text: rawText })
+    });
+    const json = await res.json();
+    hideLoading();
+
+    if (!res.ok || json.status !== "success" || !json.data) {
+      throw new Error(json.message || "AI không thể phân tích văn bản.");
+    }
+
+    populateInstallationForm(json.data);
+    showToast(json.message || "AI đã bóc tách dữ liệu thành công!", "success");
+
+  } catch (err) {
+    hideLoading();
+    showToast("Lỗi phân tích AI: " + err.message, "error");
+  }
+}
+
 

@@ -3,126 +3,374 @@
 {% block content %}
 <div class="workspace-single">
 
-  <!-- Header Giới Thiệu Tinh Gọn (Không chứa nút tải mock data) -->
+  <!-- Header Giới Thiệu -->
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
     <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
-      <span class="badge-pill blue">Biên Bản Nghiệm Thu</span>
-      <span class="badge-pill green">Mẫu CX Technology 1:1</span>
+      <span class="badge-pill blue" style="font-size: 0.88rem; padding: 0.35rem 0.8rem; font-weight: 700;">Hồ Sơ Nghiệm Thu & Bàn Giao</span>
+      <span class="badge-pill green" style="font-size: 0.88rem; padding: 0.35rem 0.8rem; font-weight: 700;">Song Ngữ Việt - Trung</span>
       <span style="font-size: 0.84rem; color: var(--text-muted);">
-        Tải lên file biên bản sửa chữa Excel (.xlsx). Hệ thống tự động đối chiếu Serial, bóc tách lỗi và tạo Biên bản nghiệm thu chuẩn 1:1 bảo toàn mẫu gốc.
+        Hỗ trợ cả 2 chuẩn: <strong>Nghiệm thu tiến độ lắp đặt (Word .docx)</strong> và <strong>Nghiệm thu sửa chữa thiết bị (Excel .xlsx)</strong> bảo toàn mẫu 1:1.
       </span>
     </div>
   </div>
 
-  <!-- Primary workflow: Upload file biên bản sửa chữa và tạo nghiệm thu -->
-  <section class="card repair-upload-card" aria-labelledby="repairUploadTitle" style="margin-bottom: 1.5rem;">
-    <div class="card-header repair-upload-header">
-      <div>
-        <div class="card-title" id="repairUploadTitle">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/></svg>
-          <span>Tạo Nghiệm Thu Từ File Biên Bản Sửa Chữa</span>
+  <!-- Tab Switcher -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; flex-wrap: wrap;">
+    <button type="button" class="btn" id="tabBtnInstallation" onclick="switchAcceptanceTab('installation')" style="font-weight: 750; font-size: 0.92rem; padding: 0.6rem 1.25rem; border-radius: 8px; background: #1e40af; color: #ffffff; display: flex; align-items: center; gap: 0.5rem; border: none; box-shadow: 0 2px 6px rgba(30, 64, 175, 0.25);">
+      <svg class="icon" viewBox="0 0 24 24" style="width: 18px; height: 18px;" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>1. Nghiệm Thu Tiến Độ Lắp Đặt (Word .docx Mẫu Hong Ming)</span>
+    </button>
+    <button type="button" class="btn btn-outline" id="tabBtnRepair" onclick="switchAcceptanceTab('repair')" style="font-weight: 750; font-size: 0.92rem; padding: 0.6rem 1.25rem; border-radius: 8px; color: #475569; background: #f8fafc; display: flex; align-items: center; gap: 0.5rem; border: 1.5px solid #cbd5e1;">
+      <svg class="icon" viewBox="0 0 24 24" style="width: 18px; height: 18px;" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      <span>2. Nghiệm Thu Sửa Chữa Thiết Bị (Excel .xlsx Mẫu CX)</span>
+    </button>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 1: NGHIỆM THU TIẾN ĐỘ LẮP ĐẶT & BÀN GIAO ĐƯA VÀO SỬ DỤNG (WORD .DOCX) -->
+  <!-- ========================================================================= -->
+  <div id="tabContentInstallation">
+    
+    <!-- Action Toolbar -->
+    <div class="card" style="margin-bottom: 1.25rem; padding: 0.9rem 1.25rem; background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%); border: 1.5px solid #bfdbfe;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <strong style="color: #1e3a8a; font-size: 1.02rem; display: flex; align-items: center; gap: 0.4rem;">
+            <span>📋 Tạo Biên Bản Tiến Độ Lắp Đặt & Bàn Giao Đưa Vào Sử Dụng</span>
+          </strong>
+          <span style="font-size: 0.8rem; color: #475569; display: block; margin-top: 0.2rem;">
+            Áp dụng Zero-Layout-Distortion Protocol: Giữ nguyên 100% lề, font Times New Roman / 微軟正黑體, cấu trúc 5 bảng & footer chuẩn Hong Ming.
+          </span>
         </div>
-        <p class="repair-upload-subtitle">
-          Tải lên file Excel do bên sửa chữa cung cấp. Hệ thống sẽ nhập toàn bộ thiết bị, tạo đủ sheet chi tiết; Gemini tự động đối chiếu và gán Ghi chú / 備註 khi có mã serial rõ ràng.
-        </p>
-      </div>
-      <span class="badge-pill purple">Gemini tự động đối chiếu Serial</span>
-    </div>
-
-    <div class="repair-upload-grid">
-      <label class="repair-dropzone" id="repairDropzone" for="repairFileInput" tabindex="0" role="button" aria-label="Chọn hoặc kéo thả file biên bản sửa chữa Excel">
-        <input class="repair-file-input" type="file" id="repairFileInput" name="file" tabindex="-1" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-describedby="repairFileHelp repairUploadStatus">
-        <span class="repair-dropzone-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
-        </span>
-        <span class="repair-dropzone-title">Kéo thả file vào đây hoặc bấm để chọn</span>
-        <span class="repair-dropzone-help" id="repairFileHelp">Chấp nhận một file .xlsx, dung lượng tối đa 20 MB</span>
-      </label>
-
-      <div class="repair-upload-panel">
-        <ol class="repair-process-list" aria-label="Quy trình xử lý">
-          <li><span>1</span><div><strong>Nhập đủ danh sách thiết bị</strong><small>Đồng bộ serial, lỗi ban đầu, bộ phận và kết quả kiểm tra từ file tải lên.</small></div></li>
-          <li><span>2</span><div><strong>Đối chiếu ghi chú bằng Gemini</strong><small>Bỏ ghi chú cũ; chỉ gán khi dòng nguồn nêu rõ serial hợp lệ.</small></div></li>
-          <li><span>3</span><div><strong>Giữ nguyên mẫu 1:1</strong><small>Bảo toàn logo, khung ảnh, font, màu và bố cục chuẩn CX Technology.</small></div></li>
-        </ol>
-
-        <div class="repair-selected-file" id="repairSelectedFile" hidden>
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-          <div>
-            <strong id="repairSelectedFileName"></strong>
-            <small id="repairSelectedFileSize"></small>
-          </div>
-          <button type="button" class="repair-clear-button" id="repairClearFileButton" aria-label="Bỏ file đã chọn" title="Bỏ file đã chọn">×</button>
-        </div>
-
-        <!-- Khối Liên Kết Hợp Đồng (Tùy Chọn / Có Thể Có Hoặc Không) -->
-        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.25rem;">
-            <label for="acceptanceContractSelect" style="font-weight: 750; font-size: 0.86rem; color: #1e293b; display: flex; align-items: center; gap: 0.4rem; margin: 0;">
-              <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; color: #2563eb;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              <span>Hợp Đồng Mua Bán Liên Kết</span>
-            </label>
-            <span class="badge-pill" style="font-size: 0.72rem; background: #e0e7ff; color: #3730a3; font-weight: 600;">Tùy chọn (Có hoặc không)</span>
-          </div>
-
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <select id="acceptanceContractSelect" class="form-control form-control-sm" style="flex: 1; font-weight: 600; font-size: 0.84rem;" onchange="onAcceptanceContractSelectChange(this.value)">
-              <option value="">-- Không liên kết (Tạo biên bản nghiệm thu độc lập) --</option>
-            </select>
-            <button type="button" class="btn btn-outline btn-sm" onclick="loadAcceptanceContractsList()" title="Làm mới danh sách hợp đồng" style="padding: 0.25rem 0.6rem;">
-              🔄
-            </button>
-          </div>
-          <div id="acceptanceContractHint" style="font-size: 0.76rem; color: #64748b; margin-top: 0.35rem;">
-            💡 Nếu có hợp đồng tương ứng, hệ thống sẽ tự động gắn biên bản nghiệm thu vào hồ sơ hợp đồng. Nếu không chọn hoặc không có, biên bản sẽ được lưu độc lập.
-          </div>
-        </div>
-
-        <div class="repair-upload-actions">
-          <p class="repair-upload-status" id="repairUploadStatus" role="status" aria-live="polite">Chưa chọn file biên bản sửa chữa.</p>
-          <button type="button" class="btn btn-primary" id="repairProcessButton" onclick="handleProcessRepairWorkbook()" disabled>
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 18h14"/></svg>
-            <span>Phân Tích & Tạo Biên Bản Nghiệm Thu</span>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+          <input type="file" id="instAcceptanceFileInput" accept=".docx,.xlsx,.txt,.md" style="display: none;" onchange="handleInstallationFileUpload(this)">
+          <button type="button" class="btn btn-outline btn-sm" onclick="triggerInstallationFileInput()" style="font-weight: 750; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff;">
+            📁 Tải Lên File Trích Xuất (AI)
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="handleLoadInstallationSampleData()" style="font-weight: 700; color: #1e40af; border-color: #93c5fd; background: #eff6ff;">
+            ⚡ Tải Mẫu CX Technology (HMV151020250001)
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="openInstallationAIModal()" style="font-weight: 700; color: #7c3aed; border-color: #c4b5fd; background: #f5f3ff;">
+            🤖 AI Bóc Tách / Nhập Dữ Liệu
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="handleRefreshInstallationPreview()" style="font-weight: 700;">
+            🔄 Xem Trước
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnGenerateInstallationWord" onclick="handleGenerateInstallationWord()" style="font-weight: 750; background: #1e40af; border-color: #1d4ed8; padding: 0.45rem 1rem;">
+            📄 Tạo & Tải File Word (.docx)
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Panel Kết Quả Hoàn Thành (Chỉ có DUY NHẤT nút tải file thực tế) -->
-    <div class="repair-result-panel" id="repairResultPanel" hidden aria-live="polite" style="margin-top: 1.25rem;">
-      <div class="repair-result-heading">
-        <span class="repair-result-check" aria-hidden="true">✓</span>
-        <div>
-          <strong style="color: #166534; font-size: 1.05rem;">Đã tạo xong file nghiệm thu thực tế</strong>
-          <small id="repairResultSummary" style="display: block; color: #1e293b; margin-top: 0.15rem;"></small>
-          <div id="repairResultContractBadge" style="margin-top: 0.4rem; font-size: 0.85rem; font-weight: 600; display: none;"></div>
+    <!-- 2 Columns: Form Editor (Left) & Live Preview (Right) -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; margin-bottom: 1.5rem;" class="installation-workspace-grid">
+      
+      <!-- CỘT TRÁI: FORM NHẬP LIỆU -->
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        
+        <!-- Khối 1: Hợp Đồng & Các Bên -->
+        <div class="card" style="padding: 1rem 1.25rem;">
+          <div style="font-weight: 750; font-size: 0.92rem; color: #1e3a8a; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+            <span>1. Thông Tin Hợp Đồng & Các Bên</span>
+            <span class="badge-pill" style="font-size: 0.72rem; background: #e0e7ff; color: #3730a3;">Bắt buộc</span>
+          </div>
+
+          <div style="margin-bottom: 0.75rem;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: #334155; margin-bottom: 0.25rem; display: block;">Chọn từ Hợp đồng đã có (hoặc tự nhập bên dưới):</label>
+            <select id="instContractSelect" class="form-control form-control-sm" onchange="onInstallationContractSelectChange(this.value)" style="font-weight: 600; font-size: 0.83rem;">
+              <option value="">-- Tự nhập thông tin hợp đồng mới --</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem;">
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Số Hợp Đồng / 合約編號:</label>
+              <input type="text" id="instSoHopDong" class="form-control form-control-sm" value="HMV151020250001" oninput="handleInstallationFormChange()">
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Số Biên Bản / 文件編號:</label>
+              <input type="text" id="instSoBienBan" class="form-control form-control-sm" value="002_BIEN_BAN_NGHIEM_THU_BAN_GIAO_CX_" oninput="handleInstallationFormChange()">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem;">
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Ngày Ký Hợp Đồng / 合約日期:</label>
+              <input type="text" id="instNgayKyHopDong" class="form-control form-control-sm" value="09/12/2025" oninput="handleInstallationFormChange()">
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Ngày Nghiệm Thu / 驗收日期:</label>
+              <input type="text" id="instNgayNghiemThu" class="form-control form-control-sm" value="09/10/2026" oninput="handleInstallationFormChange()">
+            </div>
+          </div>
+
+          <div style="margin-bottom: 0.6rem;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Tổng Giá Trị Hợp Đồng / 合約金額:</label>
+            <input type="text" id="instGiaTriHopDong" class="form-control form-control-sm" value="234.000.000 VNĐ" oninput="handleInstallationFormChange()">
+          </div>
+
+          <div style="margin-bottom: 0.6rem;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Tên Hệ Thống / Dự Án (Tiếng Việt):</label>
+            <input type="text" id="instTenHeThong" class="form-control form-control-sm" value="RFID 硬體 (RFID Hardware) – Phần mềm tùy chỉnh chức năng hệ thống RFID" oninput="handleInstallationFormChange()">
+          </div>
+
+          <div style="margin-bottom: 0.6rem;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Tên Hệ Thống / Dự Án (Tiếng Trung):</label>
+            <input type="text" id="instTenHeThongTrung" class="form-control form-control-sm" value="RFID 硬體（RFID Hardware）－ RFID 系統客製化軟體" oninput="handleInstallationFormChange()">
+          </div>
+
+          <div style="margin-bottom: 0.6rem;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Bên A (Khách hàng) - Tên Công Ty:</label>
+            <input type="text" id="instTenBenA" class="form-control form-control-sm" value="CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)" oninput="handleInstallationFormChange()">
+          </div>
+
+          <div style="margin-bottom: 0.6rem;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Bên A - Tên Tiếng Trung (Phồn thể):</label>
+            <input type="text" id="instTenBenATrung" class="form-control form-control-sm" value="CX TECHNOLOGY (VN) 股份有限公司" oninput="handleInstallationFormChange()">
+          </div>
+        </div>
+
+        <!-- Khối 2: Căn Cứ Nghiệm Thu -->
+        <div class="card" style="padding: 1rem 1.25rem;">
+          <div style="font-weight: 750; font-size: 0.92rem; color: #1e3a8a; margin-bottom: 0.75rem;">
+            2. Căn Cứ & Nguyên Tắc Nghiệm Thu
+          </div>
+
+          <div style="margin-bottom: 0.6rem;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Căn cứ Phụ lục báo giá (Tiếng Việt):</label>
+            <textarea id="instCanCuPhuLuc" class="form-control form-control-sm" rows="2" oninput="handleInstallationFormChange()">Phụ lục 1 – Báo giá khai phá chức năng ưu hóa tùy chỉnh (V1.2.3_VND) kèm theo hợp đồng</textarea>
+          </div>
+
+          <div style="margin-bottom: 0.6rem;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Căn cứ Phụ lục báo giá (Tiếng Trung):</label>
+            <textarea id="instCanCuPhuLucTrung" class="form-control form-control-sm" rows="2" oninput="handleInstallationFormChange()">附件一「RFID系統客製化功能開發報價單（V1.2.3_VND）」</textarea>
+          </div>
+
+          <div style="margin-bottom: 0.6rem;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Căn cứ Kỹ thuật / Chạy thử (Tiếng Việt):</label>
+            <textarea id="instCanCuKyThuat" class="form-control form-control-sm" rows="2" oninput="handleInstallationFormChange()">Biên bản kiểm tra kỹ thuật ngày 04/03/2026 xác nhận hoàn thành lắp đặt và kết quả chạy thử, điều chỉnh, theo dõi vận hành sau đó.</textarea>
+          </div>
+
+          <div style="margin-bottom: 0.6rem;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: #475569;">Căn cứ Kỹ thuật / Chạy thử (Tiếng Trung):</label>
+            <textarea id="instCanCuKyThuatTrung" class="form-control form-control-sm" rows="2" oninput="handleInstallationFormChange()">依據 2026/03/04《技術檢驗單》所確認之安裝完成情況，以及其後之試運行、調整及運行觀察結果。</textarea>
+          </div>
+        </div>
+
+        <!-- Khối 3: Danh Mục Hạng Mục Lắp Đặt & Nghiệm Thu -->
+        <div class="card" style="padding: 1rem 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <div style="font-weight: 750; font-size: 0.92rem; color: #1e3a8a;">
+              3. Danh Mục Hạng Mục Nghiệm Thu Lắp Đặt (<span id="instItemCountBadge">0</span> hạng mục)
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="addInstallationItem()" style="font-weight: 700; font-size: 0.78rem; padding: 0.25rem 0.6rem;">
+              ➕ Thêm Hạng Mục
+            </button>
+          </div>
+
+          <div id="instItemsContainer" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 480px; overflow-y: auto; padding-right: 4px;">
+            <!-- Render động bằng JS -->
+          </div>
+        </div>
+
+        <!-- Khối 4: Các Giai Đoạn Thanh Toán (Chọn Đợt Nghiệm Thu Đợt Này) -->
+        <div class="card" style="padding: 1rem 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="font-weight: 750; font-size: 0.92rem; color: #1e3a8a;">
+              4. Các Giai Đoạn Thanh Toán (Chọn Đợt Cần Nghiệm Thu Đợt Này)
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="addInstallationPaymentStage()" style="font-weight: 700; font-size: 0.76rem; padding: 0.2rem 0.55rem;">
+              ➕ Thêm Đợt
+            </button>
+          </div>
+
+          <div style="font-size: 0.78rem; color: #475569; margin-bottom: 0.75rem; background: #eff6ff; border-left: 3px solid #3b82f6; padding: 6px 10px; border-radius: 0 4px 4px 0;">
+            💡 <strong>Hướng dẫn:</strong> Đánh dấu [x] vào các đợt thanh toán muốn đề nghị trong biên bản này (Ví dụ: <em>Chỉ chọn Đợt 3 = 20%</em> như mẫu nghiệm thu chuẩn, hoặc <em>Chọn Đợt 2 & 3 = 60%</em> kết hợp). Hệ thống sẽ tự động cập nhật Bảng Mục V, số tiền bằng chữ song ngữ và nội dung Mục VI.
+          </div>
+
+          <!-- Quick stage selection buttons -->
+          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="selectOnlyStage(3)" style="font-size: 0.76rem; font-weight: 700; background: #fefce8; color: #854d0e; border-color: #fde047;">
+              🎯 Chỉ Chọn Đợt 3 (20% - Nghiệm thu đạt chuẩn)
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="selectStagesCombined([2, 3])" style="font-size: 0.76rem; font-weight: 700; background: #ecfdf5; color: #065f46; border-color: #6ee7b7;">
+              ⚡ Chọn Đợt 2 & 3 (60% - Nghiệm thu kết hợp)
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="selectOnlyStage(2)" style="font-size: 0.76rem; font-weight: 700; background: #f0f9ff; color: #075985; border-color: #7dd3fc;">
+              📦 Chỉ Chọn Đợt 2 (40% - Bàn giao sử dụng)
+            </button>
+          </div>
+
+          <!-- Dynamic payment stages list -->
+          <div id="instStagesContainer" style="display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 0.85rem;">
+            <!-- Rendered dynamically by JS -->
+          </div>
+
+          <!-- Summary calculation box -->
+          <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 0.75rem 0.9rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.45rem;">
+              <div>
+                <span style="font-size: 0.74rem; font-weight: 600; color: #64748b;">Đợt Đề Nghị Thanh Toán:</span>
+                <div id="instSummaryStagesLabel" style="font-weight: 750; font-size: 0.85rem; color: #1e40af;">Giai đoạn 3 (20%)</div>
+              </div>
+              <div>
+                <span style="font-size: 0.74rem; font-weight: 600; color: #64748b;">Tổng Tiền Đợt Này:</span>
+                <div id="instSummaryTotalAmount" style="font-weight: 750; font-size: 0.9rem; color: #15803d;">46.800.000 VND (20%)</div>
+              </div>
+            </div>
+            <div style="margin-bottom: 0.35rem;">
+              <span style="font-size: 0.73rem; font-weight: 600; color: #64748b;">Bằng chữ Tiếng Việt:</span>
+              <div id="instSummaryWordsVN" style="font-size: 0.78rem; font-weight: 600; color: #1e293b;">Bốn mươi sáu triệu tám trăm nghìn đồng chẵn.</div>
+            </div>
+            <div>
+              <span style="font-size: 0.73rem; font-weight: 600; color: #64748b;">Bằng chữ Tiếng Trung:</span>
+              <div id="instSummaryWordsTW" style="font-size: 0.78rem; font-weight: 600; color: #1e293b;">越南盾肆仟陸佰捌拾萬整</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- CỘT PHẢI: XEM TRƯỚC VĂN BẢN (LIVE PREVIEW) -->
+      <div style="position: sticky; top: 1rem;">
+        <div class="card" style="padding: 1rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+          <span style="font-weight: 750; font-size: 0.88rem; color: #334155;">
+            👁️ Bản Xem Trước Văn Bản Trực Quan
+          </span>
+          <span class="badge-pill blue" style="font-size: 0.75rem;">Mẫu Word .docx 1:1</span>
+        </div>
+
+        <div id="instPreviewContainer" style="max-height: calc(100vh - 180px); overflow-y: auto; background: #e2e8f0; padding: 1.25rem 0.75rem; border-radius: 8px;">
+          <!-- Preview HTML will be injected here -->
+          <div style="text-align: center; padding: 3rem; color: #64748b;">
+            Đang tải bản xem trước biên bản nghiệm thu...
+          </div>
         </div>
       </div>
-      <div class="repair-result-metrics">
-        <span><strong id="repairRecordCount">0</strong> bản ghi thiết bị</span>
-        <span><strong id="repairAssignedCount">0</strong> ghi chú đã gán</span>
-        <span><strong id="repairIgnoredCount">0</strong> ghi chú bỏ qua</span>
-        <span>Model: <strong id="repairGeminiModel">Gemini</strong></span>
-      </div>
-      <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-        <a class="btn btn-success" id="repairDownloadButton" href="#" download style="font-weight: 700;">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-          <span>Tải File Nghiệm Thu (.xlsx)</span>
-        </a>
-        <button type="button" class="btn btn-outline" id="repairOpenFolderButton" onclick="handleOpenAcceptanceFolder()" title="Mở thư mục Ho So Du An/Nghiem Thu trong Windows Explorer">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          <span>Mở Thư Mục Chứa File</span>
-        </button>
-      </div>
-    </div>
-  </section>
 
-  <!-- Danh Sách Các Biên Bản Nghiệm Thu Đã Tạo (Quản lý hồ sơ thực tế) -->
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 2: NGHIỆM THU SỬA CHỮA THIẾT BỊ (EXCEL .XLSX MẪU CX TECHNOLOGY)       -->
+  <!-- ========================================================================= -->
+  <div id="tabContentRepair" style="display: none;">
+    
+    <section class="card repair-upload-card" aria-labelledby="repairUploadTitle" style="margin-bottom: 1.5rem;">
+      <div class="card-header repair-upload-header">
+        <div>
+          <div class="card-title" id="repairUploadTitle">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/></svg>
+            <span>Tạo Nghiệm Thu Từ File Biên Bản Sửa Chữa Excel</span>
+          </div>
+          <p class="repair-upload-subtitle">
+            Tải lên file Excel do bên sửa chữa cung cấp. Hệ thống sẽ nhập toàn bộ thiết bị, tạo đủ sheet chi tiết; Gemini tự động đối chiếu và gán Ghi chú / 備註 khi có mã serial rõ ràng.
+          </p>
+        </div>
+        <span class="badge-pill purple">Gemini tự động đối chiếu Serial</span>
+      </div>
+
+      <div class="repair-upload-grid">
+        <label class="repair-dropzone" id="repairDropzone" for="repairFileInput" tabindex="0" role="button" aria-label="Chọn hoặc kéo thả file biên bản sửa chữa Excel">
+          <input class="repair-file-input" type="file" id="repairFileInput" name="file" tabindex="-1" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-describedby="repairFileHelp repairUploadStatus">
+          <span class="repair-dropzone-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+          </span>
+          <span class="repair-dropzone-title">Kéo thả file vào đây hoặc bấm để chọn</span>
+          <span class="repair-dropzone-help" id="repairFileHelp">Chấp nhận một file .xlsx, dung lượng tối đa 20 MB</span>
+        </label>
+
+        <div class="repair-upload-panel">
+          <ol class="repair-process-list" aria-label="Quy trình xử lý">
+            <li><span>1</span><div><strong>Nhập đủ danh sách thiết bị</strong><small>Đồng bộ serial, lỗi ban đầu, bộ phận và kết quả kiểm tra từ file tải lên.</small></div></li>
+            <li><span>2</span><div><strong>Đối chiếu ghi chú bằng Gemini</strong><small>Bỏ ghi chú cũ; chỉ gán khi dòng nguồn nêu rõ serial hợp lệ.</small></div></li>
+            <li><span>3</span><div><strong>Giữ nguyên mẫu 1:1</strong><small>Bảo toàn logo, khung ảnh, font, màu và bố cục chuẩn CX Technology.</small></div></li>
+          </ol>
+
+          <div class="repair-selected-file" id="repairSelectedFile" hidden>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            <div>
+              <strong id="repairSelectedFileName"></strong>
+              <small id="repairSelectedFileSize"></small>
+            </div>
+            <button type="button" class="repair-clear-button" id="repairClearFileButton" aria-label="Bỏ file đã chọn" title="Bỏ file đã chọn">×</button>
+          </div>
+
+          <!-- Khối Liên Kết Hợp Đồng -->
+          <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.25rem;">
+              <label for="acceptanceContractSelect" style="font-weight: 750; font-size: 0.86rem; color: #1e293b; display: flex; align-items: center; gap: 0.4rem; margin: 0;">
+                <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; color: #2563eb;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <span>Hợp Đồng Mua Bán Liên Kết</span>
+              </label>
+              <span class="badge-pill" style="font-size: 0.72rem; background: #e0e7ff; color: #3730a3; font-weight: 600;">Tùy chọn (Có hoặc không)</span>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <select id="acceptanceContractSelect" class="form-control form-control-sm" style="flex: 1; font-weight: 600; font-size: 0.84rem;" onchange="onAcceptanceContractSelectChange(this.value)">
+                <option value="">-- Không liên kết (Tạo biên bản nghiệm thu độc lập) --</option>
+              </select>
+              <button type="button" class="btn btn-outline btn-sm" onclick="loadAcceptanceContractsList()" title="Làm mới danh sách hợp đồng" style="padding: 0.25rem 0.6rem;">
+                🔄
+              </button>
+            </div>
+            <div id="acceptanceContractHint" style="font-size: 0.76rem; color: #64748b; margin-top: 0.35rem;">
+              💡 Nếu có hợp đồng tương ứng, hệ thống sẽ tự động gắn biên bản nghiệm thu vào hồ sơ hợp đồng. Nếu không chọn hoặc không có, biên bản sẽ được lưu độc lập.
+            </div>
+          </div>
+
+          <div class="repair-upload-actions">
+            <p class="repair-upload-status" id="repairUploadStatus" role="status" aria-live="polite">Chưa chọn file biên bản sửa chữa.</p>
+            <button type="button" class="btn btn-primary" id="repairProcessButton" onclick="handleProcessRepairWorkbook()" disabled>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 18h14"/></svg>
+              <span>Phân Tích & Tạo Biên Bản Nghiệm Thu</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Kết Quả Hoàn Thành -->
+      <div class="repair-result-panel" id="repairResultPanel" hidden aria-live="polite" style="margin-top: 1.25rem;">
+        <div class="repair-result-heading">
+          <span class="repair-result-check" aria-hidden="true">✓</span>
+          <div>
+            <strong style="color: #166534; font-size: 1.05rem;">Đã tạo xong file nghiệm thu thực tế</strong>
+            <small id="repairResultSummary" style="display: block; color: #1e293b; margin-top: 0.15rem;"></small>
+            <div id="repairResultContractBadge" style="margin-top: 0.4rem; font-size: 0.85rem; font-weight: 600; display: none;"></div>
+          </div>
+        </div>
+        <div class="repair-result-metrics">
+          <span><strong id="repairRecordCount">0</strong> bản ghi thiết bị</span>
+          <span><strong id="repairAssignedCount">0</strong> ghi chú đã gán</span>
+          <span><strong id="repairIgnoredCount">0</strong> ghi chú bỏ qua</span>
+          <span>Model: <strong id="repairGeminiModel">Gemini</strong></span>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <a class="btn btn-success" id="repairDownloadButton" href="#" download style="font-weight: 700;">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+            <span>Tải File Nghiệm Thu (.xlsx)</span>
+          </a>
+          <button type="button" class="btn btn-outline" id="repairOpenFolderButton" onclick="handleOpenAcceptanceFolder()" title="Mở thư mục Ho So Du An/Nghiem Thu trong Windows Explorer">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>Mở Thư Mục Chứa File</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- DANH SÁCH CÁC BIÊN BẢN NGHIỆM THU ĐÃ TẠO (CHUNG CHO CẢ WORD VÀ EXCEL)     -->
+  <!-- ========================================================================= -->
   <section class="card" style="margin-bottom: 2rem;">
     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <svg class="icon" viewBox="0 0 24 24" style="color: #2563eb;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <div class="card-title" style="margin: 0;">Danh Sách Biên Bản Nghiệm Thu Đã Tạo</div>
+        <div class="card-title" style="margin: 0;">Danh Sách Biên Bản Nghiệm Thu Đã Tạo (Word & Excel)</div>
         <span class="badge-pill blue" id="acceptanceFilesCountBadge">0 tệp</span>
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -142,16 +390,17 @@
         <thead>
           <tr>
             <th style="width: 45px; text-align: center;">STT</th>
-            <th>Tên Tệp Nghiệm Thu (.xlsx)</th>
+            <th style="width: 140px; text-align: center;">Loại Tài Liệu</th>
+            <th>Tên Tệp Nghiệm Thu</th>
             <th style="width: 190px; text-align: center;">Hợp Đồng Liên Kết</th>
             <th style="width: 120px; text-align: center;">Dung Lượng</th>
             <th style="width: 160px; text-align: center;">Thời Gian Tạo</th>
-            <th style="width: 200px; text-align: center;">Thao Tác</th>
+            <th style="width: 180px; text-align: center;">Thao Tác</th>
           </tr>
         </thead>
         <tbody id="acceptanceFilesTableBody">
           <tr>
-            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">
               Đang tải danh sách biên bản nghiệm thu...
             </td>
           </tr>
@@ -163,17 +412,55 @@
     <div id="acceptanceFilesEmptyState" style="display: none; text-align: center; padding: 2.5rem 1rem; background: #f8fafc; border-radius: 8px; margin: 1rem;">
       <svg style="width: 42px; height: 42px; color: #94a3b8; margin: 0 auto 0.5rem auto;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <div style="font-weight: 700; color: #475569; font-size: 0.95rem;">Chưa có biên bản nghiệm thu nào trong thư mục Ho So Du An/Nghiem Thu</div>
-      <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.25rem;">Hãy kéo thả file biên bản sửa chữa vào ô bên trên và bấm "Phân Tích & Tạo Biên Bản Nghiệm Thu".</div>
+      <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.25rem;">Hãy bấm nút "Tạo & Tải File Word (.docx)" hoặc kéo thả file Excel biên bản sửa chữa.</div>
     </div>
   </section>
 
 </div>
+
+<!-- MODAL AI PHÂN TÍCH CHO NGHIỆM THU LẮP ĐẶT -->
+<div id="installationAIModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 1050; align-items: center; justify-content: center;">
+  <div style="background: #ffffff; width: 90%; max-width: 650px; border-radius: 10px; padding: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <strong style="font-size: 1.1rem; color: #1e3a8a; display: flex; align-items: center; gap: 0.5rem;">
+        🤖 Gemini AI Phân Tích Dữ Liệu Nghiệm Thu Lắp Đặt
+      </strong>
+      <button type="button" class="btn btn-outline btn-sm" onclick="closeInstallationAIModal()" style="border: none; font-size: 1.25rem; line-height: 1; padding: 0.2rem 0.5rem;">×</button>
+    </div>
+    <p style="font-size: 0.83rem; color: #475569; margin-bottom: 0.75rem;">
+      Tải file hoặc dán nội dung từ văn bản hợp đồng / biên bản bàn giao (gồm thông tin hợp đồng, các mốc thanh toán, các hạng mục tính năng...). Gemini AI sẽ tự động bóc tách thành form chuẩn.
+    </p>
+
+    <!-- Upload Card -->
+    <div style="background: #f8fafc; border: 1.5px dashed #93c5fd; border-radius: 8px; padding: 1.1rem; text-align: center; margin-bottom: 1rem; cursor: pointer; transition: all 0.2s;" onclick="triggerInstallationFileInput()" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'">
+      <div style="font-size: 1.6rem; margin-bottom: 0.2rem;">📁 ➔ 🤖</div>
+      <div style="font-weight: 750; color: #1e40af; font-size: 0.9rem;">Nhấn để tải lên file Hợp đồng / Biên bản (.docx, .xlsx, .txt)</div>
+      <div style="font-size: 0.77rem; color: #64748b; margin-top: 3px;">Hệ thống sẽ tự động đọc toàn bộ bảng biểu, hạng mục và tất cả các giai đoạn thanh toán trong hợp đồng</div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+      <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+      <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 600;">HOẶC DÁN VĂN BẢN THÔ DƯỚI ĐÂY</span>
+      <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+    </div>
+
+    <textarea id="instAIRawText" class="form-control" rows="6" placeholder="Dán nội dung hợp đồng / biên bản bàn giao vào đây..." style="font-size: 0.84rem; margin-bottom: 1rem;"></textarea>
+    <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="closeInstallationAIModal()">Hủy</button>
+      <button type="button" class="btn btn-primary btn-sm" id="btnExecuteInstallationAI" onclick="handleExecuteInstallationAI()" style="font-weight: 700; background: #7c3aed; border-color: #6d28d9;">
+        🚀 Bắt Đầu Phân Tích Văn Bản
+      </button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/acceptance_editor.js?v=5.1"></script>
+<script src="/static/js/acceptance_editor.js?v=6.0"></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    initInstallationAcceptance();
     initRepairWorkbookUpload();
     loadAcceptanceContractsList();
     loadAcceptanceFilesList();

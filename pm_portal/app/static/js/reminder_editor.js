@@ -111,8 +111,20 @@ const ReminderEditor = {
       const amtStr = Number(targetMilestone.amount || 0).toLocaleString("vi-VN") + " VND";
       amtEl.textContent = `${targetMilestone.percentage}% (${amtStr})`;
     }
-    const termDays = parseInt(targetMilestone.payment_term_days, 10) || 0;
-    if (termEl) termEl.textContent = `${termDays} ngày`;
+    let termDays = parseInt(targetMilestone.payment_term_days, 10);
+    const isImmediate = this.isImmediateFirstMilestone(targetMilestone);
+    if (isNaN(termDays) || termDays === 0) {
+      termDays = isImmediate ? 10 : 0;
+    }
+
+    const termDaysInput = document.getElementById("tmTermDaysInput");
+    if (termDaysInput) {
+      termDaysInput.value = termDays;
+    }
+    const termHint = document.getElementById("tmTermDaysHint");
+    if (termHint) {
+      termHint.style.display = isImmediate ? "block" : "none";
+    }
 
     if (idInput) idInput.value = targetMilestone.id;
 
@@ -142,9 +154,13 @@ const ReminderEditor = {
     const dateInput = document.getElementById("tmTriggerDateInput");
     const dueEl = document.getElementById("tmCalculatedDueDate");
     const statusEl = document.getElementById("tmCalculatedStatusBadge");
+    const termDaysInput = document.getElementById("tmTermDaysInput");
 
     const dateStr = (dateInput?.value || "").trim();
-    const termDays = parseInt(this.currentTriggerMilestone.payment_term_days, 10) || 0;
+    let termDays = parseInt(termDaysInput?.value, 10);
+    if (isNaN(termDays)) {
+      termDays = this.isImmediateFirstMilestone(this.currentTriggerMilestone) ? 10 : 0;
+    }
 
     const parts = dateStr.split(/[\/\-.]/);
     if (parts.length === 3) {
@@ -160,9 +176,11 @@ const ReminderEditor = {
         const dueFormatted = `${String(dueDt.getDate()).padStart(2, "0")}/${String(dueDt.getMonth() + 1).padStart(2, "0")}/${dueDt.getFullYear()}`;
         if (dueEl) dueEl.textContent = dueFormatted;
 
-        // Simulated today: October 15, 2026
-        const simulatedToday = new Date(2026, 9, 15);
-        const diffMs = dueDt.getTime() - simulatedToday.getTime();
+        // Calculate days left relative to current date (normalized to midnight)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const targetDue = new Date(dueDt.getFullYear(), dueDt.getMonth(), dueDt.getDate());
+        const diffMs = targetDue.getTime() - today.getTime();
         const daysLeft = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
         if (statusEl) {
@@ -191,8 +209,13 @@ const ReminderEditor = {
   async submitTriggerMilestone() {
     const idInput = document.getElementById("tmActiveMilestoneId");
     const dateInput = document.getElementById("tmTriggerDateInput");
+    const termDaysInput = document.getElementById("tmTermDaysInput");
     const milestoneId = idInput?.value;
     const triggerDate = (dateInput?.value || "").trim();
+    let termDays = parseInt(termDaysInput?.value, 10);
+    if (isNaN(termDays)) {
+      termDays = (this.currentTriggerMilestone && this.isImmediateFirstMilestone(this.currentTriggerMilestone)) ? 10 : 0;
+    }
 
     if (!milestoneId || !triggerDate) {
       alert("Vui lòng nhập ngày hoàn thành điều kiện.");
@@ -203,7 +226,7 @@ const ReminderEditor = {
       const response = await fetch(`/api/v1/dossier/milestones/${milestoneId}/activate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trigger_date: triggerDate })
+        body: JSON.stringify({ trigger_date: triggerDate, term_days: termDays })
       });
       const data = await response.json();
       if (!response.ok || data.status !== "success") {
@@ -527,15 +550,14 @@ const ReminderEditor = {
                     ⚙️ Đổi Ngày
                   </button>
                 `}
-                ${!isImmediate ? `
-                  <button type="button" class="btn btn-primary btn-sm" onclick="ReminderEditor.selectAndGenerateSheet('${c.contract_code}', '${this.escapeHtml(ms.milestone_name)}', true, this)" style="padding: 2px 8px; font-size: 0.72rem; margin-left: 0.25rem;">
-                    👉 Tạo Phiếu Yêu Cầu TT
-                  </button>
-                ` : `
-                  <span style="font-size: 0.7rem; color: #475569; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin-left: 0.25rem; font-weight: 600; border: 1px dashed #cbd5e1;" title="Đợt thanh toán ngay theo điều khoản ký hợp đồng (không cần tạo phiếu yêu cầu thanh toán)">
-                    ⚡ TT ngay khi ký
+                <button type="button" class="btn btn-primary btn-sm" onclick="ReminderEditor.selectAndGenerateSheet('${c.contract_code}', '${this.escapeHtml(ms.milestone_name)}', true, this)" style="padding: 2px 8px; font-size: 0.72rem; margin-left: 0.25rem;" title="Tạo phiếu yêu cầu thanh toán (Excel + Word) cho ${this.escapeHtml(ms.milestone_name)}">
+                  👉 Tạo Phiếu Yêu Cầu TT
+                </button>
+                ${isImmediate ? `
+                  <span style="font-size: 0.68rem; color: #1e40af; background: #eff6ff; padding: 2px 6px; border-radius: 4px; margin-left: 0.25rem; font-weight: 600; border: 1px solid #bfdbfe;" title="Đợt thanh toán theo điều khoản ký HĐ (quy trình duyệt chi kế toán ~10 ngày)">
+                    ⚡ Ký HĐ (~10 ngày)
                   </span>
-                `}
+                ` : ''}
                 <button type="button" class="btn btn-sm" onclick="ReminderEditor.openMarkPaidModal(${ms.id}, '${c.contract_code}', '${this.escapeHtml(ms.milestone_name)}', ${ms.amount})" style="padding: 2px 8px; font-size: 0.72rem; margin-left: 0.25rem; font-weight: 750; color: #ffffff; background: #059669; border: 1px solid #047857;" title="Xác nhận khách hàng đã thanh toán đợt này">
                   💰 Xác Nhận Đã Thu
                 </button>
@@ -648,8 +670,7 @@ const ReminderEditor = {
    * Primary action: User picks contract milestone -> Server creates Excel 712TR + Word and populates Email Draft.
    */
   async selectAndGenerateSheet(contractCode, milestoneName, shouldScroll = true, btnEl = null) {
-    const templateSource = document.getElementById("paymentRequestTemplateSource")?.value || "excel";
-    const templateLabel = templateSource === "word" ? "Word (.docx)" : "Excel (sheet 712TR)";
+    const templateLabel = "Excel + Word";
 
     // 1. Phản hồi trực quan tức thì trên nút bấm
     let originalBtnHtml = "";
@@ -674,7 +695,7 @@ const ReminderEditor = {
     }
 
     if (window.showToast) {
-      window.showToast(`Đang tạo phiếu yêu cầu thanh toán (${templateLabel}) cho ${milestoneName}...`, "info");
+      window.showToast(`Đang tạo phiếu yêu cầu thanh toán (Excel + Word) cho ${milestoneName}...`, "info");
     }
 
     try {
@@ -684,7 +705,7 @@ const ReminderEditor = {
         body: JSON.stringify({
           contract_code: contractCode,
           milestone_name: milestoneName,
-          template_source: templateSource
+          template_source: "excel"
         })
       });
 
@@ -799,8 +820,8 @@ const ReminderEditor = {
       this.selectAndGenerateSheet("HMV151020250001", "Đợt 2", true);
     } else if (this.cachedContracts.length > 0) {
       const c = this.cachedContracts[0];
-      const nonImmediateMs = (c.milestones || []).find((m, i) => !this.isImmediateFirstMilestone(m, i));
-      const targetMs = nonImmediateMs ? nonImmediateMs.milestone_name : (c.milestones && c.milestones[0] ? c.milestones[0].milestone_name : "Đợt 2");
+      const unpaidMs = (c.milestones || []).find(m => m.status !== "PAID");
+      const targetMs = unpaidMs ? unpaidMs.milestone_name : (c.milestones && c.milestones[0] ? c.milestones[0].milestone_name : "Đợt 1");
       this.selectAndGenerateSheet(c.contract_code, targetMs, true);
     } else {
       if (window.showToast) {
@@ -887,15 +908,14 @@ const ReminderEditor = {
                     ⚙️ Đổi Ngày
                   </button><br>
                 `}
-                ${!isImmediate ? `
-                  <button type="button" class="btn btn-primary btn-sm" onclick="ReminderEditor.closeDossierModal(); ReminderEditor.selectAndGenerateSheet('${c.contract_code}', '${this.escapeHtml(m.milestone_name)}')" style="padding: 2px 8px; font-size: 0.72rem; margin-bottom: 0.25rem;">
-                    Tạo Phiếu Đợt Này
-                  </button><br>
-                ` : `
-                  <span style="display: inline-block; font-size: 0.7rem; color: #475569; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin-bottom: 0.25rem; font-weight: 600; border: 1px dashed #cbd5e1;">
-                    ⚡ TT ngay khi ký
+                <button type="button" class="btn btn-primary btn-sm" onclick="ReminderEditor.closeDossierModal(); ReminderEditor.selectAndGenerateSheet('${c.contract_code}', '${this.escapeHtml(m.milestone_name)}')" style="padding: 2px 8px; font-size: 0.72rem; margin-bottom: 0.25rem;" title="Tạo phiếu yêu cầu thanh toán cho ${this.escapeHtml(m.milestone_name)}">
+                  Tạo Phiếu Đợt Này
+                </button><br>
+                ${isImmediate ? `
+                  <span style="display: inline-block; font-size: 0.68rem; color: #1e40af; background: #eff6ff; padding: 1px 6px; border-radius: 4px; margin-bottom: 0.25rem; font-weight: 600; border: 1px solid #bfdbfe;" title="Đợt ký kết hợp đồng (~10 ngày)">
+                    ⚡ Ký HĐ (~10 ngày)
                   </span><br>
-                `}
+                ` : ''}
                 <button type="button" class="btn btn-sm" onclick="ReminderEditor.closeDossierModal(); ReminderEditor.openMarkPaidModal(${m.id}, '${c.contract_code}', '${this.escapeHtml(m.milestone_name)}', ${m.amount})" style="padding: 2px 8px; font-size: 0.72rem; font-weight: 750; color: #ffffff; background: #059669; border: 1px solid #047857;" title="Xác nhận khách hàng đã thanh toán đợt này">
                   💰 Xác Nhận Đã Thu
                 </button>
@@ -1232,7 +1252,7 @@ const ReminderEditor = {
         ngan_hang: document.getElementById("bankNameInput")?.value || "CATHAY UNITED BANK – HO CHI MINH CITY BRANCH"
       },
       danh_sach_dinh_kem: attachList,
-      template_source: document.getElementById("paymentRequestTemplateSource")?.value || "excel"
+      template_source: "excel"
     };
   },
 

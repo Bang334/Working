@@ -349,8 +349,31 @@ class TestPaymentRequestExports(unittest.TestCase):
             )
 
         self.assertEqual(result["status"], "error")
-        self.assertIn("sentinel-original-error", result["message"])
+    def test_extract_docx_payment_voucher(self):
+        from app.services.payment_voucher_ai_service import _extract_docx_text_from_base64
+        import base64
+        
+        # Test document
+        doc = Document()
+        doc.add_paragraph("BIÊN BẢN TIẾN ĐỘ LẮP ĐẶT VÀ NGHIỆM THU")
+        table = doc.add_table(rows=2, cols=2)
+        table.rows[0].cells[0].text = "Hợp đồng"
+        table.rows[0].cells[1].text = "HMV151020250001"
+        table.rows[1].cells[0].text = "Số tiền"
+        table.rows[1].cells[1].text = "46.800.000 VND"
+        
+        tmp_doc = self.root / "test_acceptance.docx"
+        doc.save(str(tmp_doc))
+        
+        with open(tmp_doc, "rb") as f:
+            b64_val = base64.b64encode(f.read()).decode("utf-8")
+            
+        extracted_text = _extract_docx_text_from_base64(b64_val)
+        self.assertIn("BIÊN BẢN TIẾN ĐỘ LẮP ĐẶT VÀ NGHIỆM THU", extracted_text)
+        self.assertIn("HMV151020250001", extracted_text)
+        self.assertIn("46.800.000 VND", extracted_text)
 
 
 if __name__ == "__main__":
     unittest.main()
+

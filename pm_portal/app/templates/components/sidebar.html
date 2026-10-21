@@ -35,6 +35,13 @@
       <span>Tạo Hợp Đồng Mua Bán</span>
     </a>
 
+    <a href="/repair-contracts" data-nav-id="repair_contracts" class="nav-item {% if active_tab == 'repair_contracts' %}active{% endif %}" {% if active_tab == 'repair_contracts' %}aria-current="page"{% endif %}>
+      <span class="nav-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </span>
+      <span>Hợp Đồng Sửa Chữa</span>
+    </a>
+
     <a href="/purchase-orders" data-nav-id="po" class="nav-item {% if active_tab == 'po' %}active{% endif %}" {% if active_tab == 'po' %}aria-current="page"{% endif %}>
       <span class="nav-icon" aria-hidden="true">
         <svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -63,6 +70,13 @@
       </span>
       <span>Đề Nghị TT & Nhắc Nợ</span>
       <span class="sidebar-unread-badge" id="sidebarReminderBadge" style="display: none;">0</span>
+    </a>
+
+    <a href="/payment-requests" data-nav-id="payment_requests" class="nav-item {% if active_tab == 'payment_requests' %}active{% endif %}" {% if active_tab == 'payment_requests' %}aria-current="page"{% endif %} title="Lập đơn xin thanh toán chi phí, đối tác & nhà cung cấp (浤詺付款申请单)">
+      <span class="nav-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><path d="M6 15h2M10 15h6"/></svg>
+      </span>
+      <span>Đơn Xin Thanh Toán</span>
     </a>
 
     <a href="/liquidation" data-nav-id="liquidation" class="nav-item {% if active_tab == 'liquidation' %}active{% endif %}" {% if active_tab == 'liquidation' %}aria-current="page"{% endif %}>

@@ -71,3 +71,66 @@ class AcceptanceAIParseRequest(BaseModel):
     model_config = {"protected_namespaces": ()}
     raw_text: str = Field(..., description="Văn bản thô, bảng giao nhận, ghi chú lỗi")
     model_name: Optional[str] = Field(None, description="Tên mô hình Gemini ưu tiên")
+
+
+class InstallationAcceptanceItem(BaseModel):
+    """Line item in installation and milestone acceptance list."""
+    stt: int = Field(..., description="Số thứ tự")
+    ten_san_pham: str = Field(..., description="Tên sản phẩm / chức năng / 產品名稱")
+    hang_muc: Optional[str] = Field("", description="Hạng mục / Yêu cầu xác nhận / 項目類別")
+    noi_dung: Optional[str] = Field("", description="Nội dung sản phẩm / tính năng chi tiết / 產品內容")
+    xac_nhan_lap_dat: Optional[str] = Field(
+        "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入使用",
+        description="Xác nhận lắp đặt / 安裝確認"
+    )
+    ket_qua_xac_nhan: Optional[str] = Field(
+        "Đã nghiệm thu, xác nhận đạt yêu cầu và chính thức đưa vào sử dụng.\n驗收合格，確認正式投入使用。",
+        description="Xác nhận nghiệm thu / 驗收確認"
+    )
+
+
+class InstallationPaymentStage(BaseModel):
+    """Payment stage milestone in installation acceptance."""
+    stage_id: Optional[str] = Field("", description="Mã định danh đợt (VD: 1, 2, 3...)")
+    stage: str = Field(..., description="Tên giai đoạn / 期別 (VD: GIAI ĐOẠN 2\n第二期)")
+    condition: str = Field(..., description="Điều kiện thanh toán / 付款條件")
+    rate: str = Field(..., description="Tỷ lệ thanh toán (VD: 40%)")
+    amount: str = Field(..., description="Số tiền thanh toán (VD: 93.600.000 VND)")
+    selected: Optional[bool] = Field(False, description="Có được chọn để đưa vào biên bản nghiệm thu đợt này hay không")
+
+
+class InstallationAcceptanceData(BaseModel):
+    """Full schema for Installation Acceptance & Handover Minutes (.docx)."""
+    so_hop_dong: str = Field("HMV151020250001", description="Số hợp đồng liên quan")
+    so_bien_ban: str = Field("002_BIEN_BAN_NGHIEM_THU_BAN_GIAO_CX_", description="Số biên bản nghiệm thu")
+    ngay_ky_hop_dong: str = Field("09/12/2025", description="Ngày ký hợp đồng")
+    ngay_nghiem_thu: str = Field("09/10/2026", description="Ngày lập biên bản nghiệm thu")
+    gia_tri_hop_dong: str = Field("234.000.000 VNĐ", description="Tổng giá trị hợp đồng")
+    
+    ten_he_thong: str = Field("RFID 硬體 (RFID Hardware) – Phần mềm tùy chỉnh chức năng hệ thống RFID", description="Tên hệ thống tiếng Việt")
+    ten_he_thong_trung: Optional[str] = Field("RFID 硬體（RFID Hardware）－ RFID 系統客製化軟體", description="Tên hệ thống tiếng Trung")
+    
+    ben_a: Dict[str, Any] = Field(default_factory=dict, description="Thông tin bên A (khách hàng)")
+    ben_b: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Thông tin bên B (Hong Ming)")
+    
+    can_cu_phu_luc: Optional[str] = Field("", description="Căn cứ phụ lục báo giá")
+    can_cu_phu_luc_trung: Optional[str] = Field("", description="Căn cứ phụ lục tiếng Trung")
+    can_cu_ky_thuat: Optional[str] = Field("", description="Căn cứ biên bản kiểm tra kỹ thuật")
+    can_cu_ky_thuat_trung: Optional[str] = Field("", description="Căn cứ kỹ thuật tiếng Trung")
+    
+    giai_doan_thanh_toan: Optional[str] = Field("Giai đoạn 2 (Sau khi triển khai lắp đặt đưa vào sử dụng - 40%)", description="Giai đoạn thanh toán đề nghị")
+    so_tien_thanh_toan: Optional[str] = Field("93.600.000 VND", description="Số tiền thanh toán đề nghị bằng số")
+    so_tien_chu_vn: Optional[str] = Field("Chín mươi ba triệu sáu trăm nghìn đồng chẵn.", description="Số tiền bằng chữ tiếng Việt")
+    so_tien_chu_tw: Optional[str] = Field("玖仟參佰陸拾萬越盾整", description="Số tiền bằng chữ tiếng Trung")
+    
+    hang_muc: List[InstallationAcceptanceItem] = Field(default_factory=list, description="Danh mục hạng mục nghiệm thu lắp đặt")
+    payment_stages: Optional[List[InstallationPaymentStage]] = Field(default_factory=list, description="Bảng các mốc thanh toán hợp đồng")
+    selected_stage_indices: Optional[List[int]] = Field(default_factory=list, description="Chỉ số các đợt được chọn đưa vào biên bản")
+
+
+class InstallationAIParseRequest(BaseModel):
+    """Request payload for Gemini AI to parse installation acceptance notes/document."""
+    model_config = {"protected_namespaces": ()}
+    raw_text: str = Field(..., description="Văn bản thô, biên bản bàn giao, nội dung hạng mục nghiệm thu lắp đặt")
+    model_name: Optional[str] = Field(None, description="Tên mô hình Gemini ưu tiên")
+

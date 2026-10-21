@@ -25,6 +25,7 @@ if __name__ == "__main__":
     print(f"   Python Version : {sys.version.split()[0]}")
     print(f"   Ứng dụng Web   : http://{SERVER_HOST}:{SERVER_PORT}")
     print(f"   Tạo Hợp Đồng   : http://{SERVER_HOST}:{SERVER_PORT}/contracts")
+    print(f"   HĐ Sửa Chữa    : http://{SERVER_HOST}:{SERVER_PORT}/repair-contracts")
     print(f"   Nghiệm Thu     : http://{SERVER_HOST}:{SERVER_PORT}/acceptance")
     print(f"   Tài Liệu API   : http://{SERVER_HOST}:{SERVER_PORT}/docs")
     print("=" * 65)

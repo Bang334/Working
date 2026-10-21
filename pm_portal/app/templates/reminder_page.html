@@ -232,13 +232,6 @@
         </div>
 
         <div style="display: flex; gap: 0.4rem; align-items: center; margin-left: auto; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 0.35rem;">
-            <label for="paymentRequestTemplateSource" style="font-size: 0.78rem; font-weight: 700; color: #475569;">Mẫu xuất:</label>
-            <select id="paymentRequestTemplateSource" class="form-control" style="width: auto; height: 32px; padding: 0.15rem 0.5rem; font-size: 0.78rem; border-radius: 6px;">
-              <option value="excel">Excel – sheet 712TR (Chuẩn Gốc)</option>
-              <option value="word">Word – đơn yêu cầu TT.docx</option>
-            </select>
-          </div>
           <a href="/contracts" class="btn btn-outline btn-sm" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem; border-color: #2563eb; color: #1d4ed8; background: #eff6ff; font-weight: 600;" title="Chuyển sang trang tạo hợp đồng mua bán mới và lưu vào hồ sơ">
             <svg class="icon" style="width: 13px; height: 13px;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             <span>➕ Tạo Hợp Đồng Mới</span>
@@ -768,7 +761,16 @@
     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; font-size: 0.82rem; line-height: 1.6;">
       <div>• <strong>Điều kiện kích hoạt:</strong> <span id="tmCondition" style="color: #0f172a; font-weight: 600;"></span></div>
       <div>• <strong>Tỷ lệ & Số tiền:</strong> <span id="tmAmountInfo" style="color: #166534; font-weight: 700;"></span></div>
-      <div>• <strong>Thời hạn T/T:</strong> <span id="tmTermDays" style="font-weight: 700; color: #b45309;">30 ngày</span></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.45rem;">
+        <span>• <strong>Thời hạn thanh toán T/T:</strong></span>
+        <div style="display: flex; align-items: center; gap: 0.35rem;">
+          <input type="number" id="tmTermDaysInput" class="form-control form-control-sm" style="width: 80px; text-align: center; font-weight: 700; height: 28px; padding: 2px 6px;" value="10" min="0" oninput="ReminderEditor.onTriggerDateInputChanged()">
+          <span style="font-size: 0.8rem; color: #64748b;">ngày</span>
+        </div>
+      </div>
+      <div id="tmTermDaysHint" style="font-size: 0.74rem; color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; padding: 4px 8px; border-radius: 4px; margin-top: 0.45rem; display: none;">
+        💡 Đợt ký kết hợp đồng: Mặc định tính 10 ngày xử lý duyệt chi của kế toán khách hàng.
+      </div>
     </div>
 
     <!-- Input Form -->
@@ -1149,7 +1151,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/reminder_editor.js?v=4.4"></script>
+<script src="/static/js/reminder_editor.js?v=4.5"></script>
 <script src="/static/js/custom_reminder_manager.js?v=1.0"></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {

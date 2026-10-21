@@ -1,0 +1,366 @@
+/* =========================================================================
+   PAYMENT VOUCHER STYLES (ĐƠN XIN THANH TOÁN - 浤詺付款申请单)
+   ========================================================================= */
+
+.voucher-workspace {
+  width: 100%;
+  max-width: 1540px;
+  margin: 0 auto;
+  padding: 1.25rem 1.75rem 4rem;
+  overflow-y: auto;
+  height: calc(100vh - var(--header-height));
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-sizing: border-box;
+}
+
+/* Quick Bar Header */
+.voucher-quickbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: var(--bg-surface);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.voucher-quickbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.voucher-quickbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* AI Prompt Box */
+.voucher-ai-card {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(147, 51, 234, 0.04) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.voucher-ai-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.65rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.voucher-ai-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--primary);
+}
+
+.voucher-quick-examples {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+}
+
+.example-chip {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.55rem;
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.example-chip:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* 2-Column Grid Layout */
+.voucher-grid-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+  transition: all 0.25s ease;
+}
+
+/* Khi ẩn bản xem trước (mặc định) -> Form chiếm 100% không gian cực kỳ rộng rãi */
+.voucher-grid-layout.preview-hidden {
+  grid-template-columns: 1fr;
+}
+
+.voucher-grid-layout.preview-hidden .excel-preview-container {
+  display: none !important;
+}
+
+.voucher-grid-layout.preview-hidden .voucher-form-card {
+  max-width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .voucher-grid-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Form Styles */
+.voucher-form-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.voucher-form-section-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1.5px solid var(--border-color);
+}
+
+/* Beneficiary Smart Select Bar */
+.beneficiary-select-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.beneficiary-select-group select {
+  flex: 1;
+}
+
+/* Live Excel Sheet Simulation - Styled as Excel Page Break Preview (Hình 2) */
+.excel-preview-container {
+  background: #64748b; /* Vùng làm việc xám của Page Break Preview */
+  border: 1px solid #475569;
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 1rem;
+}
+
+.excel-preview-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.65rem;
+  color: #f8fafc;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.excel-sheet {
+  background: #ffffff;
+  color: #111827;
+  padding: 1.25rem;
+  border-radius: 2px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  border: 2.5px solid #2563eb; /* Viền xanh dương chuẩn Page Break Preview */
+  font-family: 'Times New Roman', SimSun, 'Songti SC', serif;
+  font-size: 11pt;
+  line-height: 1.35;
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+}
+
+.excel-watermark-page1 {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: Calibri, Arial, sans-serif;
+  font-size: 68pt;
+  font-weight: 900;
+  color: rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: 0.08em;
+  z-index: 0;
+}
+
+.excel-sheet-header {
+  text-align: center;
+  margin-bottom: 0.85rem;
+}
+
+.excel-title-main {
+  font-family: SimSun, 'Songti SC', serif;
+  font-size: 15pt;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.15rem;
+}
+
+.excel-title-sub {
+  font-family: 'Times New Roman', serif;
+  font-size: 13.5pt;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+}
+
+.excel-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+  font-size: 10.5pt;
+}
+
+.excel-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1.5px solid #000000;
+  margin-bottom: 0.65rem;
+}
+
+.excel-table th,
+.excel-table td {
+  border: 1px solid #000000;
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+.excel-table .cell-label {
+  background: #ffffff;
+  font-weight: normal;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.excel-table .cell-val {
+  background: #ffffff;
+}
+
+.excel-table .cell-center {
+  text-align: center;
+}
+
+.excel-table .cell-right {
+  text-align: right;
+}
+
+.excel-table .cell-bold {
+  font-weight: bold;
+}
+
+.excel-signature-row td {
+  height: 95px;
+  vertical-align: top;
+  text-align: center;
+  padding-top: 6px;
+  font-size: 10pt;
+}
+
+.excel-sign-person {
+  margin-top: 45px;
+  font-weight: bold;
+  font-size: 10.5pt;
+}
+
+/* History & Beneficiaries Modals */
+.hm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 1rem;
+}
+
+.hm-modal-content {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  width: min(95vw, 840px);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.hm-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.hm-modal-body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.hm-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.modern-table th {
+  background: rgba(0, 0, 0, 0.03);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 1.5px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.modern-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.modern-table tr:hover {
+  background: rgba(59, 130, 246, 0.04);
+}

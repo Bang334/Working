@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="workspace-single">
+
+  <!-- Action & Status Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <span class="badge-pill blue" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 700;">🛠️ Hợp Đồng Sửa Chữa & Bảo Trì</span>
+      <span class="badge-pill green" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-weight: 700;">Khung Sẵn Sàng Nhận Form</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Soạn thảo hợp đồng dịch vụ sửa chữa thiết bị, linh kiện thay thế song ngữ Việt - Trung, tự động tính toán và xuất file Word chuẩn 100%.</span>
+    </div>
+
+    <!-- Quick Actions on Header -->
+    <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="switchTab('tabRepairList'); RepairContractEditor.loadRepairContractsList();" title="Xem danh sách hợp đồng sửa chữa đã tạo trong hệ thống">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>📋 Danh Sách HĐ Sửa Chữa (<span id="headerRepairContractCount">{{ contract_count | default(0) }}</span>)</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="handleCopyRichTextRepair()" title="Sao chép văn bản để dán trực tiếp vào Word, Email hoặc WeChat">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Sao Chép Rich Text</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="handlePrintRepair()" title="In hoặc lưu thành PDF">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>In / PDF</span>
+      </button>
+
+      <button type="button" class="btn btn-primary btn-sm" onclick="handleGenerateRepairDocx()" title="Xuất file DOCX chính thức bảo toàn 100% bố cục">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        <span>Tải File Word (.docx)</span>
+      </button>
+
+      <button type="button" class="btn btn-ai btn-sm" onclick="handleSaveRepairContract()" title="Lưu hợp đồng vào hệ thống để theo dõi công nợ & tiến độ sửa chữa">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>💾 Lưu Hợp Đồng Sửa Chữa</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card 1: AI Prompt Input (Multimodal: Text + Excel + Image + Paste) -->
+  <div class="card ai-prompt-box" id="aiRepairDropZone">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+      <div class="card-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+        <span>Bóc Tách Dữ Liệu Hợp Đồng Sửa Chữa Bằng Gemini AI</span>
+        <span class="badge-pill blue" style="font-size: 0.7rem; padding: 2px 7px;">Text · File Excel Báo Giá · Ảnh Tem Lỗi / Thiết Bị · Ctrl+V</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted);">
+        💡 Dán bảng báo giá sửa chữa, danh sách linh kiện thay thế, ảnh chụp tem Serial hoặc nhấn <strong>Ctrl+V</strong> dán ảnh! Hỗ trợ cú pháp tiến độ: <code>50% 0, 50% 30</code>.
+      </div>
+    </div>
+
+    <!-- Hidden native file input -->
+    <input type="file" id="aiRepairFileInput" accept=".xlsx,.xls,.xlsm,.png,.jpg,.jpeg,.webp,.docx,.txt" style="display: none;" onchange="RepairContractEditor.processSelectedFile(this.files[0])">
+
+    <div class="form-group" style="margin-bottom: 0.75rem; position: relative;">
+      <textarea id="aiRepairPromptInput" class="form-control" rows="4" placeholder="Dán văn bản báo giá sửa chữa, tin nhắn kỹ thuật, mô tả lỗi hư hỏng (Ví dụ: Máy dập CX hỏng nguồn, bo mạch I/O Gateway cháy IC, báo giá thay linh kiện 27.100.000 VND), hoặc nhấn Ctrl+V dán ảnh vào đây..."></textarea>
+      <div id="aiRepairDragOverlay" style="display: none; position: absolute; inset: 0; background: rgba(239, 246, 255, 0.94); border: 2px dashed #2563eb; border-radius: var(--radius-sm); align-items: center; justify-content: center; z-index: 10; pointer-events: none;">
+        <span style="font-weight: 700; color: #1d4ed8; font-size: 0.95rem;">📥 Thả tệp Excel báo giá hoặc Ảnh thiết bị sửa chữa vào đây để AI phân tích</span>
+      </div>
+    </div>
+
+    <!-- File Attachment Preview Bar -->
+    <div id="attachedRepairFileContainer" style="display: none; margin-bottom: 0.85rem; padding: 0.65rem 0.85rem; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: var(--radius-sm); align-items: center; justify-content: space-between; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+        <div id="attachedRepairFilePreviewThumb" style="width: 44px; height: 44px; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #cbd5e1; flex-shrink: 0;"></div>
+        <div style="min-width: 0;">
+          <div style="font-weight: 700; font-size: 0.85rem; color: #166534; display: flex; align-items: center; gap: 0.4rem;">
+            <span id="attachedRepairFileName" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px;"></span>
+            <span id="attachedRepairFileTypeBadge" class="badge-pill green" style="font-size: 0.68rem; padding: 1px 6px;"></span>
+          </div>
+          <div style="font-size: 0.75rem; color: #475569; margin-top: 0.15rem;">
+            <span id="attachedRepairFileSize"></span> · Sẵn sàng để AI phân tích bóc tách vào bảng hợp đồng sửa chữa
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="RepairContractEditor.clearAttachedFile()" style="font-size: 0.75rem; color: #dc2626; border-color: #fca5a5; background: #ffffff; flex-shrink: 0;">
+        × Bỏ tệp
+      </button>
+    </div>
+
+    <!-- Cấu Hình Tự Động Xuất File Word & Thư Mục Lưu -->
+    <div style="margin-top: 0.75rem; margin-bottom: 0.85rem; padding: 0.65rem 0.85rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <label style="display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; font-size: 0.84rem; font-weight: 700; color: #1e293b; user-select: none;">
+          <input type="checkbox" id="chkRepairAutoExportWord" checked style="width: 16px; height: 16px; cursor: pointer; accent-color: #2563eb;">
+          <span>☑ Tự động xuất file Word sau khi AI phân tích</span>
+        </label>
+        <span class="badge-pill blue" style="font-size: 0.68rem; padding: 1px 6px;">Mặc định</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 290px; max-width: 480px;">
+        <span style="font-size: 0.78rem; font-weight: 600; color: #475569; white-space: nowrap;">Thư mục lưu:</span>
+        <input type="text" id="txtRepairExportDirectory" class="form-control form-control-sm" value="E:\Working\Ho So Du An\Hop Dong\" placeholder="E:\Working\Ho So Du An\Hop Dong\" style="font-family: monospace; font-size: 0.78rem; background: #ffffff;">
+      </div>
+    </div>
+
+    <!-- Action Toolbar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.65rem;">
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('aiRepairFileInput').click()" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; background: #ffffff;" title="Tải file Excel hoặc Ảnh từ máy tính">
+          <svg class="icon" viewBox="0 0 24 24" style="width: 15px; height: 15px; color: #2563eb;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>📁 Tải Tệp Lên (Excel / Ảnh Thiết Bị)</span>
+        </button>
+
+        <button type="button" class="btn btn-outline btn-sm" onclick="loadSampleRepairText()" style="font-size: 0.8rem; color: #475569;" title="Nạp nhanh ví dụ thực tế sửa chữa thiết bị CX Technology">
+          <span>⚡ Mẫu Báo Giá Sửa Chữa CX</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn-ai" onclick="handleAIRepairParse()" style="font-weight: 700; padding: 0.5rem 1.15rem;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>Gọi Gemini AI Phân Tích & Điền Vào Bảng</span>
+      </button>
+    </div>
+
+    <!-- Banner Kết Quả Tự Động Xuất File Word -->
+    <div id="aiRepairAutoExportBanner" style="display: none; margin-top: 0.95rem; padding: 0.85rem 1rem; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; animation: fadeIn 0.25s ease;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; color: #16a34a; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;">✓</div>
+          <div style="min-width: 0;">
+            <div style="font-weight: 700; font-size: 0.88rem; color: #166534;">
+              Đã phân tích & tự động xuất file Word Hợp đồng sửa chữa thành công!
+            </div>
+            <div style="font-size: 0.78rem; color: #334155; margin-top: 0.15rem; word-break: break-all;">
+              • <strong>Tệp:</strong> <span id="autoRepairExportFileName" style="font-family: monospace; font-weight: 600;"></span><br>
+              • <strong>Vị trí:</strong> <span id="autoRepairExportFilePath" style="font-family: monospace; color: #0284c7;"></span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
+          <a id="btnRepairAutoExportDownload" href="#" download class="btn btn-outline btn-sm" style="background: #ffffff; border-color: #16a34a; color: #15803d; font-weight: 600; text-decoration: none;" title="Tải file Word .docx về máy tính">
+            ⬇️ Tải Word (.docx)
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Interactive Editor with Tabs -->
+  <div class="card">
+    <div class="tabs-nav">
+      <button type="button" class="tab-btn active" data-tab="tabRepairProducts">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-9 5-9-5 9-5 9 5z"/><path d="m3 8 9 5 9-5M3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
+        <span>維修清單 / Bảng Thiết Bị & Linh Kiện Sửa Chữa</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabRepairParties">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M6 21V5l6-3 6 3v16M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>
+        <span>委託方 (甲方) / Bên A (Khách Hàng)</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabRepairGeneral">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.6 11 23l-9-9V2h12l6.6 6.6a3.5 3.5 0 0 1 0 5z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+        <span>合約與專案 / Số HĐ & Gói Sửa Chữa</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabRepairTerms">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>
+        <span>付款與保固 / Tiến Độ Thanh Toán & Bảo Hành</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabRepairList" onclick="RepairContractEditor.loadRepairContractsList()" title="Xem danh sách các hợp đồng sửa chữa đã tạo">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>已建立合約清單 / Danh Sách HĐ Sửa Chữa (<span id="repairContractListCountBadge">{{ contract_count | default(0) }}</span>)</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Repair Items Table -->
+    <div class="tab-content active" id="tabRepairProducts">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">設備維修及更換零件清單 / Danh mục thiết bị sửa chữa và linh kiện thay thế</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Tự động tính thành tiền, tổng kinh phí và đồng bộ số tiền bằng chữ)</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="RepairContractEditor.addRow()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>＋ 新增品項 / Thêm Thiết Bị Sửa Chữa</span>
+        </button>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table" style="min-width: 1050px;">
+          <thead>
+            <tr>
+              <th style="width: 45px; text-align: center;">STT<br>序號</th>
+              <th style="min-width: 260px;">Tên Thiết Bị / Linh Kiện Sửa Chữa (中越雙語)<br>維修設備與更換零件名稱</th>
+              <th style="width: 160px;">Model / Serial<br>型號 / 序號</th>
+              <th style="min-width: 220px;">Hiện Tượng Lỗi & Nội Dung Sửa<br>故障現象與維修內容</th>
+              <th style="width: 140px; text-align: right;">Đơn Giá (VND)<br>單價</th>
+              <th style="width: 90px; text-align: center;">Số Lượng<br>數量</th>
+              <th style="width: 160px; text-align: right;">Thành Tiền (VND)<br>總價</th>
+              <th style="width: 50px; text-align: center;">Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="repairItemsTableBody">
+            <!-- Dynamically populated via RepairContractEditor.addRow() -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KPI Summary Cards Grid -->
+      <div class="summary-cards-grid">
+        <div class="summary-stat-card">
+          <span class="stat-label">總數量 / Tổng Thiết Bị Sửa Chữa</span>
+          <span class="stat-value" id="summaryRepairQtyDisplay">0 MÁY/BỘ</span>
+          <span class="stat-subtext">Số lượng thiết bị tiếp nhận</span>
+        </div>
+
+        <div class="summary-stat-card primary">
+          <span class="stat-label">合約總金額 / Tổng Kinh Phí Sửa Chữa</span>
+          <span class="stat-value" id="summaryRepairTotalDisplay" style="color: #1d4ed8;">0 VND</span>
+          <span class="stat-subtext">Đã bao gồm chi phí linh kiện & công sửa</span>
+        </div>
+
+        <div class="summary-stat-card warning">
+          <span class="stat-label">第1期款 / Đợt 1 (Tạm Ứng)</span>
+          <span class="stat-value" id="summaryRepairPhase1Display" style="font-size: 1.25rem; color: #b45309;">0 VND</span>
+          <span class="stat-subtext">Đặt cọc sau khi ký hợp đồng</span>
+        </div>
+
+        <div class="summary-stat-card success">
+          <span class="stat-label">尾款 / Đợt Cuối (Nghiệm Thu)</span>
+          <span class="stat-value" id="summaryRepairPhaseLastDisplay" style="font-size: 1.25rem; color: #047857;">0 VND</span>
+          <span class="stat-subtext">Thanh toán sau nghiệm thu đạt</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Bên A (Khách Hàng Giao Sửa Chữa) -->
+    <div class="tab-content" id="tabRepairParties">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">買方公司名稱 (繁體中文 / Tiếng Trung)</label>
+          <input type="text" id="fieldRepairCompanyACn" class="form-control" placeholder="Ví dụ: 越南CX科技股份有限公司 / 台灣精星科技(越南)有限公司">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tên Công Ty Bên A (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldRepairCompanyA" class="form-control" placeholder="Ví dụ: CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">公司地址 (繁體中文 / Tiếng Trung)</label>
+          <input type="text" id="fieldRepairAddressACn" class="form-control" placeholder="Nhập địa chỉ nhà máy bằng tiếng Trung">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Địa Chỉ Nhà Máy / Trụ Sở (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldRepairAddressA" class="form-control" placeholder="Nhập địa chỉ nhà máy giao nhận thiết bị">
+        </div>
+      </div>
+
+      <div class="form-grid-3" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">稅號 / Mã Số Thuế (MST) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldRepairTaxA" class="form-control" placeholder="0301789999">
+        </div>
+        <div class="form-group">
+          <label class="form-label">代表人 / Người Đại Diện Ký HĐ <span class="badge-req">*</span></label>
+          <input type="text" id="fieldRepairRepA" class="form-control" placeholder="Ví dụ: CHEN CHEN-YEN">
+        </div>
+        <div class="form-group">
+          <label class="form-label">職務 / Chức Vụ</label>
+          <input type="text" id="fieldRepairRoleA" class="form-control" value="TỔNG GIÁM ĐỐC / 總經理">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Hợp Đồng & Nội Dung Sửa Chữa -->
+    <div class="tab-content" id="tabRepairGeneral">
+      <div class="form-grid-3" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">合約編號 / Số Hợp Đồng Sửa Chữa <span class="badge-req">*</span></label>
+          <input type="text" id="fieldRepairContractNo" class="form-control" placeholder="Ví dụ: HDSC-20261019-001 hoặc 001/HĐSC/HM-CX/2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label">簽約日期 / Ngày Ký Kết <span class="badge-req">*</span></label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+            <input type="text" id="fieldRepairDay" class="form-control text-center" placeholder="Ngày">
+            <input type="text" id="fieldRepairMonth" class="form-control text-center" placeholder="Tháng">
+            <input type="text" id="fieldRepairYear" class="form-control text-center" placeholder="Năm">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">合約總金額 (數字) / Tổng Kinh Phí (VND) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldRepairTotalAmount" class="form-control font-bold" placeholder="Tự động tính từ danh mục thiết bị" oninput="RepairContractEditor.recalculateAllTotals()">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Tên Gói Sửa Chữa (Tiếng Việt) <span class="badge-req">*</span></label>
+          <input type="text" id="fieldRepairProjectVn" class="form-control" placeholder="Ví dụ: Dịch vụ sửa chữa hệ thống máy tính công nghiệp và bo mạch I/O Gateway">
+        </div>
+        <div class="form-group">
+          <label class="form-label">維修專案名稱 (繁體中文 / Tiếng Trung)</label>
+          <input type="text" id="fieldRepairProjectCn" class="form-control" placeholder="Ví dụ: 工控機設備檢修、更換零件及維修服務">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">維修地點 / Địa Điểm Tiếp Nhận & Thực Hiện Sửa Chữa <span class="badge-req">*</span></label>
+        <input type="text" id="fieldRepairLocation" class="form-control" value="Tại nhà xưởng sản xuất Bên A / Tại trung tâm kỹ thuật Hong Ming Global">
+      </div>
+    </div>
+
+    <!-- Tab 4: Tiến Độ Thanh Toán & Bảo Hành -->
+    <div class="tab-content" id="tabRepairTerms">
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Thời Hạn Sửa Chữa (Ngày làm việc) <span class="badge-req">*</span></label>
+          <input type="number" id="fieldRepairDeliveryDays" class="form-control" value="15">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Thời Hạn Bảo Hành Sau Sửa Chữa (Tháng) <span class="badge-req">*</span></label>
+          <input type="number" id="fieldRepairWarrantyMonths" class="form-control" value="6">
+        </div>
+      </div>
+
+      <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem; line-height: 1.7;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+          <div>
+            <strong style="color: var(--primary); display: block; font-size: 0.9rem;">付款進度 / Tiến Độ Thanh Toán Hợp Đồng Sửa Chữa</strong>
+            <span style="color: #64748b;">Mặc định 2 đợt: Đặt cọc 50% khi nhận thiết bị, thanh toán 50% sau khi sửa xong và nghiệm thu đạt.</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;">
+            <strong id="repairPaymentPercentTotal" style="color: #16a34a; font-weight: 700;">總計 / Tổng: 100%</strong>
+            <button type="button" class="btn btn-outline btn-sm" onclick="RepairContractEditor.addInstallment()">＋ 新增期別 / Thêm Đợt</button>
+          </div>
+        </div>
+        <div id="repairInstallmentsEditor"></div>
+      </div>
+    </div>
+
+    <!-- Tab 5: Danh Sách Hợp Đồng Sửa Chữa Đã Tạo -->
+    <div class="tab-content" id="tabRepairList">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+          <span style="font-weight: 700; color: var(--text-main); font-size: 1rem;">
+            📑 已建立維修合約清單 / Danh Sách Hợp Đồng Sửa Chữa Đã Tạo
+          </span>
+          <span class="badge-pill blue" id="repairContractListCountBadge">0 hợp đồng</span>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="RepairContractEditor.loadRepairContractsList()">
+            <span>↻ Làm Mới</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="switchTab('tabRepairProducts')">
+            <span>＋ Soạn Hợp Đồng Sửa Chữa Mới</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table" style="min-width: 1050px;">
+          <thead>
+            <tr>
+              <th style="width: 45px; text-align: center;">STT</th>
+              <th style="width: 175px;">Mã HĐ Sửa Chữa<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">合約編號 / Ngày ký</span></th>
+              <th style="min-width: 250px;">Khách Hàng (Bên A)<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">買方公司名稱</span></th>
+              <th style="min-width: 200px;">Gói Sửa Chữa<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">專案名稱</span></th>
+              <th style="width: 165px; text-align: right;">Tổng Chi Phí (VND)<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">維修總金額</span></th>
+              <th style="width: 135px; text-align: center;">Trạng Thái<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748b;">執行狀態</span></th>
+              <th style="width: 140px; text-align: center;">Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody id="repairContractsListTableBody"></tbody>
+        </table>
+      </div>
+
+      <div id="repairContractListEmptyState" style="display: none; text-align: center; padding: 3rem 1rem; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 8px; margin-top: 1rem;">
+        <svg style="width: 48px; height: 48px; color: #94a3b8; margin: 0 auto 0.75rem auto;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div style="font-weight: 700; color: #475569; font-size: 0.95rem;">Chưa có hợp đồng sửa chữa nào được lưu</div>
+        <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.25rem;">Hãy soạn thảo và bấm "Tải File Word" hoặc "Lưu Hợp Đồng" để lưu vào danh sách.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Action Footer -->
+  <div class="action-footer-bar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span class="badge-pill green">Sẵn Sàng Nhận Form Mới</span>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">
+        Khi bạn gửi form Word hoặc Excel mẫu, hệ thống sẽ tự động liên kết giữ nguyên 100% bố cục và font chữ chuẩn.
+      </span>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <button type="button" class="btn btn-outline" onclick="handleCopyRichTextRepair()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Sao Chép Rich Text</span>
+      </button>
+      <button type="button" class="btn btn-primary" onclick="handleGenerateRepairDocx()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        <span>Tải Xuống File Word (.docx)</span>
+      </button>
+      <button type="button" class="btn btn-ai" onclick="handleSaveRepairContract()" style="font-weight: 700;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>💾 Lưu Hợp Đồng Sửa Chữa</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/repair_contract_editor.js?v=1.0"></script>
+{% endblock %}

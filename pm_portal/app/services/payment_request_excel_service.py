@@ -5,7 +5,7 @@ import html
 import os
 import re
 import openpyxl
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -59,59 +59,128 @@ def _safe_file_component(value: str) -> str:
 
 
 def _milestone_trigger_zh(milestone: Dict[str, Any], index: int) -> str:
-    source = f"{milestone.get('milestone_name', '')} {milestone.get('trigger_condition', '')}".lower()
-    if "ký" in source or "tạm ứng" in source or "đặt hàng" in source:
-        return "簽約完成時"
-    if "lắp đặt" in source or "cài đặt" in source:
-        return "設備安裝完成時"
-    if "giao" in source or "bàn giao" in source:
-        return "交貨暨移交完成時"
+    # Nếu milestone đã có điều kiện tiếng Trung sẵn từ HĐ
+    if milestone.get("dieu_kien_zh"):
+        return str(milestone["dieu_kien_zh"]).strip()
+
+    source = f"{milestone.get('milestone_name', '')} {milestone.get('trigger_condition', '')} {milestone.get('dieu_kien_vi', '')}".lower()
+
+    # 1. Kiểm tra nghiệm thu / FAC trước
+    if "nghiệm thu" in source or "fac" in source or "hoàn công" in source:
+        return "最終驗收合格並簽署移交文件 (FAC) 時"
+    # 2. Kiểm tra lắp đặt / cài đặt / chạy thử thiết bị
+    if "lắp đặt" in source or "cài đặt" in source or "chạy thử" in source:
+        return "設備安裝及調測完成時"
+    # 3. Kiểm tra giao hàng / bàn giao vật tư
+    if "giao hàng" in source or "bàn giao" in source:
+        return "設備交付完成時"
+    # 4. Kiểm tra thi công / kéo cáp
     if "kéo cáp" in source or "thi công" in source:
-        return "施工完成時"
-    if "nghiệm thu" in source or "fac" in source:
-        return "驗收合格時"
-    return f"第{index}期付款條件達成時"
+        return "線路施工完成時"
+    # 5. Ký kết hợp đồng / tạm ứng / đặt cọc / đợt 1
+    if "ký kết" in source or "ký hợp đồng" in source or "tạm ứng" in source or "đặt cọc" in source or index == 1:
+        return "雙方簽約完成時"
+
+    return f"第{index:02d}期付款條件達成時"
 
 
-def _build_payment_terms(milestones: Sequence[Dict[str, Any]]) -> List[str]:
-    terms: List[str] = []
+def _build_bilingual_terms_data(
+    milestones: Sequence[Dict[str, Any]],
+    active_milestone_name: str = ""
+) -> List[Dict[str, Any]]:
+    items: List[Dict[str, Any]] = []
+    active_name_clean = str(active_milestone_name or "").strip().lower()
+
     for index, milestone in enumerate(milestones, start=1):
         percentage = _format_percentage(milestone.get("percentage"))
         amount = int(round(float(milestone.get("amount") or 0)))
         amount_display = format_amount_display(amount)
         words_vi = number_to_vietnamese_words(amount)
         words_zh = number_to_chinese_words(amount)
-        trigger_vi = str(milestone.get("trigger_condition") or milestone.get("milestone_name") or f"Đợt {index}")
+
+        trigger_vi = str(
+            milestone.get("trigger_condition")
+            or milestone.get("dieu_kien_vi")
+            or milestone.get("milestone_name")
+            or f"Đợt {index}"
+        ).strip()
         trigger_zh = _milestone_trigger_zh(milestone, index)
-        due_date = str(milestone.get("due_date") or "").strip()
-        invoice_no = str(milestone.get("invoice_no") or "").strip()
+
+        ms_title = str(milestone.get("milestone_name") or f"Đợt {index}").strip()
+        is_active = bool(
+            active_name_clean
+            and (ms_title.lower() == active_name_clean or active_name_clean in ms_title.lower())
+        )
+
         is_paid = str(milestone.get("status") or "").upper() == "PAID"
-        status_vi = "Đã hoàn tất." if is_paid else "Chưa thanh toán."
-        status_zh = "已支付。" if is_paid else "待支付。"
-        extra_vi = f" Hạn thanh toán: {due_date}." if due_date else ""
-        extra_zh = f" 付款到期日：{due_date}。" if due_date else ""
+
+        # 1. Trạng thái thanh toán: CHỈ hiển thị khi đã thanh toán (is_paid), TUYỆT ĐỐI không hiện 'Chưa thanh toán'
+        status_vi = " Đã thanh toán." if is_paid else ""
+        status_zh = " 已支付。" if is_paid else ""
+
+        # 2. Hạn thanh toán: CHỈ hiển thị cho đợt đang xin thanh toán (is_active).
+        # Các đợt chưa đến hạn / chưa xác định được ngày hoàn thành thì TUYỆT ĐỐI không hiển thị hạn thanh toán
+        due_date = str(milestone.get("due_date") or "").strip()
+        extra_vi = ""
+        extra_zh = ""
+        if is_active and due_date:
+            extra_vi = f" Hạn thanh toán: {due_date}."
+            extra_zh = f" 付款到期日：{due_date}。"
+
+        invoice_no = str(milestone.get("invoice_no") or "").strip()
         if invoice_no and invoice_no != "Chưa xuất":
             extra_vi += f" Hóa đơn: {invoice_no}."
             extra_zh += f" 發票編號：{invoice_no}。"
-        terms.append(
-            f"{index:02d}  {trigger_zh}：支付合約金額的 {percentage}% "
-            f"({amount_display} VND，{words_zh})。{extra_zh}{status_zh}\n"
-            f"{trigger_vi}: Thanh toán {percentage}% giá trị hợp đồng "
-            f"({amount_display} VND - {words_vi}){extra_vi} {status_vi}"
-        )
+
+        # Soạn nội dung từng ngôn ngữ sạch (không gắn số mục)
+        words_vi_clean = words_vi.rstrip(".")
+        line_vi = f"{trigger_vi}: Thanh toán {percentage}% giá trị hợp đồng ({amount_display} VND - {words_vi_clean}.){extra_vi}{status_vi}".strip()
+        line_zh = f"{trigger_zh}：支付合約金額的 {percentage}% ({amount_display} VND，{words_zh})。{extra_zh}{status_zh}".strip()
+
+        items.append({
+            "index": index,
+            "vietnamese": line_vi,
+            "chinese": line_zh,
+            "is_active": is_active,
+            "is_paid": is_paid,
+            "due_date": due_date if is_active else "",
+        })
+
+    return items
+
+
+def _build_payment_terms(
+    milestones: Sequence[Dict[str, Any]],
+    active_milestone_name: str = "",
+    vietnamese_first: bool = True
+) -> List[str]:
+    bilingual_data = _build_bilingual_terms_data(milestones, active_milestone_name)
+    terms: List[str] = []
+    for item in bilingual_data:
+        num_prefix = f"{item['index']:02d}. "
+        if vietnamese_first:
+            first_line = f"{num_prefix}{item['vietnamese']}"
+            second_line = f"    {item['chinese']}"
+        else:
+            first_line = f"{num_prefix}{item['chinese']}"
+            second_line = f"    {item['vietnamese']}"
+        terms.append(f"{first_line}\n{second_line}")
     return terms
 
 
-def _build_notes_text(milestones: Sequence[Dict[str, Any]]) -> str:
-    lines: List[str] = ["備註："]
-    for term in _build_payment_terms(milestones):
-        chinese, vietnamese = term.split("\n", 1)
-        lines.extend((vietnamese, chinese))
+def _build_notes_text(
+    milestones: Sequence[Dict[str, Any]],
+    active_milestone_name: str = "",
+    vietnamese_first: bool = True
+) -> str:
+    lines: List[str] = ["備註 :"]
+    for term in _build_payment_terms(milestones, active_milestone_name=active_milestone_name, vietnamese_first=vietnamese_first):
+        first_line, second_line = term.split("\n", 1)
+        lines.extend((first_line, second_line))
     lines.extend(
         [
             "",
-            "**以上價格不包含VAT增值稅，稅率依發票開立時的稅率為準。"
-            "Giá nêu trên chưa bao gồm thuế GTGT (VAT). Thuế suất áp dụng theo mức thuế suất tại thời điểm xuất hóa đơn.",
+            "**以上價格不包含VAT增值稅，稅率依發票開立時的稅率為準。Giá nêu trên chưa bao gồm thuế GTGT (VAT). Thuế suất áp dụng theo mức thuế suất tại thời điểm xuất hóa đơn.",
         ]
     )
     return "\n".join(lines)
@@ -231,9 +300,75 @@ def generate_payment_request_excel(
     u_price = float(_coalesce(total_contract_amount, c_row["total_amount"] if c_row else 234000000.0))
     pct = float(_coalesce(percentage, ms_row["percentage"] if ms_row else 40.0))
     ms_amt = float(_coalesce(amount, ms_row["amount"] if ms_row else (u_price * pct / 100.0)))
-    due_dt_str = str(_coalesce(due_date, ms_row["due_date"] if ms_row else "25/10/2026"))
-    inv_num = str(_coalesce(invoice_no, ms_row["invoice_no"] if ms_row else "Chưa xuất"))
-    ms_title = ms_row["milestone_name"] if ms_row else milestone_name
+    ms_dict = dict(ms_row) if ms_row else {}
+    c_dict = dict(c_row) if c_row else {}
+
+    # Ngày nộp đơn (申請日期) luôn là ngày hiện tại (hoặc ngày chỉ định)
+    app_dt = now
+    if app_date:
+        for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"):
+            try:
+                app_dt = datetime.strptime(str(app_date).strip(), fmt)
+                break
+            except ValueError:
+                continue
+
+    # Xác định thời hạn thanh toán T/T số ngày từ hợp đồng
+    m_term = int(ms_dict.get("payment_term_days") or 0)
+    cond_text = f"{ms_dict.get('milestone_name', '')} {ms_dict.get('trigger_condition', '')} {milestone_name}".lower()
+    is_immediate = (
+        "ký" in cond_text
+        or "tạm ứng" in cond_text
+        or "đặt cọc" in cond_text
+        or "ngay" in cond_text
+        or ms_dict.get("dot") == 1
+        or str(ms_dict.get("milestone_name") or milestone_name).strip() == "Đợt 1"
+    )
+
+    if m_term <= 0:
+        if is_immediate:
+            m_term = 10  # Thanh toán ngay / tạm ứng khi ký hợp đồng: mặc định 10 ngày
+        else:
+            m_term = 30  # Các đợt tiếp theo: mặc định 30 ngày nếu không có thỏa thuận khác
+
+    # Ngày đến hạn (應付款日期): Nếu caller truyền do người dùng chỉ định thì dùng,
+    # ngược lại TÍNH TỪ NGÀY NỘP ĐƠN (app_dt) + số ngày thời hạn thanh toán T/T (m_term)
+    if due_date and str(due_date).strip():
+        due_dt_str = str(due_date).strip()
+    else:
+        due_dt_str = (app_dt + timedelta(days=m_term)).strftime("%d/%m/%Y")
+
+    inv_num = str(_coalesce(invoice_no, ms_dict.get("invoice_no") or "Chưa xuất"))
+    ms_title = ms_dict.get("milestone_name") or milestone_name
+
+    # Cập nhật lại due_date vào database cho đợt thanh toán này
+    if ms_dict.get("id"):
+        try:
+            cursor.execute(
+                """
+                UPDATE payment_milestones 
+                SET due_date = ?, 
+                    payment_term_days = ?,
+                    status = CASE WHEN status = 'PAID' THEN 'PAID' ELSE 'URGENT' END,
+                    status_label = CASE WHEN status = 'PAID' THEN status_label ELSE 'Đến hạn thanh toán' END
+                WHERE id = ?
+                """,
+                (due_dt_str, m_term, ms_dict["id"])
+            )
+        except Exception:
+            try:
+                cursor.execute(
+                    """
+                    UPDATE payment_milestones 
+                    SET due_date = ?, 
+                        status = CASE WHEN status = 'PAID' THEN 'PAID' ELSE 'URGENT' END,
+                        status_label = CASE WHEN status = 'PAID' THEN status_label ELSE 'Đến hạn thanh toán' END
+                    WHERE id = ?
+                    """,
+                    (due_dt_str, ms_dict["id"])
+                )
+            except Exception:
+                pass
 
     if not all_milestones:
         all_milestones = [
@@ -249,7 +384,7 @@ def generate_payment_request_excel(
         ]
     else:
         for item in all_milestones:
-            if str(item.get("milestone_name")) == str(ms_title):
+            if str(item.get("milestone_name")) == str(ms_title) or (ms_dict.get("id") and item.get("id") == ms_dict.get("id")):
                 item.update(
                     {
                         "percentage": pct,
@@ -259,8 +394,9 @@ def generate_payment_request_excel(
                     }
                 )
 
-    payment_terms = _build_payment_terms(all_milestones)
-    notes_text = _build_notes_text(all_milestones)
+    bilingual_terms_data = _build_bilingual_terms_data(all_milestones, active_milestone_name=ms_title)
+    payment_terms = _build_payment_terms(all_milestones, active_milestone_name=ms_title, vietnamese_first=True)
+    notes_text = _build_notes_text(all_milestones, active_milestone_name=ms_title, vietnamese_first=True)
 
     wb = openpyxl.load_workbook(str(TEMPLATE_PATH))
 
@@ -371,6 +507,7 @@ def generate_payment_request_excel(
         "invoice_no": inv_num,
         "notes_text": notes_text,
         "payment_terms": payment_terms,
+        "payment_terms_bilingual": bilingual_terms_data,
         "milestones": all_milestones,
         "file_name": file_name,
         "download_url": f"/api/v1/dossier/documents/{doc_id}/download",

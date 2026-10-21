@@ -141,8 +141,8 @@ def _replace_in_template_paragraph(paragraph, values: Dict[str, str]) -> int:
 
     # Hỗ trợ ô tô vàng/chữ đỏ dùng trực tiếp tên trường, không có dấu ngoặc.
     for run in paragraph.runs:
-        color = run.font.color.rgb
-        is_marker_style = run.font.highlight_color is not None or (color is not None and str(color).upper() == "FF0000")
+        color = run.font.color.rgb if (run.font and run.font.color) else None
+        is_marker_style = (run.font and run.font.highlight_color is not None) or (color is not None and str(color).upper() == "FF0000")
         marker = _normalized_marker(run.text)
         if is_marker_style and marker in values:
             run.text = values[marker]
@@ -280,31 +280,45 @@ def _set_cell_shading(cell, fill: str) -> None:
 
 
 def _fill_payment_terms_table(table, data: Dict[str, Any]) -> int:
+    bilingual_items = data.get("payment_terms_bilingual") or []
     terms = [str(value) for value in (data.get("payment_terms") or [])]
     if len(table.rows) == 1:
         _replace_cell_value(table.cell(0, 0), data.get("notes_text", ""))
         return 1
-    if not terms:
+    if not terms and not bilingual_items:
         return 0
 
-    target_count = len(terms)
+    count = len(bilingual_items) if bilingual_items else len(terms)
     # Đồng bộ số hàng khớp 1:1 với số lượng điều khoản: "Bao nhiêu điều khoản bấy nhiêu hàng"
-    while len(table.rows) > target_count and len(table.rows) > 1:
+    while len(table.rows) > count and len(table.rows) > 1:
         table._tbl.remove(table.rows[-1]._tr)
-    while len(table.rows) < target_count:
+    while len(table.rows) < count:
         new_tr = copy.deepcopy(table.rows[-1]._tr)
         table._tbl.append(new_tr)
 
-    for index, term in enumerate(terms):
+    for index in range(count):
         row = table.rows[index]
         cells = _unique_row_cells(row)
         if not cells:
             continue
         cell = cells[0]
-        chinese, vietnamese = (term.split("\n", 1) + [""])[:2]
-        prefix_match = re.match(r"^(\d{2}\s+)(.*)$", chinese, flags=re.DOTALL)
+
+        if index < len(bilingual_items):
+            item = bilingual_items[index]
+            chinese_body = item.get("chinese", "").strip()
+            vietnamese_body = item.get("vietnamese", "").strip()
+        else:
+            term = terms[index]
+            part1, part2 = (term.split("\n", 1) + [""])[:2]
+            p1_clean = re.sub(r"^\d{2}[.\s]+", "", part1.strip()).strip()
+            p2_clean = re.sub(r"^\d{2}[.\s]+", "", part2.strip()).strip()
+            has_cjk_p1 = bool(re.search(r"[\u4e00-\u9fff]", p1_clean))
+            if has_cjk_p1:
+                chinese_body, vietnamese_body = p1_clean, p2_clean
+            else:
+                chinese_body, vietnamese_body = p2_clean, p1_clean
+
         prefix = f"{index + 1:02d}  "
-        chinese_body = prefix_match.group(2) if prefix_match else chinese
 
         # Nền xen kẽ: lẻ (1, 3, 5...) màu trắng FFFFFF, chẵn (2, 4...) màu xanh nhạt F3F8FC
         fill_color = "FFFFFF" if (index % 2 == 0) else "F3F8FC"
@@ -325,11 +339,11 @@ def _fill_payment_terms_table(table, data: Dict[str, Any]) -> int:
             first_paragraph.add_run(chinese_body)
 
         if len(cell.paragraphs) >= 2:
-            _replace_paragraph_value(cell.paragraphs[1], vietnamese)
+            _replace_paragraph_value(cell.paragraphs[1], vietnamese_body)
             for paragraph in cell.paragraphs[2:]:
                 _replace_paragraph_value(paragraph, "")
-        elif vietnamese:
-            cell.add_paragraph(vietnamese)
+        elif vietnamese_body:
+            cell.add_paragraph(vietnamese_body)
     return 1
 
 
@@ -717,17 +731,31 @@ def _add_notes_table(doc: Document, data: Dict[str, Any]) -> None:
         _set_cell_margins(table.cell(0, 0), top=80, start=90, bottom=80, end=90)
         return
 
-    table = doc.add_table(rows=len(terms), cols=1)
+    bilingual_items = data.get("payment_terms_bilingual") or []
+    count = len(bilingual_items) if bilingual_items else len(terms)
+    table = doc.add_table(rows=count, cols=1)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     _set_table_layout_fixed(table)
     _set_table_borders(table, size=4, color="D9D9D9")
     _set_table_column_widths(table, [7.20])
-    for index, term in enumerate(terms):
+    for index in range(count):
         cell = table.cell(index, 0)
-        chinese, vietnamese = (term.split("\n", 1) + [""])[:2]
-        prefix_match = re.match(r"^(\d{2}\s+)(.*)$", chinese, flags=re.DOTALL)
+        if index < len(bilingual_items):
+            item = bilingual_items[index]
+            chinese_body = item.get("chinese", "").strip()
+            vietnamese_body = item.get("vietnamese", "").strip()
+        else:
+            term = terms[index]
+            part1, part2 = (term.split("\n", 1) + [""])[:2]
+            p1_clean = re.sub(r"^\d{2}[.\s]+", "", part1.strip()).strip()
+            p2_clean = re.sub(r"^\d{2}[.\s]+", "", part2.strip()).strip()
+            has_cjk_p1 = bool(re.search(r"[\u4e00-\u9fff]", p1_clean))
+            if has_cjk_p1:
+                chinese_body, vietnamese_body = p1_clean, p2_clean
+            else:
+                chinese_body, vietnamese_body = p2_clean, p1_clean
+
         prefix = f"{index + 1:02d}  "
-        chinese_body = prefix_match.group(2) if prefix_match else chinese
 
         fill_color = "FFFFFF" if (index % 2 == 0) else "F3F8FC"
         _set_cell_shading(cell, fill_color)
@@ -743,12 +771,12 @@ def _add_notes_table(doc: Document, data: Dict[str, Any]) -> None:
         r_zh = p.add_run(chinese_body)
         _set_run_font(r_zh, name=FONT_CJK, size=8.0, bold=False)
 
-        if vietnamese:
+        if vietnamese_body:
             p_vi = cell.add_paragraph()
             p_vi.paragraph_format.left_indent = Pt(18)
             p_vi.paragraph_format.space_before = Pt(0)
             p_vi.paragraph_format.space_after = Pt(0)
-            r_vi = p_vi.add_run(vietnamese)
+            r_vi = p_vi.add_run(vietnamese_body)
             _set_run_font(r_vi, name=FONT_LATIN, size=8.0, bold=False)
 
 

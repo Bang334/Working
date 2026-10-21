@@ -407,3 +407,384 @@ Chỉ trả về DUY NHẤT một khối JSON hợp lệ theo định dạng sau
         "ten_du_an_viet": f"Hệ thống {base_name}",
         "ten_du_an_trung": f"{base_name} 系統報價單"
     }
+
+
+EXISTING_CONTRACT_SYSTEM_PROMPT = """Bạn là trợ lý AI quản lý dự án cấp cao của CÔNG TY TNHH TOÀN CẦU HONG MING (宏明環球有限公司).
+Nhiệm vụ: Đọc kỹ toàn bộ văn bản tài liệu hợp đồng mua bán / hợp đồng dịch vụ / thỏa thuận dự án được cung cấp (file Word .docx, PDF, Excel hoặc ảnh scan hợp đồng) và trích xuất thành định dạng JSON chuẩn xác 100%.
+
+QUY TẮC BÓC TÁCH NGHIỆP VỤ BẮT BUỘC:
+1. "so_hop_dong": Tìm số hợp đồng hoặc mã số hợp đồng (ví dụ: "001/HĐMB/HM-CX/2026", "HMV22092026SY0001", v.v.). Nếu không thấy, tạo mã theo định dạng "HMV" + ngày hiện tại.
+2. "khach_hang_vi": Tên đầy đủ của Bên A (Khách hàng / 買方) bằng tiếng Việt (ví dụ: "CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)").
+3. "khach_hang_zh": Tên tiếng Trung (Phồn thể) của Bên A nếu có trong văn bản (ví dụ: "越南CX科技股份有限公司"). Nếu không có thì để chuỗi rỗng "".
+4. "mst": Mã số thuế Bên A nếu có.
+5. "dia_chi_vi": Địa chỉ trụ sở/nhà máy Bên A.
+6. "dia_chi_zh": Địa chỉ tiếng Trung nếu có.
+7. "nguoi_dai_dien": Họ tên người đại diện ký hợp đồng của Bên A.
+8. "chuc_vu": Chức vụ của người đại diện (Tổng giám đốc, Giám đốc...).
+9. "ten_du_an_vi": Tên dự án hoặc tên gói hợp đồng bằng tiếng Việt (ví dụ: "Hệ thống RFID Hardware & MES Lite Custom ERP").
+10. "ten_du_an_zh": Tên dự án tiếng Trung tương ứng.
+11. "ngay_ky": Ngày tháng năm ký hợp đồng, định dạng chuẩn "DD/MM/YYYY" (ví dụ: "15/10/2026").
+12. "tong_gia_tri": Tổng giá trị hợp đồng thanh toán (số nguyên VND, đã gồm hoặc chưa gồm thuế theo văn bản).
+13. "milestones": Danh sách chi tiết các đợt thanh toán (Tiến độ thanh toán / 付款進度):
+    - "dot": Số thứ tự đợt (1, 2, 3...)
+    - "ten_dot": Tên đợt (ví dụ: "Đợt 1", "Đợt 2", "Đợt 3", "Nghiệm thu")
+    - "phan_tram": Tỷ lệ phần trăm (số nguyên hoặc thập phân, ví dụ: 30, 60, 10)
+    - "so_tien": Số tiền của đợt thanh toán tương ứng (số nguyên VND)
+    - "dieu_kien_vi": Điều kiện kích hoạt tiếng Việt (ví dụ: "Sau khi hai bên ký kết hợp đồng", "Sau khi hoàn thành lắp đặt thiết bị", "Sau khi ký biên bản nghiệm thu bàn giao FAC")
+    - "dieu_kien_zh": Điều kiện tiếng Trung nếu có (ví dụ: "雙方簽約完成時", "設備安裝完成時", "驗收合格時")
+    - "thoi_han_tt_ngay": Thời hạn thanh toán T/T (số ngày).
+      * ĐẶC BIỆT CHÚ Ý QUY TRÌNH THỰC TẾ: Nếu đợt 1 ghi "ngay sau khi ký hợp đồng", "thanh toán ngay khi ký", "雙方簽約後即期以電匯 (T/T) 方式支付", hoặc tạm ứng khi ký, thời hạn thanh toán quy ước là 10 ngày ("thoi_han_tt_ngay": 10) vì quy trình kế toán bên A lập thủ tục duyệt chi thường mất khoảng 10 ngày.
+      * Các đợt tiếp theo: Lấy đúng số ngày ghi trong hợp đồng (ví dụ: 15, 30, 60 ngày). Nếu không ghi rõ số ngày, để 30.
+
+ĐỊNH DẠNG JSON ĐẦU RA BẮT BUỘC:
+{
+  "so_hop_dong": "001/HĐMB/HM-CX/2026",
+  "khach_hang_vi": "CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)",
+  "khach_hang_zh": "越南CX科技股份有限公司",
+  "mst": "0302324901",
+  "dia_chi_vi": "KCX Tân Thuận, Quận 7, TP.HCM",
+  "dia_chi_zh": "胡志明市第七郡新順加工出口區",
+  "nguoi_dai_dien": "HUANG YU",
+  "chuc_vu": "Tổng Giám Đốc",
+  "ten_du_an_vi": "Dự án MES Lite & Hệ thống RFID",
+  "ten_du_an_zh": "MES Lite 系統與 RFID 硬體專案",
+  "ngay_ky": "15/10/2026",
+  "tong_gia_tri": 712020000,
+  "milestones": [
+    {
+      "dot": 1,
+      "ten_dot": "Đợt 1",
+      "phan_tram": 30,
+      "so_tien": 213606000,
+      "dieu_kien_vi": "Sau khi ký kết hợp đồng, chuyển khoản T/T",
+      "dieu_kien_zh": "雙方簽約後即期以電匯 (T/T) 方式支付",
+      "thoi_han_tt_ngay": 10
+    },
+    {
+      "dot": 2,
+      "ten_dot": "Đợt 2",
+      "phan_tram": 60,
+      "so_tien": 427212000,
+      "dieu_kien_vi": "Sau khi lắp đặt hoàn tất hệ thống thiết bị",
+      "dieu_kien_zh": "設備安裝及系統建置完成",
+      "thoi_han_tt_ngay": 30
+    },
+    {
+      "dot": 3,
+      "ten_dot": "Đợt 3",
+      "phan_tram": 10,
+      "so_tien": 71202000,
+      "dieu_kien_vi": "Sau khi nghiệm thu đạt chuẩn và ký biên bản bàn giao (FAC)",
+      "dieu_kien_zh": "最終驗收合格並簽署移交文件 (FAC)",
+      "thoi_han_tt_ngay": 30
+    }
+  ]
+}
+CHỈ TRẢ VỀ DUY NHẤT KHỐI JSON HỢP LỆ (BẮT ĐẦU BẰNG { VÀ KẾT THÚC BẰNG }), KHÔNG VIẾT LỜI DẪN.
+"""
+
+
+def extract_contract_fallback_rules(text_content: str, file_name: str) -> Dict[str, Any]:
+    """Phân tích văn bản hợp đồng bằng quy tắc Regex/Heuristics khi AI gặp sự cố hoặc trả về thiếu đợt."""
+    # 1. Số hợp đồng: Tìm HMV... trước, sau đó tìm Số HĐ
+    contract_code = ""
+    hmv_match = re.search(r"\b(HMV[A-Za-z0-9_\-]+)\b", text_content)
+    if hmv_match:
+        contract_code = hmv_match.group(1).strip()
+    else:
+        code_match = re.search(r"(?:Số HĐ|Hợp đồng số|Mã HĐ|合約編號|Số|Số\s*HĐ\s*\/合約編號)\s*[:：\/\s]*([A-Za-z0-9_\-\/]+)", text_content)
+        if code_match and len(code_match.group(1).strip()) > 2:
+            contract_code = code_match.group(1).strip()
+
+    # 2. Khách hàng Bên A
+    cust_vi = ""
+    cust_zh = ""
+    a_match = re.search(r"Bên A\s*(?:\([^\)]*\))?\s*[:：]\s*([^\n\r\|]+)", text_content, re.IGNORECASE)
+    if a_match:
+        cust_vi = a_match.group(1).strip()
+    zh_match = re.search(r"(?:Party A|買方|Bên A)[^\n\r]*?([一-龥\s]{3,30}(?:公司|企業|廠))", text_content)
+    if zh_match:
+        cust_zh = zh_match.group(1).strip()
+
+    # 3. Ngày ký
+    signed_date = ""
+    date_match = re.search(r"(?:Ngày hợp đồng|合約日期|Ngày ký)\s*(?:\([^\)]*\))?\s*[:：]?\s*(\d{1,2})\s*[\/\-]\s*(\d{1,2})\s*[\/\-]\s*(\d{4})", text_content, re.IGNORECASE)
+    if date_match:
+        signed_date = f"{int(date_match.group(1)):02d}/{int(date_match.group(2)):02d}/{date_match.group(3)}"
+    else:
+        date_match2 = re.search(r"ngày\s*(\d{1,2})\s*tháng\s*(\d{1,2})\s*năm\s*(\d{4})", text_content, re.IGNORECASE)
+        if date_match2:
+            signed_date = f"{int(date_match2.group(1)):02d}/{int(date_match2.group(2)):02d}/{date_match2.group(3)}"
+
+    # 4. Tổng giá trị
+    total_amount = 0
+    total_match = re.search(r"(?:Tổng cộng số tiền|Tổng giá trị|總金額|Tổng tiền|Giá trị hợp đồng)\s*(?:phải thanh toán)?\s*[:：]?\s*([0-9\.\,]+)\s*(?:VND|đ|đồng)?", text_content, re.IGNORECASE)
+    if total_match:
+        num_str = re.sub(r"[^\d]", "", total_match.group(1))
+        if num_str:
+            total_amount = int(num_str)
+
+    # 5. Tên dự án
+    proj_vi = ""
+    proj_match = re.search(r"Dự án\s*[\u201c\u201d\"]([^\u201c\u201d\"]+)[\u201c\u201d\"]", text_content, re.IGNORECASE)
+    if proj_match:
+        proj_vi = proj_match.group(1).strip()
+    else:
+        proj_match2 = re.search(r"(?:về việc|Dự án|V/v)\s*[:：]?\s*([^\n\r]+)", text_content, re.IGNORECASE)
+        if proj_match2:
+            proj_vi = proj_match2.group(1).strip()
+
+    # 6. Các đợt thanh toán (Milestones)
+    milestones = []
+    lines = [l.strip() for l in text_content.splitlines() if l.strip()]
+    for i, line in enumerate(lines):
+        pct_match = re.search(r"(?:Thanh toán|thanh toán|chi trả|tạm ứng|đặt cọc)\s*(\d+(?:[\.,]\d+)?)\s*%", line, re.IGNORECASE)
+        if not pct_match:
+            pct_match = re.search(r"(\d+(?:[\.,]\d+)?)\s*%\s*(?:giá trị hợp đồng|tổng giá trị)", line, re.IGNORECASE)
+        if pct_match:
+            pct_val = float(pct_match.group(1).replace(",", "."))
+            if pct_val < 1.0 or pct_val > 100.0:
+                continue
+            dot_num = len(milestones) + 1
+            context = line
+            if i + 1 < len(lines):
+                context += " " + lines[i + 1]
+            amt_match = re.search(r"([\d\.\,]{6,})\s*(?:VND|đ|đồng)", context, re.IGNORECASE)
+            amt_val = 0
+            if amt_match:
+                amt_str = re.sub(r"[^\d]", "", amt_match.group(1))
+                if amt_str:
+                    amt_val = int(amt_str)
+            if amt_val == 0 and total_amount > 0 and pct_val > 0:
+                amt_val = int(round(total_amount * pct_val / 100))
+            days_match = re.search(r"(?:T/T|thời hạn|trong vòng)?\s*(\d+)\s*(?:ngày|天|days)", context, re.IGNORECASE)
+            days = 30
+            if days_match:
+                days = int(days_match.group(1))
+            elif dot_num == 1 or "ký" in context.lower() or "tạm ứng" in context.lower():
+                days = 10
+            cond = line.split(":")[0].strip() if ":" in line else line
+            cond = re.sub(r"^[0-9\.\-\*\s]+", "", cond).strip()
+            milestones.append({
+                "dot": dot_num,
+                "ten_dot": f"Đợt {dot_num}",
+                "phan_tram": pct_val,
+                "so_tien": amt_val,
+                "dieu_kien_vi": cond,
+                "thoi_han_tt_ngay": days
+            })
+            if sum(m["phan_tram"] for m in milestones) >= 100.0:
+                break
+
+    if not milestones:
+        milestones = [
+            {"dot": 1, "ten_dot": "Đợt 1", "phan_tram": 30, "so_tien": int(round(total_amount * 0.3)) if total_amount > 0 else 0, "dieu_kien_vi": "Sau khi hai bên ký kết hợp đồng, chuyển khoản T/T", "thoi_han_tt_ngay": 10},
+            {"dot": 2, "ten_dot": "Đợt 2", "phan_tram": 60, "so_tien": int(round(total_amount * 0.6)) if total_amount > 0 else 0, "dieu_kien_vi": "Sau khi hoàn thành lắp đặt hệ thống thiết bị", "thoi_han_tt_ngay": 15},
+            {"dot": 3, "ten_dot": "Đợt 3", "phan_tram": 10, "so_tien": int(round(total_amount * 0.1)) if total_amount > 0 else 0, "dieu_kien_vi": "Sau khi nghiệm thu đạt chuẩn và ký biên bản bàn giao (FAC)", "thoi_han_tt_ngay": 30}
+        ]
+
+    return {
+        "so_hop_dong": contract_code or f"HMV{datetime.now().strftime('%d%m%Y')}0001",
+        "khach_hang_vi": cust_vi or "Khách hàng doanh nghiệp",
+        "khach_hang_zh": cust_zh,
+        "ten_du_an_vi": proj_vi or f"Hợp đồng {contract_code}",
+        "ten_du_an_zh": "",
+        "ngay_ky": signed_date or datetime.now().strftime("%d/%m/%Y"),
+        "tong_gia_tri": total_amount,
+        "milestones": milestones,
+        "file_name": file_name
+    }
+
+
+def extract_existing_contract_from_file(
+    file_bytes: bytes,
+    file_name: str,
+    file_mime_type: Optional[str] = None,
+    raw_user_notes: str = "",
+    api_key: Optional[str] = None,
+    preferred_model: Optional[str] = None
+) -> Dict[str, Any]:
+    """Phân tích file hợp đồng có sẵn (Word DOCX, PDF, Excel, Ảnh scan) bằng Gemini AI kèm cơ chế dự phòng chuẩn xác."""
+    keys_to_try = [api_key] if api_key else ([DEFAULT_GEMINI_KEY] + [k for k in DEFAULT_GEMINI_KEYS if k != DEFAULT_GEMINI_KEY])
+    models_to_try = []
+    if preferred_model and preferred_model in CANDIDATE_MODELS:
+        models_to_try.append(preferred_model)
+    for m in CANDIDATE_MODELS:
+        if m not in models_to_try:
+            models_to_try.append(m)
+
+    fname_lower = (file_name or "").lower()
+    fmime_lower = (file_mime_type or "").lower()
+
+    is_docx = fname_lower.endswith(".docx")
+    is_excel = any(fname_lower.endswith(ext) for ext in [".xlsx", ".xls", ".xlsm"])
+    is_pdf = fname_lower.endswith(".pdf") or ("pdf" in fmime_lower)
+    is_image = any(fname_lower.endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".webp", ".bmp"]) or ("image" in fmime_lower)
+
+    parts: List[Dict[str, Any]] = []
+    extracted_text_content = ""
+
+    if is_docx:
+        extracted_text_content = extract_text_from_docx(file_bytes)
+        prompt_text = (
+            f"{EXISTING_CONTRACT_SYSTEM_PROMPT}\n\n"
+            f"VĂN BẢN HỢP ĐỒNG ĐỌC TỪ FILE WORD ({file_name}):\n\"\"\"\n{extracted_text_content}\n\"\"\""
+        )
+        if raw_user_notes.strip():
+            prompt_text += f"\n\nLƯU Ý BỔ SUNG CỦA NGƯỜI DÙNG:\n\"\"\"\n{raw_user_notes.strip()}\n\"\"\""
+        parts = [{"text": prompt_text}]
+
+    elif is_excel:
+        extracted_text_content = extract_text_from_excel(file_bytes)
+        prompt_text = (
+            f"{EXISTING_CONTRACT_SYSTEM_PROMPT}\n\n"
+            f"DỮ LIỆU ĐỌC TỪ BẢNG TÍNH EXCEL HỢP ĐỒNG ({file_name}):\n\"\"\"\n{extracted_text_content}\n\"\"\""
+        )
+        if raw_user_notes.strip():
+            prompt_text += f"\n\nLƯU Ý BỔ SUNG CỦA NGƯỜI DÙNG:\n\"\"\"\n{raw_user_notes.strip()}\n\"\"\""
+        parts = [{"text": prompt_text}]
+
+    elif is_pdf:
+        prompt_text = (
+            f"{EXISTING_CONTRACT_SYSTEM_PROMPT}\n\n"
+            f"Hãy đọc và phân tích kỹ toàn bộ các trang của tài liệu Hợp đồng PDF đính kèm ({file_name}).\n"
+            f"Trích xuất chính xác 100% số hợp đồng, tên pháp nhân Bên A, mã số thuế, tên dự án, ngày ký, tổng số tiền và toàn bộ các đợt thanh toán."
+        )
+        if raw_user_notes.strip():
+            prompt_text += f"\n\nLƯU Ý BỔ SUNG CỦA NGƯỜI DÙNG:\n\"\"\"\n{raw_user_notes.strip()}\n\"\"\""
+        parts = [
+            {"text": prompt_text},
+            {
+                "inlineData": {
+                    "mimeType": "application/pdf",
+                    "data": base64.b64encode(file_bytes).decode("ascii")
+                }
+            }
+        ]
+
+    elif is_image:
+        mime_to_send = "image/jpeg"
+        if "png" in fname_lower:
+            mime_to_send = "image/png"
+        elif "webp" in fname_lower:
+            mime_to_send = "image/webp"
+
+        prompt_text = (
+            f"{EXISTING_CONTRACT_SYSTEM_PROMPT}\n\n"
+            f"Hãy phân tích ảnh scan/chụp tài liệu Hợp đồng mua bán ({file_name}).\n"
+            f"Trích xuất chính xác các thông tin hợp đồng và tiến độ thanh toán theo định dạng JSON yêu cầu."
+        )
+        if raw_user_notes.strip():
+            prompt_text += f"\n\nLƯU Ý BỔ SUNG CỦA NGƯỜI DÙNG:\n\"\"\"\n{raw_user_notes.strip()}\n\"\"\""
+        parts = [
+            {"text": prompt_text},
+            {
+                "inlineData": {
+                    "mimeType": mime_to_send,
+                    "data": base64.b64encode(file_bytes).decode("ascii")
+                }
+            }
+        ]
+    else:
+        # Fallback thử decode utf-8 text
+        try:
+            extracted_text_content = file_bytes.decode("utf-8", errors="ignore")
+        except Exception:
+            extracted_text_content = ""
+        prompt_text = (
+            f"{EXISTING_CONTRACT_SYSTEM_PROMPT}\n\n"
+            f"NỘI DUNG TÀI LIỆU HỢP ĐỒNG ({file_name}):\n\"\"\"\n{extracted_text_content}\n\"\"\""
+        )
+        parts = [{"text": prompt_text}]
+
+    payload = {
+        "contents": [{"parts": parts}],
+        "generationConfig": {
+            "temperature": 0.1,
+            "responseMimeType": "application/json"
+        }
+    }
+
+    last_error = None
+    parsed = None
+
+    for key in keys_to_try:
+        for model in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"}
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    text = resp_data["candidates"][0]["content"]["parts"][0]["text"]
+                    clean_text = re.sub(r"^```(?:json)?\s*", "", text.strip())
+                    clean_text = re.sub(r"\s*```$", "", clean_text).strip()
+                    parsed = json.loads(clean_text)
+                    if isinstance(parsed, dict) and parsed.get("so_hop_dong"):
+                        break
+            except Exception as e:
+                logger.warning("Gemini extract contract failed with model %s: %s", model, e)
+                last_error = e
+                continue
+        if parsed is not None:
+            break
+
+    # Nếu AI không phản hồi nhưng có text trích xuất từ DOCX/Excel/Text, fallback bằng bộ luật Regex
+    if parsed is None:
+        if extracted_text_content.strip():
+            logger.info("Gemini AI failed, using fallback rule-based extractor for file: %s", file_name)
+            parsed = extract_contract_fallback_rules(extracted_text_content, file_name)
+        else:
+            raise RuntimeError(f"Không thể phân tích dữ liệu hợp đồng bằng AI ({last_error})")
+
+    # Đảm bảo các trường mặc định chuẩn xác
+    parsed["file_name"] = file_name
+    parsed["file_size"] = len(file_bytes)
+
+    # Đảm bảo tổng giá trị là số nguyên dương
+    total_val = 0
+    try:
+        total_val = int(round(float(parsed.get("tong_gia_tri") or 0)))
+        parsed["tong_gia_tri"] = total_val
+    except Exception:
+        parsed["tong_gia_tri"] = 0
+
+    # Nếu AI không bóc tách được milestones nhưng có text, chạy fallback để lấy milestones
+    milestones = parsed.get("milestones", [])
+    if (not isinstance(milestones, list) or len(milestones) == 0) and extracted_text_content.strip():
+        fallback_data = extract_contract_fallback_rules(extracted_text_content, file_name)
+        milestones = fallback_data.get("milestones", [])
+        parsed["milestones"] = milestones
+
+    # Đảm bảo các đợt thanh toán có đầy đủ trường nghiệp vụ
+    if isinstance(milestones, list):
+        for idx, m in enumerate(milestones, start=1):
+            if not m.get("dot"):
+                m["dot"] = idx
+            if not m.get("ten_dot"):
+                m["ten_dot"] = f"Đợt {idx}"
+            
+            # Tính số tiền nếu thiếu
+            pct = float(m.get("phan_tram") or 0)
+            if (not m.get("so_tien") or int(m.get("so_tien") or 0) == 0) and total_val > 0 and pct > 0:
+                m["so_tien"] = int(round(total_val * pct / 100))
+            
+            # Phân tích điều kiện & thời hạn thanh toán T/T
+            dieu_kien = str(m.get("dieu_kien_vi") or m.get("dieu_kien_zh") or "").lower()
+            current_days = int(m.get("thoi_han_tt_ngay") or 0)
+            
+            if current_days == 0:
+                # Quét số ngày thanh toán từ văn bản điều kiện
+                day_match = re.search(r"(\d+)\s*(?:ngày|天|days)", dieu_kien)
+                if day_match:
+                    m["thoi_han_tt_ngay"] = int(day_match.group(1))
+                elif idx == 1 or "ký" in dieu_kien or "tạm ứng" in dieu_kien or "đặt cọc" in dieu_kien:
+                    m["thoi_han_tt_ngay"] = 10
+                else:
+                    m["thoi_han_tt_ngay"] = 30
+
+    return parsed
+

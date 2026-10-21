@@ -2,6 +2,18 @@
  * Main Application Controller for Hong Ming Global PM Portal
  */
 
+// Global HTML Escaper
+function escapeHtml(text) {
+  if (text === null || text === undefined) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+window.escapeHtml = escapeHtml;
+
 // Toast notification helper
 function showToast(message, type = "info") {
   const container = document.getElementById("toastContainer");
@@ -598,3 +610,353 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
+
+// ==========================================
+// IMPORT EXISTING CONTRACT FROM COMPUTER
+// ==========================================
+let currentImportedContractFile = null;
+
+function openImportExistingContractModal() {
+  const modal = document.getElementById("importExistingContractModal");
+  if (!modal) return;
+  modal.style.display = "flex";
+
+  // Nếu bảng đợt chưa có hàng nào, thêm 3 hàng mặc định
+  const tbody = document.getElementById("impMilestonesTableBody");
+  if (tbody && tbody.children.length === 0) {
+    renderImportMilestones([
+      { dot: 1, ten_dot: "Đợt 1", phan_tram: 30, so_tien: 0, dieu_kien_vi: "Sau khi hai bên ký kết hợp đồng, chuyển khoản T/T", thoi_han_tt_ngay: 10 },
+      { dot: 2, ten_dot: "Đợt 2", phan_tram: 60, so_tien: 0, dieu_kien_vi: "Sau khi bàn giao thiết bị và hoàn thành cài đặt hệ thống", thoi_han_tt_ngay: 30 },
+      { dot: 3, ten_dot: "Đợt 3", phan_tram: 10, so_tien: 0, dieu_kien_vi: "Sau khi nghiệm thu đạt chuẩn và ký biên bản bàn giao (FAC)", thoi_han_tt_ngay: 30 }
+    ]);
+  }
+}
+
+function closeImportExistingContractModal() {
+  const modal = document.getElementById("importExistingContractModal");
+  if (modal) modal.style.display = "none";
+}
+
+function handleExistingFileSelected(input) {
+  if (!input || !input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  currentImportedContractFile = file;
+
+  const dropZone = document.getElementById("importDropZone");
+  const previewCard = document.getElementById("importedFilePreviewCard");
+  const fileNameEl = document.getElementById("importedFileName");
+  const fileSizeEl = document.getElementById("importedFileSize");
+  const fileIconEl = document.getElementById("importedFileIcon");
+
+  if (dropZone) dropZone.style.display = "none";
+  if (previewCard) previewCard.style.display = "flex";
+
+  if (fileNameEl) fileNameEl.textContent = file.name;
+  if (fileSizeEl) {
+    const sizeKb = Math.round(file.size / 1024);
+    fileSizeEl.textContent = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${sizeKb} KB`;
+  }
+
+  const ext = file.name.split(".").pop().toLowerCase();
+  if (fileIconEl) {
+    if (ext === "docx" || ext === "doc") fileIconEl.textContent = "📝";
+    else if (ext === "pdf") fileIconEl.textContent = "📕";
+    else if (ext === "xlsx" || ext === "xls") fileIconEl.textContent = "📊";
+    else if (["png", "jpg", "jpeg", "webp"].includes(ext)) fileIconEl.textContent = "🖼️";
+    else fileIconEl.textContent = "📄";
+  }
+
+  // Tự động phân tích AI ngay khi người dùng chọn file
+  handleAnalyzeExistingContract();
+}
+
+function clearImportedFile() {
+  currentImportedContractFile = null;
+  const fileInput = document.getElementById("existingContractFileInput");
+  if (fileInput) fileInput.value = "";
+  const dropZone = document.getElementById("importDropZone");
+  const previewCard = document.getElementById("importedFilePreviewCard");
+  if (dropZone) dropZone.style.display = "block";
+  if (previewCard) previewCard.style.display = "none";
+}
+
+async function handleAnalyzeExistingContract() {
+  if (!currentImportedContractFile) {
+    showToast("Vui lòng chọn file hợp đồng từ máy tính.", "warning");
+    return;
+  }
+
+  const loadingEl = document.getElementById("importAiLoadingIndicator");
+  const btnAnalyze = document.getElementById("btnAnalyzeExistingFile");
+
+  if (loadingEl) loadingEl.style.display = "block";
+  if (btnAnalyze) btnAnalyze.disabled = true;
+
+  try {
+    const formData = new FormData();
+    formData.append("file", currentImportedContractFile);
+
+    const res = await fetch("/api/v1/contracts/ai-extract-uploaded-file", {
+      method: "POST",
+      body: formData
+    });
+    const result = await res.json();
+
+    if (result.status === "success" && result.data) {
+      const d = result.data;
+      if (document.getElementById("impContractCode")) document.getElementById("impContractCode").value = d.so_hop_dong || "";
+      if (document.getElementById("impSignedDate")) document.getElementById("impSignedDate").value = d.ngay_ky || "";
+      if (document.getElementById("impTotalAmount")) {
+        const amt = Number(d.tong_gia_tri || 0);
+        document.getElementById("impTotalAmount").value = amt > 0 ? amt.toLocaleString("vi-VN") : "";
+      }
+      if (document.getElementById("impCustomerVi")) document.getElementById("impCustomerVi").value = d.khach_hang_vi || "";
+      if (document.getElementById("impCustomerZh")) document.getElementById("impCustomerZh").value = d.khach_hang_zh || "";
+      if (document.getElementById("impProjectVi")) document.getElementById("impProjectVi").value = d.ten_du_an_vi || "";
+      if (document.getElementById("impProjectZh")) document.getElementById("impProjectZh").value = d.ten_du_an_zh || "";
+
+      if (Array.isArray(d.milestones) && d.milestones.length > 0) {
+        renderImportMilestones(d.milestones);
+      } else {
+        renderImportMilestones([]);
+        recalculateImportedMilestones();
+      }
+
+      showToast("Gemini AI đã bóc tách dữ liệu hợp đồng thành công!", "success");
+    } else {
+      showToast(result.message || "Không thể phân tích dữ liệu hợp đồng.", "error");
+    }
+  } catch (err) {
+    console.error("AI parse contract error:", err);
+    showToast("Lỗi khi kết nối AI: " + err.message, "error");
+  } finally {
+    if (loadingEl) loadingEl.style.display = "none";
+    if (btnAnalyze) btnAnalyze.disabled = false;
+  }
+}
+
+function renderImportMilestones(milestones) {
+  const tbody = document.getElementById("impMilestonesTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  if (!Array.isArray(milestones) || milestones.length === 0) {
+    milestones = [
+      { dot: 1, ten_dot: "Đợt 1", phan_tram: 30, so_tien: 0, dieu_kien_vi: "Sau khi hai bên ký kết hợp đồng, chuyển khoản T/T", thoi_han_tt_ngay: 10 },
+      { dot: 2, ten_dot: "Đợt 2", phan_tram: 60, so_tien: 0, dieu_kien_vi: "Sau khi hoàn thành lắp đặt hệ thống thiết bị", thoi_han_tt_ngay: 15 },
+      { dot: 3, ten_dot: "Đợt 3", phan_tram: 10, so_tien: 0, dieu_kien_vi: "Sau khi nghiệm thu đạt chuẩn và ký biên bản bàn giao (FAC)", thoi_han_tt_ngay: 30 }
+    ];
+  }
+
+  const totalAmt = parseNumberFromInput(document.getElementById("impTotalAmount")?.value || 0);
+
+  milestones.forEach((m, idx) => {
+    const dotNum = m.dot || (idx + 1);
+    const tenDot = m.ten_dot || `Đợt ${dotNum}`;
+    const pct = m.phan_tram !== undefined && m.phan_tram !== null ? Number(m.phan_tram) : 0;
+    let soTien = Number(m.so_tien || 0);
+    if (soTien === 0 && totalAmt > 0 && pct > 0) {
+      soTien = Math.round(totalAmt * pct / 100);
+    }
+    const dieuKien = m.dieu_kien_vi || m.dieu_kien || "";
+    let termDays = m.thoi_han_tt_ngay !== undefined && m.thoi_han_tt_ngay !== null ? Number(m.thoi_han_tt_ngay) : (idx === 0 ? 10 : 30);
+    if (idx === 0 && termDays === 0) termDays = 10;
+
+    const tr = document.createElement("tr");
+    tr.style.borderBottom = "1px solid #e2e8f0";
+    tr.className = "imp-milestone-row";
+    tr.innerHTML = `
+      <td style="padding: 6px 8px;">
+        <input type="text" class="form-control form-control-sm imp-ms-name" value="${escapeHtml(tenDot)}" style="font-weight: 700; width: 100%;">
+      </td>
+      <td style="padding: 6px 6px; text-align: center;">
+        <input type="number" class="form-control form-control-sm text-center imp-ms-pct" value="${pct}" min="0" max="100" step="any" oninput="onImpMilestonePctChanged(this)">
+      </td>
+      <td style="padding: 6px 8px; text-align: right;">
+        <input type="text" class="form-control form-control-sm text-right imp-ms-amount font-bold" value="${Number(soTien).toLocaleString("vi-VN")}" oninput="formatNumberInputLive(this)">
+      </td>
+      <td style="padding: 6px 8px;">
+        <input type="text" class="form-control form-control-sm imp-ms-cond" value="${escapeHtml(dieuKien)}" placeholder="Điều kiện thanh toán...">
+      </td>
+      <td style="padding: 6px 6px; text-align: center;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 2px;">
+          <input type="number" class="form-control form-control-sm text-center imp-ms-days" value="${termDays}" min="0" style="width: 55px; font-weight: 700;" title="Thời hạn thanh toán T/T số ngày">
+          <span style="font-size: 0.72rem; color: #64748b;">ngày</span>
+        </div>
+      </td>
+      <td style="padding: 6px 6px; text-align: center;">
+        <button type="button" class="btn btn-outline btn-xs" onclick="removeImportMilestoneRow(this)" style="color: #dc2626; border-color: #fca5a5; padding: 1px 6px;">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function addImportMilestoneRow() {
+  const tbody = document.getElementById("impMilestonesTableBody");
+  if (!tbody) return;
+  const count = tbody.children.length + 1;
+  const tr = document.createElement("tr");
+  tr.style.borderBottom = "1px solid #e2e8f0";
+  tr.className = "imp-milestone-row";
+  tr.innerHTML = `
+    <td style="padding: 6px 8px;">
+      <input type="text" class="form-control form-control-sm imp-ms-name" value="Đợt ${count}" style="font-weight: 700; width: 100%;">
+    </td>
+    <td style="padding: 6px 6px; text-align: center;">
+      <input type="number" class="form-control form-control-sm text-center imp-ms-pct" value="0" min="0" max="100" step="any" oninput="onImpMilestonePctChanged(this)">
+    </td>
+    <td style="padding: 6px 8px; text-align: right;">
+      <input type="text" class="form-control form-control-sm text-right imp-ms-amount font-bold" value="0" oninput="formatNumberInputLive(this)">
+    </td>
+    <td style="padding: 6px 8px;">
+      <input type="text" class="form-control form-control-sm imp-ms-cond" value="" placeholder="Điều kiện thanh toán...">
+    </td>
+    <td style="padding: 6px 6px; text-align: center;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 2px;">
+        <input type="number" class="form-control form-control-sm text-center imp-ms-days" value="30" min="0" style="width: 55px; font-weight: 700;">
+        <span style="font-size: 0.72rem; color: #64748b;">ngày</span>
+      </div>
+    </td>
+    <td style="padding: 6px 6px; text-align: center;">
+      <button type="button" class="btn btn-outline btn-xs" onclick="removeImportMilestoneRow(this)" style="color: #dc2626; border-color: #fca5a5; padding: 1px 6px;">✕</button>
+    </td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function removeImportMilestoneRow(btn) {
+  const tr = btn.closest("tr");
+  if (tr) tr.remove();
+}
+
+function onImpMilestonePctChanged(input) {
+  const tr = input.closest("tr");
+  if (!tr) return;
+  const pct = parseFloat(input.value) || 0;
+  const totalAmt = parseNumberFromInput(document.getElementById("impTotalAmount")?.value || 0);
+  const amtInput = tr.querySelector(".imp-ms-amount");
+  if (amtInput && totalAmt > 0) {
+    const calc = Math.round(totalAmt * pct / 100);
+    amtInput.value = calc.toLocaleString("vi-VN");
+  }
+}
+
+function recalculateImportedMilestones() {
+  const totalAmt = parseNumberFromInput(document.getElementById("impTotalAmount")?.value || 0);
+  if (totalAmt <= 0) return;
+  const rows = document.querySelectorAll("#impMilestonesTableBody .imp-milestone-row");
+  rows.forEach(tr => {
+    const pctInput = tr.querySelector(".imp-ms-pct");
+    const amtInput = tr.querySelector(".imp-ms-amount");
+    if (pctInput && amtInput) {
+      const pct = parseFloat(pctInput.value) || 0;
+      if (pct > 0) {
+        amtInput.value = Math.round(totalAmt * pct / 100).toLocaleString("vi-VN");
+      }
+    }
+  });
+}
+
+function parseNumberFromInput(val) {
+  if (!val) return 0;
+  return parseInt(String(val).replace(/[^0-9]/g, ""), 10) || 0;
+}
+
+function formatNumberInputLive(input) {
+  const num = parseNumberFromInput(input.value);
+  input.value = num > 0 ? num.toLocaleString("vi-VN") : "";
+}
+
+async function submitImportExistingContract() {
+  const code = (document.getElementById("impContractCode")?.value || "").trim();
+  const custVi = (document.getElementById("impCustomerVi")?.value || "").trim();
+  const custZh = (document.getElementById("impCustomerZh")?.value || "").trim();
+  const projVi = (document.getElementById("impProjectVi")?.value || "").trim();
+  const projZh = (document.getElementById("impProjectZh")?.value || "").trim();
+  const signedDate = (document.getElementById("impSignedDate")?.value || "").trim();
+  const totalAmt = parseNumberFromInput(document.getElementById("impTotalAmount")?.value || 0);
+
+  if (!code) {
+    showToast("Vui lòng nhập Số/Mã hợp đồng.", "warning");
+    document.getElementById("impContractCode")?.focus();
+    return;
+  }
+  if (!custVi) {
+    showToast("Vui lòng nhập tên khách hàng Bên A.", "warning");
+    document.getElementById("impCustomerVi")?.focus();
+    return;
+  }
+
+  // Thu thập các đợt thanh toán
+  const milestoneRows = document.querySelectorAll("#impMilestonesTableBody .imp-milestone-row");
+  const milestones = [];
+  milestoneRows.forEach((tr, idx) => {
+    const name = (tr.querySelector(".imp-ms-name")?.value || `Đợt ${idx + 1}`).trim();
+    const pct = parseFloat(tr.querySelector(".imp-ms-pct")?.value) || 0;
+    const amt = parseNumberFromInput(tr.querySelector(".imp-ms-amount")?.value || 0);
+    const cond = (tr.querySelector(".imp-ms-cond")?.value || "").trim();
+    let days = parseInt(tr.querySelector(".imp-ms-days")?.value, 10);
+    if (isNaN(days) || days < 0) days = (idx === 0 ? 10 : 30);
+    milestones.push({
+      dot: idx + 1,
+      ten_dot: name,
+      phan_tram: pct,
+      so_tien: amt,
+      dieu_kien_vi: cond,
+      thoi_han_tt_ngay: days
+    });
+  });
+
+  const contractData = {
+    so_hop_dong: code,
+    khach_hang_vi: custVi,
+    khach_hang_zh: custZh,
+    ten_du_an_vi: projVi || `Hợp đồng ${code}`,
+    ten_du_an_zh: projZh,
+    ngay_ky: signedDate,
+    tong_gia_tri: totalAmt,
+    milestones: milestones
+  };
+
+  const btnSubmit = document.getElementById("btnSubmitImportContract");
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "⏳ Đang lưu hợp đồng...";
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("contract_data", JSON.stringify(contractData));
+    if (currentImportedContractFile) {
+      formData.append("file", currentImportedContractFile);
+    }
+
+    const res = await fetch("/api/v1/contracts/import-existing", {
+      method: "POST",
+      body: formData
+    });
+    const result = await res.json();
+
+    if (result.status === "success") {
+      closeImportExistingContractModal();
+      showToast(`✅ Đã lưu thành công hợp đồng ${code} vào hệ thống!`, "success");
+
+      // Chuyển sang Tab Danh Sách Hợp Đồng và reload lại bảng
+      if (typeof switchTab === "function") switchTab("tabContractList");
+      if (window.ContractEditor && typeof ContractEditor.loadContractsList === "function") {
+        ContractEditor.loadContractsList();
+      }
+    } else {
+      showToast(result.message || "Lỗi khi lưu hợp đồng.", "error");
+    }
+  } catch (err) {
+    console.error("Submit import contract error:", err);
+    showToast("Lỗi kết nối máy chủ: " + err.message, "error");
+  } finally {
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = "💾 Lưu Hợp Đồng Vào Hồ Sơ Hệ Thống";
+    }
+  }
+}

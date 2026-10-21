@@ -49,3 +49,17 @@ Tài liệu này định nghĩa bối cảnh doanh nghiệp, vai trò trách nhi
      2. *Không tự ý sửa lời văn hay điều khoản cố định:* Không xóa, xáo trộn hoặc tự ý viết lại các điều khoản pháp lý mẫu. Chỉ thay thế đúng các trường thông tin biến động (Tên pháp nhân, MST, đại diện, chức vụ, địa chỉ, số hợp đồng, ngày tháng ký, danh mục thiết bị, số lượng, đơn giá, tổng tiền, số tiền bằng chữ tiếng Việt & tiếng Trung, tiến độ thanh toán...).
      3. *Nhận diện linh hoạt mọi định dạng placeholder:* Tự động quét và khớp chính xác các vị trí cần thay đổi dù người dùng gắn thẻ bằng `{{TÊN_TRƯỜNG}}`, `[TÊN_TRƯỜNG]`, tô nền màu vàng (Highlight) hay chữ màu đỏ trong file Word/Excel.
      4. *Bảo toàn định dạng văn bản Word (Run-Level Preservation):* Khi cập nhật file Word `.docx`, bắt buộc sử dụng script bảo toàn style từng khối chữ (`runs`) như `fill_contract_docx.py`, giải quyết triệt để vấn đề placeholder bị ngắt quãng giữa các runs, đảm bảo văn bản sau khi điền giữ nguyên 100% format gốc của vị trí đó.
+8. **Quy chuẩn Biểu mẫu Báo Giá ECO PRIME (ECO PRIME 報價單):**
+   - **File phôi mẫu gốc bất biến:** `E:\Working\Bieu Mau\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx` (nhân bản từ `ECO PRIME_BHT Báo Giá Đồng Hồ Điện_24-07-2026.xlsx`).
+   - **Script tạo tự động 1:1 cố định:** `E:\Working\scripts\generate_eco_prime_quotation.py` (đồng bộ tại `hongming-pm-hub/scripts/generate_eco_prime_quotation.py`).
+   - **Quy tắc bắt buộc khi tạo báo giá ECO PRIME:**
+     1. *Thiết bị phần cứng:* Bóc tách chính xác từ sơ đồ kỹ thuật, TUYỆT ĐỐI KHÔNG tự ý bịa thêm chi phí thi công nếu đề bài không yêu cầu.
+     2. *Quy chuẩn màu sắc 100% mẫu gốc:*
+        - 7 hạng mục thiết bị: Font chữ màu đen chuẩn mực, không dùng màu xanh.
+        - Khối chữ ký (A24:A25): Chữ màu nâu vàng `#9C6500` bold.
+        - Số tiền Tạm tính, VAT 8%, Tổng cộng (G21:H23): Chữ màu xanh dương `#0000FF` bold.
+        - Điều khoản 2 (Bảo hành): Đoạn `交貨後保固一年` và `Bảo hành 1 năm kể từ ngày giao hàng.` có màu xanh dương `#0000FF` bold.
+        - Điều khoản 3 (Thanh toán): Toàn bộ chữ màu đỏ rực `#FF0000` bold.
+        - Màu nền theme: Giữ nguyên màu theme 6 tint 0.8 gốc của workbook, không dùng mã màu cam đậm nhân tạo.
+     3. *Cột đơn giá:* Cột F (Giá bán USD) và Cột J (Giá vốn xuất xưởng USD) để trống (`None`) để Sếp tự điền.
+     4. *Khổ in:* Khóa chặt vùng in `$A$1:$H$27`, PageBreakPreview, Zoom 60%, Scale 38%, không loang viền ngoài.

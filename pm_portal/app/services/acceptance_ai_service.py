@@ -5,7 +5,7 @@ import logging
 import re
 import urllib.error
 import urllib.request
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from app.config import CANDIDATE_MODELS, DEFAULT_GEMINI_KEY, DEFAULT_MODEL, DEFAULT_GEMINI_KEYS
 from app.utils.currency_helper import (
@@ -419,3 +419,406 @@ def _fallback_local_acceptance_parse(raw_text: str) -> Dict[str, Any]:
         result_dict["ben_b"] = ben_b_custom
 
     return result_dict
+
+
+INSTALLATION_SYSTEM_PROMPT = """Bạn là chuyên gia phân tích và bóc tách dữ liệu Biên bản nghiệm thu lắp đặt & bàn giao đưa vào sử dụng song ngữ Việt - Trung cho CÔNG TY TNHH TOÀN CẦU HONG MING (宏明環球有限公司).
+
+NHIỆM VỤ:
+Phân tích văn bản đầu vào (nội dung hợp đồng, bảng hạng mục bàn giao lắp đặt, ghi chú nghiệm thu tiến độ) và trích xuất thành định dạng JSON chuẩn 100%.
+
+QUY TẮC CỐT LÕI:
+1. Trích xuất thông tin hợp đồng & các bên:
+   - so_hop_dong: Mã hợp đồng (VD: HMV151020250001, HMV100120260001)
+   - so_bien_ban: Số biên bản (VD: 002_BIEN_BAN_NGHIEM_THU_BAN_GIAO_CX_ hoặc BB-NT-2026-___)
+   - ngay_ky_hop_dong: Ngày ký HĐ (DD/MM/YYYY)
+   - ngay_nghiem_thu: Ngày nghiệm thu (DD/MM/YYYY)
+   - gia_tri_hop_dong: Tổng giá trị HĐ (VD: 234.000.000 VNĐ)
+   - ten_he_thong: Tên hệ thống / dự án tiếng Việt
+   - ten_he_thong_trung: Tên hệ thống / dự án tiếng Trung
+   - ben_a: { ten_cong_ty, ten_tieng_trung, dia_chi, mst }
+   - ben_b: { ten_cong_ty, ten_tieng_trung, dia_chi, mst, nguoi_dai_dien, chuc_vu }
+2. Trích xuất căn cứ pháp lý:
+   - can_cu_phu_luc: Căn cứ phụ lục báo giá
+   - can_cu_phu_luc_trung: Tiếng Trung
+   - can_cu_ky_thuat: Căn cứ biên bản kỹ thuật / chạy thử
+   - can_cu_ky_thuat_trung: Tiếng Trung
+3. Trích xuất danh mục hạng mục nghiệm thu lắp đặt (hang_muc):
+   - stt: Số thứ tự (1, 2, 3...)
+   - hang_muc: Tên hạng mục ngắn gọn song ngữ (CHỈ lấy cột Hạng mục / 項目類別, TUYỆT ĐỐI KHÔNG ghép thêm tên sản phẩm hay nội dung dài dòng vào). Ví dụ:
+     "1. Xác nhận mở vụ án / 立案確認, Yêu cầu xác nhận / 需求確認"
+     "2. Mỗi máy có thể quét các nhân viên vận hành máy khác nhau khi vào và ra khỏi trạm.\\n進出站時每個機台都可以掃不同的機台操作者Máy quét mã vạch được tối ưu hóa để lựa chọn máy bằng cách nhấp chuột.掃描機台條碼優化為點選機台方式。"
+   - xac_nhan_lap_dat: "Xác nhận thiết bị đã được đưa vào sử dụng.\\n確認已投入使用"
+   - ket_qua_xac_nhan: "Đã nghiệm thu, xác nhận đạt yêu cầu.\\n驗收合格，確認符合需求"
+4. Trích xuất đề nghị thanh toán & các giai đoạn:
+   - giai_doan_thanh_toan: Tên giai đoạn đề nghị thanh toán đợt này (VD: Giai đoạn 2 (Sau khi triển khai lắp đặt đưa vào sử dụng - 40%))
+   - so_tien_thanh_toan: Số tiền đề nghị thanh toán đợt này (VD: 93.600.000 VND)
+   - so_tien_chu_vn: Bằng chữ tiếng Việt
+   - so_tien_chu_tw: Bằng chữ tiếng Trung
+   - payment_stages: [ { stage, condition, rate, amount } ]
+
+ĐỊNH DẠNG JSON ĐẦU RA BẮT BUỘC:
+{
+  "so_hop_dong": "HMV151020250001",
+  "so_bien_ban": "002_BIEN_BAN_NGHIEM_THU_BAN_GIAO_CX_",
+  "ngay_ky_hop_dong": "09/12/2025",
+  "ngay_nghiem_thu": "09/10/2026",
+  "gia_tri_hop_dong": "234.000.000 VNĐ",
+  "ten_he_thong": "RFID 硬體 (RFID Hardware) – Phần mềm tùy chỉnh chức năng hệ thống RFID",
+  "ten_he_thong_trung": "RFID 硬體（RFID Hardware）－ RFID 系統客製化軟體",
+  "ben_a": {
+    "ten_cong_ty": "CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)",
+    "ten_tieng_trung": "CX TECHNOLOGY (VN) 股份有限公司",
+    "dia_chi": "Số Lô CT 10b-12-14-16-18-20-22-24a, Khu C, KCX Tân Thuận, Phường Tân Thuận, Tp. Hồ Chí Minh",
+    "mst": "0300737556"
+  },
+  "ben_b": {
+    "ten_cong_ty": "CÔNG TY TNHH TOÀN CẦU HONG MING",
+    "ten_tieng_trung": "宏明環球有限公司",
+    "dia_chi": "Lầu 2, số 68 Nguyễn Huệ, Phường Sài Gòn, Thành phố Hồ Chí Minh, Việt Nam",
+    "mst": "0318280158",
+    "nguoi_dai_dien": "Ông TANG WEI LI",
+    "chuc_vu": "Tổng giám đốc"
+  },
+  "can_cu_phu_luc": "Phụ lục 1 – Báo giá khai phá chức năng ưu hóa tùy chỉnh (V1.2.3_VND) kèm theo hợp đồng",
+  "can_cu_phu_luc_trung": "附件一「RFID系統客製化功能開發報價單（V1.2.3_VND）」",
+  "can_cu_ky_thuat": "Biên bản kiểm tra kỹ thuật ngày 04/03/2026 xác nhận hoàn thành lắp đặt và kết quả chạy thử, điều chỉnh, theo dõi vận hành sau đó.",
+  "can_cu_ky_thuat_trung": "依據 2026/03/04《技術檢驗單》所確認之安裝完成情況，以及其後之試運行、調整及運行觀察結果。",
+  "giai_doan_thanh_toan": "Giai đoạn 2 (Sau khi triển khai lắp đặt đưa vào sử dụng - 40%)",
+  "so_tien_thanh_toan": "93.600.000 VND",
+  "so_tien_chu_vn": "Chín mươi ba triệu sáu trăm nghìn đồng chẵn.",
+  "so_tien_chu_tw": "玖仟參佰陸拾萬越盾整",
+  "hang_muc": [
+    {
+      "stt": 1,
+      "ten_san_pham": "Concept Development",
+      "hang_muc": "1. Xác nhận mở vụ án / 立案確認\\n2. Yêu cầu xác nhận / 需求確認",
+      "noi_dung": "Nộp hồ sơ dự án, họp thảo luận: lập kế hoạch kiến trúc dự án, lập kế hoạch quy trình và xác nhận nhu cầu.",
+      "xac_nhan_lap_dat": "Xác nhận thiết bị đã được đưa vào sử dụng.\\n確認已投入使用",
+      "ket_qua_xac_nhan": "Đã nghiệm thu, xác nhận đạt yêu cầu và chính thức đưa vào sử dụng.\\n驗收合格，確認正式投入使用。"
+    }
+  ],
+  "payment_stages": [
+    {
+      "stage": "GIAI ĐOẠN 1\\n第一期",
+      "condition": "Sau khi ký kết hợp đồng\\n簽約完成時",
+      "rate": "40%",
+      "amount": "93.600.000 VND"
+    },
+    {
+      "stage": "GIAI ĐOẠN 2 (ĐỢT NÀY)\\n第二期（本期款）",
+      "condition": "Sau khi triển khai sản phẩm đưa vào sử dụng\\n產品安裝後",
+      "rate": "40%",
+      "amount": "93.600.000 VND"
+    },
+    {
+      "stage": "GIAI ĐOẠN 3 (QUYẾT TOÁN)\\n第三期（尾款）",
+      "condition": "Khi nghiệm thu đạt tiêu chuẩn\\n驗收合格時",
+      "rate": "20%",
+      "amount": "46.800.000 VND"
+    },
+    {
+      "stage": "TỔNG CỘNG HỢP ĐỒNG\\n合約總計",
+      "condition": "100% Giá trị Hợp đồng",
+      "rate": "100%",
+      "amount": "234.000.000 VNĐ"
+    }
+  ]
+}
+CHỈ TRẢ VỀ JSON HỢP LỆ, KHÔNG KÈM THEO BẤT KỲ VĂN BẢN GIẢI THÍCH NÀO NGOÀI JSON.
+"""
+
+
+def parse_installation_acceptance_text(raw_input_text: str, preferred_model: str = None) -> Dict[str, Any]:
+    """Parse raw installation acceptance text via Gemini API, fallback to heuristics."""
+    models_to_try = []
+    if preferred_model and preferred_model in CANDIDATE_MODELS:
+        models_to_try.append(preferred_model)
+    for m in CANDIDATE_MODELS:
+        if m not in models_to_try:
+            models_to_try.append(m)
+
+    api_keys_to_try = [k for k in DEFAULT_GEMINI_KEYS if k]
+    if not api_keys_to_try and DEFAULT_GEMINI_KEY:
+        api_keys_to_try.append(DEFAULT_GEMINI_KEY)
+
+    last_error = None
+    for api_key in api_keys_to_try:
+        for model in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            payload = {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [
+                            {"text": INSTALLATION_SYSTEM_PROMPT},
+                            {"text": f"VĂN BẢN ĐẦU VÀO CẦN PHÂN TÍCH:\n\n{raw_input_text}"}
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "responseMimeType": "application/json"
+                }
+            }
+
+            try:
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=30) as response:
+                    res_body = response.read().decode("utf-8")
+                    res_json = json.loads(res_body)
+                    text_content = res_json["candidates"][0]["content"]["parts"][0]["text"]
+                    clean_text = text_content.strip()
+                    if clean_text.startswith("```json"):
+                        clean_text = clean_text[7:]
+                    if clean_text.endswith("```"):
+                        clean_text = clean_text[:-3]
+
+                    parsed = json.loads(clean_text.strip())
+                    parsed["_executed_model"] = model
+                    
+                    # Sanitize & normalize payment_stages
+                    raw_stages = parsed.get("payment_stages") or []
+                    if not raw_stages:
+                        raw_stages = _extract_payment_stages_from_text(raw_input_text)
+                    
+                    cleaned_stages = []
+                    for idx, st in enumerate(raw_stages, start=1):
+                        s_name = str(st.get("stage") or "").strip()
+                        # Filter out summary/total rows
+                        if any(kw in s_name.lower() for kw in ["tổng cộng", "tổng giá trị", "合計", "總計"]) or str(st.get("rate") or "").strip() == "100%":
+                            continue
+                        
+                        m = re.search(r'(?:GIAI\s*ĐOẠN|ĐỢT)\s*([0-9]+)', s_name, re.IGNORECASE)
+                        s_num = int(m.group(1)) if m else idx
+                        
+                        is_sel = st.get("selected")
+                        if is_sel is None:
+                            is_sel = (s_num in (2, 3))
+                        
+                        cleaned_stages.append({
+                            "stage_id": str(st.get("stage_id") or s_num),
+                            "stage_num": s_num,
+                            "stage": s_name or f"GIAI ĐOẠN {s_num}",
+                            "condition": str(st.get("condition") or "").strip(),
+                            "rate": str(st.get("rate") or "").strip(),
+                            "amount": str(st.get("amount") or "").strip(),
+                            "selected": bool(is_sel)
+                        })
+                    
+                    if not cleaned_stages:
+                        cleaned_stages = _extract_payment_stages_from_text(raw_input_text)
+                        
+                    parsed["payment_stages"] = cleaned_stages
+                    return parsed
+            except Exception as e:
+                last_error = e
+                logger.warning("Gemini model %s with key %s... failed: %s", model, api_key[:8] if api_key else "", e)
+
+    # Heuristic fallback if Gemini is offline
+    logger.info("Using local heuristic fallback for installation acceptance: %s", last_error)
+    return _fallback_parse_installation_text(raw_input_text)
+
+
+def extract_text_from_upload_file(file_bytes: bytes, filename: str) -> str:
+    """Extract clean text content from uploaded files (.docx, .xlsx, .txt, .md, .json, .csv)."""
+    import io
+    fname = (filename or "").lower()
+
+    if fname.endswith(".docx"):
+        from docx import Document
+        doc = Document(io.BytesIO(file_bytes))
+        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+        table_lines = []
+        for t_idx, tbl in enumerate(doc.tables):
+            for r in tbl.rows:
+                cells = [c.text.replace("\n", " ").strip() for c in r.cells]
+                # dedup merged cells
+                dedup = []
+                for cell in cells:
+                    if not dedup or cell != dedup[-1]:
+                        dedup.append(cell)
+                if any(dedup):
+                    table_lines.append(" | ".join(dedup))
+        return "\n".join(paragraphs + ["\n--- BẢNG DỮ LIỆU ---"] + table_lines)
+
+    elif fname.endswith((".xlsx", ".xlsm")):
+        import openpyxl
+        wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
+        lines = []
+        for sheet_name in wb.sheetnames:
+            ws = wb[sheet_name]
+            lines.append(f"--- SHEET: {sheet_name} ---")
+            for row in ws.iter_rows(values_only=True):
+                non_empty = [str(val).strip() for val in row if val is not None and str(val).strip()]
+                if non_empty:
+                    lines.append(" | ".join(non_empty))
+        return "\n".join(lines)
+
+    elif fname.endswith((".txt", ".md", ".json", ".csv", ".log")):
+        for enc in ["utf-8", "utf-8-sig", "cp1258", "latin-1"]:
+            try:
+                return file_bytes.decode(enc)
+            except Exception:
+                continue
+        return file_bytes.decode("utf-8", errors="replace")
+
+    elif fname.endswith(".pdf"):
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+            pages_text = [p.extract_text() for p in reader.pages if p.extract_text()]
+            return "\n".join(pages_text)
+        except Exception:
+            return ""
+
+    return ""
+
+
+def _extract_payment_stages_from_text(raw_text: str) -> List[Dict[str, Any]]:
+    """Extract all contract payment stages from raw text with robust regex."""
+    stages = []
+    # Match pattern: 1. Sau khi ký kết... 40% = 93.600.000 VNĐ ... 1. 簽約完成時...
+    pattern = r'(?P<idx>[1-5])\.\s*(?P<vn>[^\n]+?thanh toán\s*(?P<rate>\d+[\.,]?\d*%).*?=\s*(?P<amount>[\d\.,]+)\s*(?:VNĐ|VND|越盾)[^\n]*)(?:\n(?P=idx)\.\s*(?P<tw>[^\n]+))?'
+    matches = list(re.finditer(pattern, raw_text, re.IGNORECASE))
+    
+    zh_stage_map = {1: "第一期", 2: "第二期", 3: "第三期", 4: "第四期", 5: "第五期"}
+    
+    if matches:
+        for m in matches:
+            idx = int(m.group("idx"))
+            rate = m.group("rate").replace(",", ".")
+            amount_str = m.group("amount").strip()
+            vn_text = m.group("vn").strip()
+            tw_text = (m.group("tw") or "").strip()
+            
+            cond_vn = re.sub(r'[:：]?\s*thanh toán.*$', '', vn_text, flags=re.IGNORECASE).strip()
+            cond_tw = re.sub(r'[:：]?\s*支付.*$', '', tw_text, flags=re.IGNORECASE).strip()
+            condition_combined = f"{cond_vn}\n{cond_tw}" if cond_tw else cond_vn
+            
+            stages.append({
+                "stage_id": str(idx),
+                "stage_num": idx,
+                "stage": f"GIAI ĐOẠN {idx}\n{zh_stage_map.get(idx, f'第{idx}期')}",
+                "condition": condition_combined,
+                "rate": rate,
+                "amount": f"{amount_str} VND",
+                "selected": (idx == 2 or idx == 3) # default selected for installation/acceptance
+            })
+
+    if not stages:
+        # Default 3 stages for CX Technology HMV151020250001
+        stages = [
+            {
+                "stage_id": "1",
+                "stage": "GIAI ĐOẠN 1\n第一期",
+                "condition": "Sau khi ký kết hợp đồng\n簽約完成時",
+                "rate": "40%",
+                "amount": "93.600.000 VND",
+                "selected": False
+            },
+            {
+                "stage_id": "2",
+                "stage": "GIAI ĐOẠN 2\n第二期",
+                "condition": "Sau khi triển khai sản phẩm đưa vào sử dụng\n產品安裝後",
+                "rate": "40%",
+                "amount": "93.600.000 VND",
+                "selected": True
+            },
+            {
+                "stage_id": "3",
+                "stage": "GIAI ĐOẠN 3\n第三期",
+                "condition": "Khi nghiệm thu đạt tiêu chuẩn\n驗收合格時",
+                "rate": "20%",
+                "amount": "46.800.000 VND",
+                "selected": True
+            }
+        ]
+    return stages
+
+
+def _fallback_parse_installation_text(raw_input_text: str) -> Dict[str, Any]:
+    """Parse text using local rules and regex when Gemini API is unavailable."""
+    m_hd = re.search(r'(HMV\d+)', raw_input_text)
+    so_hop_dong = m_hd.group(1) if m_hd else "HMV151020250001"
+
+    m_val = re.search(r'([\d\.,]+)\s*(?:VNĐ|VND|越盾)', raw_input_text)
+    gia_tri_hop_dong = f"{m_val.group(1)} VNĐ" if m_val else "234.000.000 VNĐ"
+
+    payment_stages = _extract_payment_stages_from_text(raw_input_text)
+
+    # Extract items if table lines exist
+    items = []
+    lines = raw_input_text.splitlines()
+    for line in lines:
+        if "|" in line:
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) >= 3 and parts[0].isdigit():
+                # Prefer column 2 (Hạng mục) if available
+                hm_val = parts[2] if len(parts) >= 3 else parts[1]
+                items.append({
+                    "stt": int(parts[0]),
+                    "hang_muc": hm_val,
+                    "xac_nhan_lap_dat": "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入使用",
+                    "ket_qua_xac_nhan": "Đã nghiệm thu, xác nhận đạt yêu cầu.\n驗收合格，確認符合需求"
+                })
+
+    if not items:
+        items = [
+            {"stt": 1, "hang_muc": "1. Xác nhận mở vụ án / 立案確認, Yêu cầu xác nhận / 需求確認", "xac_nhan_lap_dat": "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入使用", "ket_qua_xac_nhan": "Đã nghiệm thu, xác nhận đạt yêu cầu.\n驗收合格，確認符合需求"},
+            {"stt": 2, "hang_muc": "2. Mỗi máy có thể quét các nhân viên vận hành máy khác nhau khi vào và ra khỏi trạm.\n進出站時每個機台都可以掃不同的機台操作者Máy quét mã vạch được tối ưu hóa để lựa chọn máy bằng cách nhấp chuột.掃描機台條碼優化為點選機台方式。", "xac_nhan_lap_dat": "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入使用", "ket_qua_xac_nhan": "Đã nghiệm thu, xác nhận đạt yêu cầu.\n驗收合格，確認符合需求"},
+            {"stt": 3, "hang_muc": "3. Quét nhiều ID nhân viên để vào và ra khỏi trạm.\n進出站可刷複數人員工號。", "xac_nhan_lap_dat": "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入 sử dụng", "ket_qua_xac_nhan": "Đã nghiệm thu, xác nhận đạt yêu cầu.\n驗收合格，確認符合需求"},
+            {"stt": 4, "hang_muc": "4. QR條碼掃描\nQuét mã vạch QR", "xac_nhan_lap_dat": "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入使用", "ket_qua_xac_nhan": "Đã nghiệm thu, xác nhận đạt yêu cầu.\n驗收合格，確認符合需求"},
+            {"stt": 5, "hang_muc": "5. 特定人員解除綁定權限控管\nHủy ràng buộc quyền cho nhân viên cụ thể", "xac_nhan_lap_dat": "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入使用", "ket_qua_xac_nhan": "Đã nghiệm thu, xác nhận đạt yêu cầu.\n驗收合格，確認符合需求"},
+            {"stt": 6, "hang_muc": "6. RFID離線模式可以自動切換\nChế độ ngoại tuyến RFID có thể chuyển đổi tự động", "xac_nhan_lap_dat": "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入使用", "ket_qua_xac_nhan": "Đã nghiệm thu, xác nhận đạt yêu cầu.\n驗收合格，確認符合需求"},
+            {"stt": 7, "hang_muc": "7. 增加Run Card查詢條件\nThêm điều kiện truy vấn Run Card", "xac_nhan_lap_dat": "Xác nhận thiết bị đã được đưa vào sử dụng.\n確認已投入使用", "ket_qua_xac_nhan": "Đã nghiệm thu, xác nhận đạt yêu cầu.\n驗收合格，確認符合需求"}
+        ]
+
+    return {
+        "_executed_model": "LocalHeuristicsFallback",
+        "so_hop_dong": so_hop_dong,
+        "so_bien_ban": f"002_BIEN_BAN_NGHIEM_THU_BAN_GIAO_{so_hop_dong}_",
+        "ngay_ky_hop_dong": "09/12/2025",
+        "ngay_nghiem_thu": datetime.now().strftime("%d/%m/%Y"),
+        "gia_tri_hop_dong": gia_tri_hop_dong,
+        "ten_he_thong": "RFID 硬體 (RFID Hardware) – Phần mềm tùy chỉnh chức năng hệ thống RFID",
+        "ten_he_thong_trung": "RFID 硬體（RFID Hardware）－ RFID 系統客製化軟體",
+        "ben_a": {
+            "ten_cong_ty": "CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)",
+            "ten_tieng_trung": "CX TECHNOLOGY (VN) 股份有限公司",
+            "dia_chi": "Số Lô CT 10b-12-14-16-18-20-22-24a, Khu C, KCX Tân Thuận, Phường Tân Thuận, Tp. Hồ Chí Minh",
+            "mst": "0300737556"
+        },
+        "ben_b": {
+            "ten_cong_ty": "CÔNG TY TNHH TOÀN CẦU HONG MING",
+            "ten_tieng_trung": "宏明環球有限公司",
+            "dia_chi": "Lầu 2, số 68 Nguyễn Huệ, Phường Sài Gòn, Thành phố Hồ Chí Minh, Việt Nam",
+            "mst": "0318280158",
+            "nguoi_dai_dien": "Ông TANG WEI LI",
+            "chuc_vu": "Tổng giám đốc"
+        },
+        "can_cu_phu_luc": "Phụ lục 1 – Báo giá khai phá chức năng ưu hóa tùy chỉnh (V1.2.3_VND) kèm theo hợp đồng",
+        "can_cu_phu_luc_trung": "附件一「RFID系統客製化功能開發報價單（V1.2.3_VND）」",
+        "can_cu_ky_thuat": "Biên bản kiểm tra kỹ thuật ngày 04/03/2026 xác nhận hoàn thành lắp đặt và kết quả chạy thử, điều chỉnh, theo dõi vận hành sau đó.",
+        "can_cu_ky_thuat_trung": "依據 2026/03/04《技術檢驗單》所確認之安裝完成情況，以及其後之試運行、調整及運行觀察結果。",
+        "giai_doan_thanh_toan": "Giai đoạn 2 & 3 (Triển khai lắp đặt và nghiệm thu hoàn thành - 60%)",
+        "so_tien_thanh_toan": "140.400.000 VND",
+        "so_tien_chu_vn": "Một trăm bốn mươi triệu bốn trăm nghìn đồng chẵn.",
+        "so_tien_chu_tw": "越南盾壹億肆仟零肆拾萬整",
+        "hang_muc": items,
+        "payment_stages": payment_stages
+    }
+
+
+def parse_installation_acceptance_file(file_bytes: bytes, filename: str, preferred_model: str = None) -> Dict[str, Any]:
+    """Extract text from uploaded document and parse into structured installation acceptance data."""
+    extracted_text = extract_text_from_upload_file(file_bytes, filename)
+    if not extracted_text.strip():
+        logger.warning("Empty or unsupported file content: %s", filename)
+        return _fallback_parse_installation_text("")
+    return parse_installation_acceptance_text(extracted_text, preferred_model=preferred_model)
+

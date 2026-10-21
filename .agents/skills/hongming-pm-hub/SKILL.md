@@ -23,11 +23,14 @@ Khi người dùng yêu cầu thực hiện một nhiệm vụ, hãy kích hoạ
 
 ### Workflow 1: Lập & Kiểm Tra Báo Giá (Quotation / 報價單)
 - **Mục tiêu:** Tạo hoặc rà soát báo giá thiết bị IoT, hệ thống tiết kiệm năng lượng (EMS), bản quyền phần mềm, hoặc gói nhân công thi công.
-- **Tài liệu tham khảo:** [quotation_sample.md](./resources/quotation_sample.md) & Bảng giá gốc [`HM浤詺資訊_Vonmax弘聲 機聯網暨工廠節能 第二階段 硬體報價單_202603_V1.5.xlsx`](file:///e:/Working/HM浤詺資訊_Vonmax弘聲%20機聯網暨工廠節能%20第二階段%20硬體報價單_202603_V1.5.xlsx).
+- **Tài liệu tham khảo:**
+  - Báo giá EMS/IoT Hong Ming: [quotation_sample.md](./resources/quotation_sample.md) & Bảng giá gốc [`HM浤詺資訊_Vonmax弘聲 機聯網暨工廠節能 第二階段 硬體報價單_202603_V1.5.xlsx`](file:///e:/Working/HM浤詺資訊_Vonmax弘聲%20機聯網暨工廠節能%20第二階段%20硬體報價單_202603_V1.5.xlsx).
+  - Báo giá chuẩn ECO PRIME (Đồng hồ điện, Gateway CC2051, biến dòng Rogowski): Mẫu phôi chuẩn bất biến `E:\Working\Bieu Mau\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx` và script tạo tự động 1:1 `scripts/generate_eco_prime_quotation.py`.
 - **Quy tắc bắt buộc:**
   1. Thể hiện song ngữ: Tiếng Việt và Tiếng Trung Phồn thể.
-  2. Bóc tách rõ 3 phần: (1) Phần cứng thiết bị, (2) Vật tư phụ & Hạ tầng, (3) Chi phí thi công & Cấu hình.
-  3. Ghi rõ điều khoản: Hiệu lực báo giá, thuế VAT (chưa bao gồm VAT), bảo hành (12 tháng), và thời hạn thanh toán.
+  2. Bóc tách rõ danh mục thiết bị từ sơ đồ thiết kế. TUYỆT ĐỐI KHÔNG tự ý bịa thêm chi phí thi công nếu đề bài không yêu cầu.
+  3. Tuân thủ 100% màu sắc chuẩn: Chữ thiết bị màu đen; Hàng bảo hành (Điều khoản 2) có đoạn chữ xanh dương; Hàng thanh toán (Điều khoản 3) toàn bộ chữ màu đỏ rực; Khối chữ ký (A24:A25) chữ màu nâu vàng `#9C6500`; Số tiền Tạm tính, VAT, Tổng cộng chữ màu xanh dương `#0000FF` bold; Nền theme chuẩn 6 tint 0.8.
+  4. Cột đơn giá bán (cột F) và giá vốn (cột J) để trống cho Sếp tự điền. Vùng in `$A$1:$H$27` khít chặt trên 1 trang A4.
 
 ### Workflow 2: Soạn Thảo & Rà Soát Hợp Đồng Mua Bán (Contract / 買賣合約)
 - **Mục tiêu:** Soạn thảo hợp đồng bán hàng thiết bị hoặc hợp đồng trọn gói triển khai dự án cho khách hàng FDI Đài Loan/Trung Quốc.

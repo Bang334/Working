@@ -16,7 +16,7 @@ from app.config import WORKING_DIR
 
 DB_DIR = WORKING_DIR / "database"
 DB_PATH = DB_DIR / "pm_portal.db"
-SIMULATED_TODAY = datetime(2026, 10, 15)
+SIMULATED_TODAY = datetime.now()
 
 # Ensure database directory exists
 os.makedirs(DB_DIR, exist_ok=True)
@@ -140,6 +140,50 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS beneficiaries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        unit_name TEXT UNIQUE NOT NULL,
+        account_number TEXT NOT NULL,
+        bank_name TEXT NOT NULL,
+        short_name TEXT,
+        default_reason TEXT,
+        swift_code TEXT,
+        currency TEXT DEFAULT 'VND',
+        usage_count INTEGER DEFAULT 0,
+        last_used_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS payment_voucher_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        report_code TEXT NOT NULL,
+        request_date TEXT NOT NULL,
+        beneficiary_name TEXT NOT NULL,
+        account_number TEXT NOT NULL,
+        bank_name TEXT NOT NULL,
+        reason_vi TEXT,
+        reason_zh TEXT,
+        full_reason TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT DEFAULT 'VND',
+        amount_usd REAL,
+        exchange_rate REAL DEFAULT 26000,
+        amount_in_words_vi TEXT,
+        amount_in_words_zh TEXT,
+        prepared_by TEXT DEFAULT 'NGUYỄN SỸ KIM BẰNG',
+        supervisor TEXT DEFAULT '',
+        checker TEXT DEFAULT '',
+        accountant TEXT DEFAULT '',
+        director TEXT DEFAULT '',
+        attachment_note TEXT DEFAULT '',
+        file_path TEXT,
+        file_name TEXT,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_contracts_code ON contracts(contract_code);
     CREATE INDEX IF NOT EXISTS idx_milestones_contract ON payment_milestones(contract_code);
     CREATE INDEX IF NOT EXISTS idx_documents_contract ON documents(contract_code);
@@ -148,6 +192,10 @@ def init_db():
     CREATE INDEX IF NOT EXISTS idx_quotations_current ON quotations(is_current);
     CREATE INDEX IF NOT EXISTS idx_custom_reminders_status ON custom_reminders(status);
     CREATE INDEX IF NOT EXISTS idx_custom_reminders_due ON custom_reminders(due_date);
+    CREATE INDEX IF NOT EXISTS idx_beneficiaries_name ON beneficiaries(unit_name);
+    CREATE INDEX IF NOT EXISTS idx_beneficiaries_short ON beneficiaries(short_name);
+    CREATE INDEX IF NOT EXISTS idx_voucher_report_code ON payment_voucher_requests(report_code);
+    CREATE INDEX IF NOT EXISTS idx_voucher_beneficiary ON payment_voucher_requests(beneficiary_name);
     """)
 
     # Backward-compatible migration for databases created before event-based
@@ -178,8 +226,227 @@ def init_db():
                 f"ALTER TABLE custom_reminders ADD COLUMN {col_name} {col_def}"
             )
 
+    # Seed default beneficiaries if table is empty
+    seed_default_beneficiaries(cursor)
+
     conn.commit()
     conn.close()
+
+
+def seed_default_beneficiaries(cursor: sqlite3.Cursor):
+    """Nạp sẵn danh bạ tài khoản thụ hưởng từ thực tế hoạt động Hong Ming."""
+    count = cursor.execute("SELECT COUNT(*) FROM beneficiaries").fetchone()[0]
+    if count > 0:
+        return
+
+    default_beneficiaries = [
+        (
+            "CONG TY TNHH TO CHUC SU KIEN OMG",
+            "0071000764939",
+            "Vietcombank CN HCM",
+            "TCSK OMG",
+            "Thanh toán theo hợp đồng triển lãm VIMF",
+            None,
+            "VND",
+            5
+        ),
+        (
+            "CONG TY TNHH FINEPRO AUTOMATION",
+            "700020535654",
+            "Shinhanbank",
+            "FINEPRO",
+            "Thanh toán chi phí Thu Thập dữ liệu máy dập",
+            None,
+            "VND",
+            4
+        ),
+        (
+            "CÔNG TY TNHH ĐẦU TƯ PHÁT TRIỂN VÀ THƯƠNG MẠI THANH XUÂN",
+            "0101100497008",
+            "tại ngân hàng MB (Quân Đội)",
+            "THANH XUÂN",
+            "Thanh toán phí dịch vụ theo Hợp đồng và báo cáo NHNN",
+            None,
+            "VND",
+            3
+        ),
+        (
+            "CÔNG TY TNHH VIET NHAT SOLUTIONS",
+            "5592201007166",
+            "Agribank - CN Thành phố Thuận An Sóng Thần",
+            "VIỆT NHẬT",
+            "Thanh toán máy laptop, thiết bị IT",
+            "VBAAVNVX6524",
+            "VND",
+            3
+        ),
+        (
+            "CÔNG TY TNHH MTV CÔNG NGHỆ BÁCH DUY",
+            "203485179",
+            "Ngân Hàng TMCP Á Châu (ACB) - CN Bắc Sài Gòn",
+            "BÁCH DUY",
+            "THANH TOÁN MUA PIN MÁY QUÉT MÃ VẠCH RFR900",
+            None,
+            "VND",
+            3
+        ),
+        (
+            "CÔNG TY TNHH AVANTECH VIỆT NAM TECHNOLOGY",
+            "0851000023335",
+            "Ngân Hàng TMCP Ngoại Thương Việt Nam - CN Hà Thành",
+            "Advanteck",
+            "Thanh toán giá trị hợp đồng thiết bị Advantech",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "CONG TY TNHH WIN TECH SOLUTION",
+            "68968888",
+            "tại ngân hàng TMCP Á Châu - CN Bảy Hiền, Tp HCM",
+            "WIN TECH",
+            "TT gia hạn HT mở hóa đơn",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "CONG TY TNHH PHAT TRIEN CONG NGHE THAI SON",
+            "0491001474862",
+            "Ngân Hàng TMCP Ngoại Thương VN - CN Thăng Long HN",
+            "THÁI SƠN",
+            "TT CKS+EBH(bhxh) và Gia hạn CKS+PM Hải Quan",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "CÔNG TY TNHH TÍN BẢO LAN",
+            "1043233195",
+            "Ngân Hàng TMCP Ngoại Thương Việt Nam - CN Kỳ Đồng, HCM",
+            "TÍN BẢO LAN",
+            "Thanh toán theo hợp đồng thiết bị Tín Bảo Lan",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "CÔNG TY TNHH HẰNG ĐỈNH",
+            "5813207",
+            "Ngân Hàng TMCP Á Châu (ACB) – Chi Nhánh Bình Dương",
+            "HẰNG ĐỈNH",
+            "Thanh toán văn phòng phẩm (VPP)",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "CÔNG TY TNHH TM DV SX GLOBAL LINK",
+            "110003019737",
+            "VIETINBANK",
+            "GLOBAL LINK",
+            "Thanh toán phí thủ tục hải quan và vận chuyển HAWB",
+            None,
+            "VND",
+            3
+        ),
+        (
+            "CÔNG TY TNHH YẾN SÀO SONG KIM / TRAN KIM CHI",
+            "050131909079",
+            "Sacombank - Chi nhánh Bình Dương",
+            "SONG KIM",
+            "Thanh toán tiền mua quà tặng sự kiện, đối tác",
+            None,
+            "VND",
+            1
+        ),
+        (
+            "CTY TNHH TM TOAN PHU GIAI",
+            "1361168168",
+            "ACB - PGD HUYNH TAN PHAT",
+            "TOÀN PHÚ GIAI",
+            "Thanh toán chi phí vé máy bay công tác",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "CÔNG TY TNHH GIAO NHẬN HÀNG HẢI ĐỨC TRƯỜNG THỊNH",
+            "53597968",
+            "ACB – PGD Nguyễn Biểu",
+            "DTT",
+            "Thanh toán cước vận chuyển hàng không (Air Freight), phí lưu kho",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "CONG TY TNHH TRẢI NGHIỆM HAHA EXE",
+            "77774466",
+            "ACB - CN HCM",
+            "HAHA EXE",
+            "Thanh toán tiền vé máy bay công tác theo hóa đơn",
+            None,
+            "VND",
+            1
+        ),
+        (
+            "CONG TY CO PHAN CONG NGHE OMI",
+            "687979887979",
+            "ACB - CN HCM",
+            "OMI CALL",
+            "Thanh toán tổng đài OMI CALL theo hợp đồng",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "CONG TY TNHH A&B VIET NAM",
+            "0201000700555",
+            "Ngân hàng Vietcombank - CN Hà Tĩnh",
+            "A&B",
+            "Thanh toán chi phí thi công hệ thống cáp và lắp đặt IoT",
+            None,
+            "VND",
+            3
+        ),
+        (
+            "CÔNG TY TNHH THƯƠNG MẠI DỊCH VỤ CÔNG NGHỆ QUỐC TẾ HẰNG THANH",
+            "1039508686",
+            "Ngân hàng Vietcombank - Thị trấn Vôi - Lạng Giang – Bắc Giang",
+            "HẰNG THANH",
+            "Thanh toán theo hợp đồng và phụ lục phát sinh",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "CONG TY TNHH THUONG MAI THINH DAI PHAT",
+            "1272036868",
+            "VCB - CN BD",
+            "THỊNH ĐẠI PHÁT",
+            "Thanh toán văn phòng phẩm theo hóa đơn",
+            None,
+            "VND",
+            2
+        ),
+        (
+            "BHXH CO SO TAN DINH",
+            "0331009999999",
+            "Vietcombank – Chi nhánh Sài Gòn",
+            "BHXH TÂN ĐỊNH",
+            "Thanh toán bảo hiểm xã hội (BHXH) cho cán bộ nhân viên",
+            None,
+            "VND",
+            4
+        )
+    ]
+
+    cursor.executemany("""
+        INSERT OR IGNORE INTO beneficiaries 
+        (unit_name, account_number, bank_name, short_name, default_reason, swift_code, currency, usage_count)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, default_beneficiaries)
 
 
 def seed_database():
@@ -371,7 +638,11 @@ def get_contract_by_code(contract_code: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def activate_payment_milestone(milestone_id: int, trigger_date: str) -> Optional[Dict[str, Any]]:
+def activate_payment_milestone(
+    milestone_id: int,
+    trigger_date: str,
+    custom_term_days: Optional[int] = None
+) -> Optional[Dict[str, Any]]:
     """Check off a milestone trigger and derive its due date from its own T/T term."""
     trigger_dt = None
     for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"):
@@ -391,7 +662,21 @@ def activate_payment_milestone(milestone_id: int, trigger_date: str) -> Optional
         conn.close()
         return None
 
-    term_days = int(row["payment_term_days"] or 0)
+    if custom_term_days is not None:
+        try:
+            term_days = int(custom_term_days)
+        except (ValueError, TypeError):
+            term_days = int(row["payment_term_days"] or 0)
+    else:
+        term_days = int(row["payment_term_days"] or 0)
+
+    # Nghiệp vụ thực tế: Đợt 1 ký kết hợp đồng ghi là thanh toán ngay nhưng quy trình duyệt chi của kế toán thường mất khoảng 10 ngày
+    if term_days == 0:
+        name_lower = str(row["milestone_name"] or "").lower()
+        cond_lower = str(row["trigger_condition"] or "").lower()
+        if "đợt 1" in name_lower or "ký" in cond_lower or "kí" in cond_lower or "tạm ứng" in cond_lower or "cọc" in cond_lower:
+            term_days = 10
+
     due_dt = trigger_dt + timedelta(days=term_days)
     days_left = (due_dt.date() - SIMULATED_TODAY.date()).days
     if days_left < 0:
@@ -406,11 +691,11 @@ def activate_payment_milestone(milestone_id: int, trigger_date: str) -> Optional
     cursor.execute(
         """
         UPDATE payment_milestones
-        SET trigger_date = ?, due_date = ?, triggered = 1,
+        SET trigger_date = ?, due_date = ?, payment_term_days = ?, triggered = 1,
             status = ?, status_label = ?
         WHERE id = ?
         """,
-        (trigger_text, due_text, status, label, milestone_id),
+        (trigger_text, due_text, term_days, status, label, milestone_id),
     )
     conn.commit()
     cursor.execute("SELECT * FROM payment_milestones WHERE id = ?", (milestone_id,))

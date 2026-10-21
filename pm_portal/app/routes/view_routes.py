@@ -51,6 +51,30 @@ async def contracts_page(request: Request):
     )
 
 
+@router.get("/repair-contracts", response_class=HTMLResponse)
+@router.get("/repair-contract", response_class=HTMLResponse)
+async def repair_contracts_page(request: Request):
+    """Main repair contract generator view."""
+    from app.services.repair_contract_service import get_all_repair_contracts_list
+    try:
+        contracts = get_all_repair_contracts_list()
+        contract_count = len(contracts)
+    except Exception:
+        contract_count = 0
+
+    return templates.TemplateResponse(
+        "repair_contract_page.html",
+        {
+            "request": request,
+            "active_tab": "repair_contracts",
+            "models": CANDIDATE_MODELS,
+            "default_model": DEFAULT_MODEL,
+            "page_title": "Tạo Hợp Đồng Sửa Chữa & Bảo Trì Song Ngữ",
+            "contract_count": contract_count
+        }
+    )
+
+
 @router.get("/quotation", response_class=HTMLResponse)
 @router.get("/quotations", response_class=HTMLResponse)
 async def quotations_page(request: Request):
@@ -183,3 +207,36 @@ async def reminders_page(request: Request):
 async def payment_reminders_alias():
     """Alias for /reminders."""
     return RedirectResponse(url="/reminders", status_code=302)
+
+
+@router.get("/payment-requests", response_class=HTMLResponse)
+@router.get("/payment-request", response_class=HTMLResponse)
+@router.get("/don-xin-thanh-toan", response_class=HTMLResponse)
+async def payment_requests_page(request: Request):
+    """Trang lập Đơn Xin Thanh Toán (浤詺付款申请单) và quản lý tài khoản thụ hưởng."""
+    from app.services.beneficiary_service import list_beneficiaries
+    from app.services.payment_voucher_excel_service import list_voucher_history
+
+    try:
+        beneficiaries = list_beneficiaries(limit=100)
+    except Exception:
+        beneficiaries = []
+
+    try:
+        history = list_voucher_history(limit=20)
+    except Exception:
+        history = []
+
+    return templates.TemplateResponse(
+        "payment_request_page.html",
+        {
+            "request": request,
+            "active_tab": "payment_requests",
+            "models": CANDIDATE_MODELS,
+            "default_model": DEFAULT_MODEL,
+            "page_title": "Đơn Xin Thanh Toán · 浤詺付款申请单",
+            "beneficiaries": beneficiaries,
+            "history": history
+        }
+    )
+

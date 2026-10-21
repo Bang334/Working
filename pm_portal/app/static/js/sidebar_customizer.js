@@ -32,6 +32,14 @@ const SidebarTabManager = {
       desc: "Soạn thảo và xuất file hợp đồng mẫu song ngữ Việt - Trung",
     },
     {
+      id: "repair_contracts",
+      section: "project_flow",
+      name: "Hợp Đồng Sửa Chữa",
+      icon: "🛠️",
+      url: "/repair-contracts",
+      desc: "Soạn thảo và bóc tách hợp đồng dịch vụ sửa chữa thiết bị, linh kiện",
+    },
+    {
       id: "po",
       section: "project_flow",
       name: "Đơn Đặt Mua Hàng (PO)",
@@ -62,6 +70,14 @@ const SidebarTabManager = {
       icon: "⏰",
       url: "/reminders",
       desc: "Đề nghị thanh toán, thư nhắc nợ khách hàng & lịch hẹn cá nhân",
+    },
+    {
+      id: "payment_requests",
+      section: "project_flow",
+      name: "Đơn Xin Thanh Toán",
+      icon: "💳",
+      url: "/payment-requests",
+      desc: "Lập đơn xin thanh toán chi phí nội bộ & nhà cung cấp (浤詺付款申请单)",
     },
     {
       id: "liquidation",

@@ -11,10 +11,15 @@ from app.controllers.acceptance_controller import (
     download_acceptance_file_controller,
     generate_acceptance_excel_controller,
     generate_acceptance_word_controller,
-    parse_raw_acceptance_text_controller,
+    generate_installation_acceptance_word_controller,
+    get_installation_sample_data_controller,
     list_acceptance_files_controller,
+    parse_installation_acceptance_text_controller,
+    parse_raw_acceptance_text_controller,
     process_repair_workbook_upload_controller,
     render_acceptance_preview_controller,
+    render_installation_acceptance_preview_controller,
+    upload_and_parse_installation_file_controller,
 )
 from app.controllers.ai_controller import parse_raw_contract_text_controller
 from app.controllers.contract_controller import (
@@ -34,7 +39,7 @@ from app.controllers.reminder_controller import (
     search_google_drive_controller,
     send_gmail_message_controller,
 )
-from app.models.acceptance_models import AcceptanceAIParseRequest
+from app.models.acceptance_models import AcceptanceAIParseRequest, InstallationAIParseRequest
 from app.models.contract_models import AIParseRequest
 from app.models.reminder_models import ReminderAIParseRequest
 from app.controllers.custom_reminder_controller import (
@@ -61,10 +66,32 @@ from app.controllers.quotation_controller import (
     save_quotation_controller,
 )
 from app.models.quotation_models import QuotationAIParseRequest, QuotationSaveRequest
+from app.models.repair_contract_models import RepairAIParseRequest
+from app.controllers.repair_contract_controller import (
+    delete_repair_contract_controller,
+    download_repair_contract_file_controller,
+    generate_repair_contract_controller,
+    get_repair_contract_detail_controller,
+    list_repair_contracts_controller,
+    parse_raw_repair_contract_text_controller,
+    save_repair_contract_controller,
+)
 from app.services.font_service import (
     get_active_font_setting,
     get_all_fonts,
     save_active_font_setting,
+)
+from app.controllers.payment_voucher_controller import (
+    ai_extract_voucher_controller,
+    ai_translate_reason_controller,
+    delete_beneficiary_controller,
+    delete_voucher_history_controller,
+    download_voucher_file_controller,
+    generate_voucher_excel_controller,
+    get_next_report_code_controller,
+    list_beneficiaries_controller,
+    list_voucher_history_controller,
+    save_beneficiary_controller,
 )
 
 logger = logging.getLogger(__name__)
@@ -189,6 +216,66 @@ async def get_contract_dossier_endpoint(identifier: str):
     return get_contract_dossier_controller(identifier)
 
 
+@router.post("/contracts/ai-extract-uploaded-file")
+async def extract_uploaded_contract_file_endpoint(
+    file: UploadFile = File(..., description="File hợp đồng có sẵn (.docx, .pdf, .xlsx, ảnh scan)"),
+    user_notes: Optional[str] = Form("", description="Ghi chú thêm nếu có")
+):
+    """Use Gemini AI to extract existing contract details from an uploaded file."""
+    try:
+        from app.services.ai_service import extract_existing_contract_from_file
+        file_bytes = await file.read()
+        result = extract_existing_contract_from_file(
+            file_bytes=file_bytes,
+            file_name=file.filename,
+            file_mime_type=file.content_type,
+            raw_user_notes=user_notes or ""
+        )
+        return {
+            "status": "success",
+            "message": f"Gemini AI đã phân tích thành công tệp '{file.filename}'!",
+            "data": result
+        }
+    except Exception as exc:
+        logger.exception("Error extracting contract from file: %s", exc)
+        return {
+            "status": "error",
+            "message": f"Lỗi phân tích tệp hợp đồng: {str(exc)}"
+        }
+
+
+@router.post("/contracts/import-existing")
+async def import_existing_contract_endpoint(
+    file: Optional[UploadFile] = File(None, description="File hợp đồng đính kèm"),
+    contract_data: str = Form(..., description="Dữ liệu JSON của hợp đồng")
+):
+    """Import an existing contract with file and payment milestones into the system."""
+    try:
+        import json
+        from app.services.contract_service import save_imported_contract
+        
+        parsed_data = json.loads(contract_data) if isinstance(contract_data, str) else contract_data
+        file_bytes = None
+        file_name = None
+        if file:
+            file_bytes = await file.read()
+            file_name = file.filename
+            
+        result = save_imported_contract(
+            contract_data=parsed_data,
+            file_bytes=file_bytes,
+            file_name=file_name
+        )
+        return result
+    except Exception as exc:
+        logger.exception("Error importing existing contract: %s", exc)
+        return {
+            "status": "error",
+            "message": f"Lỗi lưu hợp đồng có sẵn: {str(exc)}"
+        }
+
+
+
 # ==========================================
 # ACCEPTANCE (NGHIỆM THU) ENDPOINTS
 # ==========================================
@@ -236,6 +323,41 @@ async def download_acceptance_file(file_name: str) -> FileResponse:
 async def list_acceptance_files():
     """List all created acceptance files in Ho So Du An/Nghiem Thu."""
     return list_acceptance_files_controller()
+
+
+# Installation Acceptance (Nghiệm thu lắp đặt & bàn giao đưa vào sử dụng)
+@router.post("/acceptance/installation/generate-word")
+async def generate_installation_acceptance_word_endpoint(payload: Dict[str, Any]):
+    """Generate Installation Acceptance Word (.docx) document matching template 1:1."""
+    return generate_installation_acceptance_word_controller(payload)
+
+
+@router.post("/acceptance/installation/preview")
+async def render_installation_acceptance_preview(payload: Dict[str, Any]):
+    """Recalculate and return live HTML preview for installation acceptance."""
+    return render_installation_acceptance_preview_controller(payload)
+
+
+@router.post("/acceptance/installation/ai-parse")
+async def parse_installation_acceptance_ai(request: InstallationAIParseRequest):
+    """Analyze contract or handover text with Gemini AI to extract installation acceptance items."""
+    return parse_installation_acceptance_text_controller(request)
+
+
+@router.get("/acceptance/installation/sample-data")
+async def get_installation_acceptance_sample():
+    """Get standard CX Technology sample data for installation acceptance."""
+    return get_installation_sample_data_controller()
+
+
+@router.post("/acceptance/installation/upload-and-parse")
+async def upload_and_parse_installation_file_endpoint(
+    file: UploadFile = File(...),
+    model_name: Optional[str] = Form(None)
+):
+    """Upload contract or draft document (.docx, .xlsx, .txt), extract text and parse with AI."""
+    return await upload_and_parse_installation_file_controller(file, model_name)
+
 
 
 
@@ -358,9 +480,10 @@ async def get_single_contract_dossier(contract_code: str):
 async def activate_milestone_endpoint(milestone_id: int, payload: Dict[str, Any]):
     """Mark a milestone trigger complete and start its own T/T countdown."""
     trigger_date = payload.get("trigger_date")
+    custom_term_days = payload.get("term_days")
     if not trigger_date:
         raise HTTPException(status_code=400, detail="Vui lòng nhập ngày hoàn thành điều kiện.")
-    milestone = activate_payment_milestone(milestone_id, str(trigger_date))
+    milestone = activate_payment_milestone(milestone_id, str(trigger_date), custom_term_days=custom_term_days)
     if not milestone:
         raise HTTPException(status_code=404, detail="Không tìm thấy đợt thanh toán.")
     return {
@@ -780,5 +903,139 @@ async def open_custom_reminder_folder_endpoint(reminder_id: int):
 async def list_project_files_for_reminders_endpoint():
     """List available project files from Ho So Du An to link with 1 click."""
     return await list_available_project_files_controller()
+
+
+# ==========================================
+# REPAIR CONTRACT ENDPOINTS
+# ==========================================
+
+@router.post("/ai/parse-repair-contract")
+async def parse_repair_contract_with_ai_endpoint(request: RepairAIParseRequest):
+    """Analyze repair text, quotation or file with Gemini AI to extract repair contract schema."""
+    return parse_raw_repair_contract_text_controller(request)
+
+
+@router.post("/ai/parse-repair-contract-file")
+async def parse_repair_contract_file_with_ai_endpoint(
+    file: UploadFile = File(...),
+    raw_text: Optional[str] = Form(""),
+    model_name: Optional[str] = Form(None)
+):
+    """Analyze uploaded Excel sheet or image for repair contract directly with Gemini AI."""
+    import base64
+    content = await file.read()
+    request = RepairAIParseRequest(
+        raw_text=raw_text or "",
+        file_base64=base64.b64encode(content).decode("ascii"),
+        file_name=file.filename,
+        file_mime=file.content_type,
+        model_name=model_name
+    )
+    return parse_raw_repair_contract_text_controller(request)
+
+
+@router.post("/repair-contracts/generate")
+async def generate_repair_contract_endpoint(contract_data: Dict[str, Any]):
+    """Generate official Word (.docx) file for repair contract."""
+    return generate_repair_contract_controller(contract_data)
+
+
+@router.post("/repair-contracts/save")
+async def save_repair_contract_endpoint(contract_data: Dict[str, Any]):
+    """Save repair contract to SQLite database and export Word file."""
+    return save_repair_contract_controller(contract_data)
+
+
+@router.get("/repair-contracts/list")
+async def list_repair_contracts_endpoint():
+    """Retrieve list of created repair contracts."""
+    return list_repair_contracts_controller()
+
+
+@router.get("/repair-contracts/detail/{contract_code}")
+async def get_repair_contract_detail_endpoint(contract_code: str):
+    """Retrieve full repair contract details."""
+    return get_repair_contract_detail_controller(contract_code)
+
+
+@router.delete("/repair-contracts/{contract_code}")
+async def delete_repair_contract_endpoint(contract_code: str):
+    """Delete a repair contract."""
+    return delete_repair_contract_controller(contract_code)
+
+
+@router.get("/repair-contracts/download/{filename}")
+async def download_repair_contract_file_endpoint(filename: str):
+    """Download a generated repair contract file."""
+    return download_repair_contract_file_controller(filename)
+
+
+# =========================================================================
+# PAYMENT VOUCHER / ĐƠN XIN THANH TOÁN (浤詺付款申请单)
+# =========================================================================
+
+@router.post("/payment-requests/ai-extract")
+async def ai_extract_voucher_endpoint(payload: Dict[str, Any]):
+    """AI trích xuất thông tin Đơn xin thanh toán từ văn bản tự do."""
+    return ai_extract_voucher_controller(payload)
+
+
+@router.post("/payment-requests/ai-translate-reason")
+async def ai_translate_reason_endpoint(payload: Dict[str, Any]):
+    """AI dịch lý do thanh toán sang tiếng Trung song ngữ."""
+    return ai_translate_reason_controller(payload)
+
+
+@router.get("/payment-requests/next-code")
+async def get_next_report_code_endpoint(
+    employee_code: str = "HVM007",
+    date: Optional[str] = None
+):
+    """Lấy mã số báo đơn tiếp theo theo mã nhân viên và ngày (tự động đếm số bản trong ngày)."""
+    return get_next_report_code_controller(employee_code=employee_code, target_date=date)
+
+
+@router.post("/payment-requests/generate-excel")
+async def generate_voucher_excel_endpoint(payload: Dict[str, Any]):
+    """Tạo và xuất file Excel Đơn xin thanh toán chuẩn 1:1."""
+    return generate_voucher_excel_controller(payload)
+
+
+@router.get("/payment-requests/beneficiaries")
+async def list_beneficiaries_endpoint(search: Optional[str] = None):
+    """Lấy danh sách các tài khoản thụ hưởng trong sổ tay."""
+    return list_beneficiaries_controller(search)
+
+
+@router.post("/payment-requests/beneficiaries")
+async def save_beneficiary_endpoint(payload: Dict[str, Any]):
+    """Thêm hoặc cập nhật tài khoản thụ hưởng vào sổ tay."""
+    return save_beneficiary_controller(payload)
+
+
+@router.delete("/payment-requests/beneficiaries/{beneficiary_id}")
+async def delete_beneficiary_endpoint(beneficiary_id: int):
+    """Xóa tài khoản thụ hưởng khỏi sổ tay."""
+    return delete_beneficiary_controller(beneficiary_id)
+
+
+@router.get("/payment-requests/history")
+async def list_voucher_history_endpoint(search: Optional[str] = None, limit: int = 100):
+    """Lấy lịch sử các đơn xin thanh toán đã tạo, có hỗ trợ tìm kiếm tra cứu."""
+    return list_voucher_history_controller(search=search, limit=limit)
+
+
+@router.delete("/payment-requests/history/{voucher_id}")
+async def delete_voucher_history_endpoint(voucher_id: int):
+    """Xóa một bản ghi đơn xin thanh toán khỏi lịch sử."""
+    return delete_voucher_history_controller(voucher_id)
+
+
+@router.get("/payment-requests/download/{filename}")
+async def download_voucher_file_endpoint(filename: str):
+    """Tải file Excel đơn xin thanh toán đã tạo."""
+    return download_voucher_file_controller(filename)
+
+
 
 
