@@ -137,7 +137,8 @@ def generate_payment_request_from_extracted_data(data: Dict[str, Any]) -> Dict[s
     user_downloads = Path.home() / "Downloads"
     if user_downloads.exists():
         try:
-            wb.save(str(user_downloads / file_name))
+            import shutil
+            shutil.copy2(str(out_path), str(user_downloads / file_name))
         except Exception:
             pass
 

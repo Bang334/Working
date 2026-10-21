@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 import urllib.parse
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from app.models.eco_prime_models import (
     EcoPrimeQuotationData,
@@ -74,7 +74,9 @@ async def export_excel_endpoint(data: EcoPrimeQuotationData):
     """API xuất và tải trực tiếp file Excel Báo Giá ECO PRIME chuẩn 1:1."""
     try:
         result = generate_eco_prime_excel(data, save_to_disk=True)
-        byte_stream = result["bytes_io"]
+        content_bytes = result.get("content_bytes")
+        if not content_bytes and "bytes_io" in result:
+            content_bytes = result["bytes_io"].getvalue()
         file_name = result["file_name"]
 
         # Mã hóa filename theo RFC 5987 để trình duyệt tải đúng tiếng Việt / Trung
@@ -84,8 +86,8 @@ async def export_excel_endpoint(data: EcoPrimeQuotationData):
             "Access-Control-Expose-Headers": "Content-Disposition"
         }
 
-        return StreamingResponse(
-            byte_stream,
+        return Response(
+            content=content_bytes,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers=headers
         )

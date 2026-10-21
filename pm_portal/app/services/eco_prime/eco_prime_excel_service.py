@@ -291,19 +291,36 @@ def generate_eco_prime_excel(
     ws.row_dimensions[r_term3].height = 25.0
 
     # 9. Khóa chặt vùng in & Cấu hình Page Setup A4
-    ws.freeze_panes = "A13"
+    # Mẫu gốc không dùng freeze_panes (báo giá 1 trang chuẩn A4).
+    # Đặt topLeftCell = "A1" để mở từ đầu trang (A1), tránh bị kẹt góc nhìn ở dòng A11.
+    ws.freeze_panes = None
     ws.print_area = f"'{ws.title}'!$A$1:$H${r_term3}"
     ws.page_setup.paperSize = 9  # A4
     ws.page_setup.orientation = "portrait"
     ws.page_setup.scale = 38
     ws.sheet_properties.pageSetUpPr.fitToPage = False
 
+    ws.sheet_view.topLeftCell = "A1"
     if hasattr(ws, "views") and hasattr(ws.views, "sheetView") and ws.views.sheetView:
-        ws.views.sheetView[0].view = "pageBreakPreview"
-        ws.views.sheetView[0].showGridLines = False
+        for sv in ws.views.sheetView:
+            sv.view = "pageBreakPreview"
+            sv.showGridLines = False
+            sv.topLeftCell = "A1"
+            sv.zoomScale = 60
+            sv.pane = None
+            if hasattr(sv, "selection") and sv.selection:
+                sv.selection[0].pane = None
+                sv.selection[0].activeCell = "A1"
+                sv.selection[0].sqref = "A1"
     ws.sheet_view.zoomScale = 60
 
-    # 10. Lưu workbook hoặc xuất BytesIO
+    # 10. Lưu workbook vào byte_stream một lần duy nhất
+    # (openpyxl đóng stream file ảnh trong workbook khi save, không được gọi wb.save lần 2)
+    byte_stream = io.BytesIO()
+    wb.save(byte_stream)
+    content_bytes = byte_stream.getvalue()
+    byte_stream.seek(0)
+
     saved_file_path = None
     if save_to_disk:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -313,22 +330,18 @@ def generate_eco_prime_excel(
         fname = custom_output_filename or f"ECO_PRIME_Bao_Gia_{clean_cust or 'Project'}_{timestamp}.xlsx"
         out_file = target_dir / fname
         try:
-            wb.save(str(out_file))
+            out_file.write_bytes(content_bytes)
             saved_file_path = str(out_file)
         except PermissionError:
             out_file_v2 = target_dir / f"{out_file.stem}_v2.xlsx"
-            wb.save(str(out_file_v2))
+            out_file_v2.write_bytes(content_bytes)
             saved_file_path = str(out_file_v2)
 
-    # Xuất BytesIO cho web tải trực tiếp
-    byte_stream = io.BytesIO()
-    wb.save(byte_stream)
-    byte_stream.seek(0)
-    
     return {
         "file_name": custom_output_filename or f"ECO_PRIME_Bao_Gia_{clean_cust or 'Project'}.xlsx",
         "file_path": saved_file_path,
         "bytes_io": byte_stream,
+        "content_bytes": content_bytes,
         "sheet_title": ws.title,
         "item_count": num_items,
         "last_row": r_term3,
