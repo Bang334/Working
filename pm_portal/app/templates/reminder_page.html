@@ -203,6 +203,66 @@
   </style>
 
   <!-- ============================================================== -->
+  <!-- KHỐI MỚI: TẢI LÊN ĐA TỆP HỒ SƠ & GEMINI AI BÓC TÁCH TỰ ĐỘNG -->
+  <!-- ============================================================== -->
+  <div class="card" style="border: 1.5px solid #8b5cf6; background: linear-gradient(180deg, #faf5ff 0%, #ffffff 80px); box-shadow: 0 4px 18px rgba(139, 92, 246, 0.08); margin-bottom: 1.5rem; border-radius: 10px; overflow: hidden;">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 1.25rem; background: #f5f3ff; border-bottom: 1px solid #e9d5ff; flex-wrap: wrap; gap: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #7c3aed; color: #fff; border-radius: 6px; font-weight: 800; font-size: 0.95rem;">✨</span>
+        <div>
+          <span style="font-weight: 700; color: #5b21b6; font-size: 1.05rem;">Tải Lên Hồ Sơ Đa Tệp & Gemini AI Bóc Tách Đề Nghị Thanh Toán</span>
+          <span class="badge-pill" style="background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; font-size: 0.72rem; padding: 2px 8px; margin-left: 0.5rem; font-weight: 700;">Hỗ Trợ Gửi Nhiều File</span>
+        </div>
+      </div>
+      <span style="font-size: 0.8rem; color: #6b21a8;">Tải lên cùng lúc: Biên bản nghiệm thu (.docx), Đơn thanh toán (.xlsx), Hợp đồng scan, PDF...</span>
+    </div>
+
+    <div style="padding: 1.25rem;">
+      <!-- Dropzone & File Input -->
+      <div id="multiFileDropzone" style="border: 2px dashed #c4b5fd; background: #fdfcff; border-radius: 8px; padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+        <input type="file" id="multiFilesInput" multiple accept=".docx,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp,.txt,.csv" style="display: none;" onchange="ReminderEditor.onFilesSelected(this.files)">
+        <div onclick="document.getElementById('multiFilesInput').click();">
+          <svg style="width: 42px; height: 42px; color: #8b5cf6; margin-bottom: 0.5rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div style="font-weight: 700; color: #6d28d9; font-size: 0.95rem;">Kéo thả nhiều tệp vào đây hoặc <span style="text-decoration: underline;">Bấm để duyệt chọn tệp</span></div>
+          <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.35rem;">Hỗ trợ: Word (.docx), Excel (.xlsx), PDF, Ảnh chụp nghiệm thu / scan (JPG, PNG)</div>
+        </div>
+      </div>
+
+      <!-- Selected Files Preview List -->
+      <div id="selectedFilesContainer" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <strong style="font-size: 0.85rem; color: #334155;">📁 Danh sách tệp đã chọn (<span id="selectedFilesCount">0</span> tệp):</strong>
+          <button type="button" class="btn btn-outline btn-sm" onclick="ReminderEditor.clearSelectedFiles()" style="font-size: 0.74rem; padding: 2px 8px; color: #dc2626; border-color: #fca5a5;">Xóa tất cả</button>
+        </div>
+        <div id="selectedFilesBadges" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <!-- Dynamically populated chips -->
+        </div>
+
+        <!-- Action Bar: Model selector + AI Extract Button -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid #e2e8f0; flex-wrap: wrap; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="font-size: 0.82rem; color: #475569; font-weight: 600;">Mô hình Gemini:</label>
+            <select id="selectAiModelMulti" class="form-control" style="font-size: 0.82rem; padding: 0.3rem 0.6rem; width: 190px;">
+              {% for m in models %}
+              <option value="{{ m }}" {% if m == default_model %}selected{% endif %}>{{ m }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button type="button" class="btn btn-primary" id="btnExtractMultiFiles" onclick="ReminderEditor.extractFromUploadedFiles()" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); border: none; font-weight: 700; padding: 0.55rem 1.35rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+            <span>✨ Gemini Phân Tích & Bóc Tách Hồ Sơ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Extraction Result Box -->
+      <div id="aiExtractionResultCard" style="display: none; margin-top: 1.25rem; border: 1.5px solid #10b981; border-radius: 8px; background: #f0fdf4; padding: 1.15rem; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.08);">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
   <!-- BƯỚC 1: QUẢN LÝ HỒ SƠ HỢP ĐỒNG & CHỌN ĐỢT THANH TOÁN (SQLITE) -->
   <!-- ============================================================== -->
   <div class="card contract-dossier-panel" style="border: 1.5px solid #bfdbfe; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 80px); box-shadow: 0 4px 18px rgba(30, 58, 138, 0.05); margin-bottom: 1.5rem;">
@@ -1151,7 +1211,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/reminder_editor.js?v=4.5"></script>
+<script src="/static/js/reminder_editor.js?v=4.6"></script>
 <script src="/static/js/custom_reminder_manager.js?v=1.0"></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {

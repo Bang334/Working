@@ -34,6 +34,8 @@ from app.controllers.contract_controller import (
 )
 from app.controllers.reminder_controller import (
     create_gmail_draft_controller,
+    extract_payment_documents_controller,
+    generate_payment_request_from_extracted_controller,
     parse_raw_reminder_text_controller,
     render_reminder_preview_controller,
     search_google_drive_controller,
@@ -369,6 +371,35 @@ async def upload_and_parse_installation_file_endpoint(
 async def parse_reminder_with_ai(request: ReminderAIParseRequest):
     """Analyze payment request or reminder notes with Gemini AI."""
     return parse_raw_reminder_text_controller(request)
+
+
+@router.post("/reminders/ai-extract-documents")
+async def extract_payment_documents_endpoint(
+    files: List[UploadFile] = File(...),
+    preferred_model: Optional[str] = Form(None)
+):
+    """Extract payment request data from multiple uploaded documents (Word, Excel, PDF, Images)."""
+    return await extract_payment_documents_controller(files=files, preferred_model=preferred_model)
+
+
+@router.post("/reminders/generate-payment-request-extracted")
+async def generate_payment_request_extracted_endpoint(payload: Dict[str, Any]):
+    """Generate official Excel payment request (請款單) from extracted multi-document data."""
+    return generate_payment_request_from_extracted_controller(payload)
+
+
+@router.get("/payment-requests/download-custom/{filename}")
+async def download_custom_payment_request_endpoint(filename: str):
+    """Download custom generated payment request Excel file."""
+    from app.config import WORKING_DIR
+    target = WORKING_DIR / "Ho So Du An" / "Yeu Cau Thanh Toan" / filename
+    if not target.exists():
+        raise HTTPException(status_code=404, detail="Không tìm thấy file yêu cầu thanh toán trên máy.")
+    return FileResponse(
+        path=str(target),
+        filename=filename,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 
 @router.post("/reminders/preview")

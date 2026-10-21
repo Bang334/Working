@@ -1493,6 +1493,286 @@ const ReminderEditor = {
         btn.disabled = false;
       }
     }
+  },
+
+  // ==========================================
+  // MULTI-FILE UPLOAD & GEMINI EXTRACTION
+  // ==========================================
+  multiFiles: [],
+  extractedPaymentData: null,
+  lastExtractedExcelPath: "",
+
+  onFilesSelected(fileList) {
+    if (!fileList || fileList.length === 0) return;
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      if (!this.multiFiles.some(f => f.name === file.name && f.size === file.size)) {
+        this.multiFiles.push(file);
+      }
+    }
+    this.renderSelectedFiles();
+  },
+
+  removeSelectedFile(index) {
+    if (index >= 0 && index < this.multiFiles.length) {
+      this.multiFiles.splice(index, 1);
+      this.renderSelectedFiles();
+    }
+  },
+
+  clearSelectedFiles() {
+    this.multiFiles = [];
+    const input = document.getElementById("multiFilesInput");
+    if (input) input.value = "";
+    this.renderSelectedFiles();
+    const resBox = document.getElementById("aiExtractionResultCard");
+    if (resBox) resBox.style.display = "none";
+  },
+
+  renderSelectedFiles() {
+    const container = document.getElementById("selectedFilesContainer");
+    const countEl = document.getElementById("selectedFilesCount");
+    const badgesEl = document.getElementById("selectedFilesBadges");
+    if (!container || !badgesEl) return;
+
+    if (this.multiFiles.length === 0) {
+      container.style.display = "none";
+      return;
+    }
+
+    container.style.display = "block";
+    if (countEl) countEl.textContent = this.multiFiles.length;
+
+    badgesEl.innerHTML = "";
+    this.multiFiles.forEach((file, idx) => {
+      const ext = file.name.split(".").pop().toLowerCase();
+      let icon = "📄";
+      let tagColor = "#3b82f6";
+      let tagBg = "#eff6ff";
+      if (ext === "xlsx" || ext === "xls") {
+        icon = "📊";
+        tagColor = "#16a34a";
+        tagBg = "#f0fdf4";
+      } else if (ext === "docx" || ext === "doc") {
+        icon = "📝";
+        tagColor = "#2563eb";
+        tagBg = "#eff6ff";
+      } else if (ext === "pdf") {
+        icon = "📕";
+        tagColor = "#dc2626";
+        tagBg = "#fef2f2";
+      } else if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
+        icon = "🖼️";
+        tagColor = "#8b5cf6";
+        tagBg = "#faf5ff";
+      }
+
+      const sizeKb = Math.round(file.size / 1024);
+      const chip = document.createElement("div");
+      chip.style.cssText = `
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        padding: 4px 10px; background: ${tagBg}; border: 1px solid ${tagColor}40;
+        border-radius: 6px; font-size: 0.8rem; color: #1e293b; font-weight: 500;
+      `;
+      chip.innerHTML = `
+        <span>${icon}</span>
+        <span style="font-weight: 600; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${this.escapeHtml(file.name)}</span>
+        <span style="color: #64748b; font-size: 0.72rem;">(${sizeKb} KB)</span>
+        <button type="button" onclick="ReminderEditor.removeSelectedFile(${idx})" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 0.85rem; padding: 0 2px; line-height: 1;" title="Bỏ tệp này">✕</button>
+      `;
+      badgesEl.appendChild(chip);
+    });
+  },
+
+  async extractFromUploadedFiles() {
+    if (this.multiFiles.length === 0) {
+      if (window.showToast) window.showToast("Vui lòng chọn ít nhất một tệp tài liệu trước khi phân tích.", "warning");
+      return;
+    }
+
+    const btn = document.getElementById("btnExtractMultiFiles");
+    const originalText = btn ? btn.innerHTML : "";
+    if (btn) {
+      btn.innerHTML = "⏳ Gemini đang đọc & đối chiếu đa tệp...";
+      btn.disabled = true;
+    }
+
+    try {
+      const formData = new FormData();
+      for (const file of this.multiFiles) {
+        formData.append("files", file);
+      }
+      const modelSelect = document.getElementById("selectAiModelMulti");
+      if (modelSelect && modelSelect.value) {
+        formData.append("preferred_model", modelSelect.value);
+      }
+
+      const res = await fetch("/api/v1/reminders/ai-extract-documents", {
+        method: "POST",
+        body: formData
+      });
+      const result = await res.json();
+
+      if (res.ok && result.status === "success" && result.data) {
+        this.extractedPaymentData = result.data;
+        if (window.showToast) window.showToast(result.message || "Bóc tách đa tệp thành công!", "success");
+        this.renderAiExtractionResult(result.data);
+      } else {
+        const msg = result.message || "Không thể phân tích các tệp đã tải lên.";
+        if (window.showToast) window.showToast(msg, "error");
+      }
+    } catch (err) {
+      if (window.showToast) window.showToast(`Lỗi gọi Gemini AI: ${err.message}`, "error");
+    } finally {
+      if (btn) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+  },
+
+  renderAiExtractionResult(data) {
+    const card = document.getElementById("aiExtractionResultCard");
+    if (!card) return;
+
+    const amtFmt = (Number(data.payment_amount) || 0).toLocaleString("vi-VN");
+    const totalFmt = (Number(data.total_contract_amount) || 0).toLocaleString("vi-VN");
+    const pct = data.milestone_percentage || "20";
+
+    card.style.display = "block";
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.85rem; border-bottom: 1px dashed #86efac; padding-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <span class="badge-pill green" style="font-size: 0.76rem; font-weight: 700;">✅ Bóc Tách Thành Công</span>
+          <span style="font-weight: 700; color: #166534; font-size: 1.05rem; margin-left: 0.5rem;">${this.escapeHtml(data.customer_name_vi || "Khách hàng")}</span>
+        </div>
+        <div style="font-size: 0.82rem; color: #15803d; font-weight: 600;">
+          Hợp đồng: <span style="font-family: monospace; background: #dcfce7; padding: 2px 6px; border-radius: 4px;">${this.escapeHtml(data.contract_code || "N/A")}</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; font-size: 0.85rem; color: #1e293b; margin-bottom: 1rem;">
+        <div><strong>Dự án:</strong> <span style="color: #334155;">${this.escapeHtml(data.project_name_vi || "-")}</span></div>
+        <div><strong>Đợt thanh toán:</strong> <span style="color: #2563eb; font-weight: 700;">${this.escapeHtml(data.milestone_name || `Đợt (${pct}%)`)}</span></div>
+        <div><strong>Số tiền đề nghị:</strong> <span style="color: #16a34a; font-weight: 800; font-size: 1.02rem;">${amtFmt} đ</span> <span style="color: #64748b; font-size: 0.78rem;">(Tổng HĐ: ${totalFmt} đ)</span></div>
+        <div><strong>Hạn thanh toán:</strong> <span style="color: #d97706; font-weight: 700;">${this.escapeHtml(data.due_date || "31/10/2026")}</span></div>
+      </div>
+
+      ${data.payment_terms_summary ? `
+      <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 6px; padding: 0.65rem 0.85rem; font-size: 0.8rem; color: #334155; margin-bottom: 1rem; max-height: 110px; overflow-y: auto; white-space: pre-wrap;">
+        <strong style="color: #15803d;">📋 Tiến độ thanh toán (sẽ ghi vào mục Ghi chú 備註):</strong>\n${this.escapeHtml(data.payment_terms_summary)}
+      </div>` : ""}
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center; justify-content: flex-end; padding-top: 0.5rem; border-top: 1px solid #bbf7d0;">
+        <button type="button" class="btn btn-primary" onclick="ReminderEditor.generateExcelFromExtracted(this)" style="font-weight: 700; background: #16a34a; border-color: #16a34a; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem;">
+          <span>📊 Xuất Phiếu Yêu Cầu Thanh Toán (Excel Sheet CX / 712TR)</span>
+        </button>
+
+        <button type="button" class="btn btn-outline" id="btnOpenExtractedExcel" onclick="ReminderEditor.openLastExtractedFile(this)" style="display: none; font-weight: 700; color: #2563eb; border-color: #2563eb; background: #eff6ff;" title="Bật trực tiếp file Excel trên máy tính bằng Excel/WPS">
+          <span>📂 Mở File Trên Máy</span>
+        </button>
+
+        <button type="button" class="btn btn-secondary" onclick="ReminderEditor.applyExtractedToEmailForm()" style="font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem;">
+          <span>📝 Đưa Dữ Liệu Vào Soạn Thư & Gửi Email (Bước 2) ➔</span>
+        </button>
+      </div>
+    `;
+
+    card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  },
+
+  async generateExcelFromExtracted(btnEl) {
+    if (!this.extractedPaymentData) {
+      if (window.showToast) window.showToast("Chưa có dữ liệu bóc tách.", "warning");
+      return;
+    }
+    const origHtml = btnEl ? btnEl.innerHTML : "";
+    if (btnEl) {
+      btnEl.innerHTML = "⏳ Đang tạo Excel...";
+      btnEl.disabled = true;
+    }
+
+    try {
+      const res = await fetch("/api/v1/reminders/generate-payment-request-extracted", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(this.extractedPaymentData)
+      });
+      const data = await res.json();
+
+      if (res.ok && data.status === "success") {
+        this.lastExtractedExcelPath = data.file_path || "";
+        if (window.showToast) window.showToast(`Đã xuất thành công file "${data.file_name}"!`, "success");
+
+        // Hiển thị nút Mở file trên máy
+        const btnOpen = document.getElementById("btnOpenExtractedExcel");
+        if (btnOpen) btnOpen.style.display = "inline-flex";
+
+        // Tự động mở file trên Windows nếu có đường dẫn
+        if (data.file_path) {
+          await this.openLastExtractedFile();
+        } else if (data.download_url) {
+          const a = document.createElement("a");
+          a.href = data.download_url;
+          a.download = data.file_name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      } else {
+        if (window.showToast) window.showToast(data.message || "Lỗi tạo file Excel.", "error");
+      }
+    } catch (err) {
+      if (window.showToast) window.showToast(`Lỗi tạo file: ${err.message}`, "error");
+    } finally {
+      if (btnEl) {
+        btnEl.innerHTML = origHtml;
+        btnEl.disabled = false;
+      }
+    }
+  },
+
+  async openLastExtractedFile(btnEl) {
+    if (!this.lastExtractedExcelPath) {
+      if (window.showToast) window.showToast("Không tìm thấy đường dẫn file.", "warning");
+      return;
+    }
+    await openSystemFileDirectly(this.lastExtractedExcelPath, btnEl);
+  },
+
+  applyExtractedToEmailForm() {
+    if (!this.extractedPaymentData) return;
+    const d = this.extractedPaymentData;
+
+    // Cập nhật các trường email ở Bước 2
+    const toInput = document.getElementById("emailToInput");
+    if (toInput && Array.isArray(d.email_to) && d.email_to.length > 0) {
+      toInput.value = d.email_to.join(", ");
+    }
+    const ccInput = document.getElementById("emailCcInput");
+    if (ccInput && Array.isArray(d.email_cc) && d.email_cc.length > 0) {
+      ccInput.value = d.email_cc.join(", ");
+    }
+    const subjectInput = document.getElementById("emailSubjectInput");
+    if (subjectInput && d.email_subject) {
+      subjectInput.value = d.email_subject;
+    }
+
+    const custVi = document.getElementById("custNameVi");
+    if (custVi && d.customer_name_vi) custVi.value = d.customer_name_vi;
+    const custZh = document.getElementById("custNameZh");
+    if (custZh && d.customer_name_zh) custZh.value = d.customer_name_zh;
+
+    this.activeContractCode = d.contract_code || "";
+    this.activeMilestoneName = d.milestone_name || "";
+
+    if (window.showToast) window.showToast("Đã nạp toàn bộ thông tin bóc tách vào Bước 2 (Soạn Thư & Email)!", "success");
+
+    const step2 = document.getElementById("step3EmailSection");
+    if (step2) {
+      step2.scrollIntoView({ behavior: "smooth" });
+    }
   }
 };
 

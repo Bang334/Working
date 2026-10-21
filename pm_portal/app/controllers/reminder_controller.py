@@ -238,3 +238,46 @@ def search_google_drive_controller(payload: Dict[str, Any]) -> Dict[str, Any]:
             "message": f"Lỗi tìm kiếm trên Google Drive: {str(exc)}",
             "files": []
         }
+
+
+async def extract_payment_documents_controller(files: List[Any], preferred_model: str = None) -> Dict[str, Any]:
+    """Extract payment request data from multiple uploaded documents using Gemini Multimodal AI."""
+    from app.services.document_parser_service import extract_content_from_files, extract_payment_info_with_gemini
+    try:
+        if not files:
+            raise ValueError("Vui lòng tải lên ít nhất một tệp tài liệu (Word, Excel, PDF hoặc Ảnh).")
+
+        text_sections, inline_parts = await extract_content_from_files(files)
+        if not text_sections and not inline_parts:
+            raise ValueError("Không thể trích xuất nội dung từ các tệp đã tải lên.")
+
+        extracted = extract_payment_info_with_gemini(
+            text_sections=text_sections,
+            inline_gemini_parts=inline_parts,
+            preferred_model=preferred_model
+        )
+        return {
+            "status": "success",
+            "message": f"Gemini AI ({extracted.get('_executed_model', 'Gemini')}) đã bóc tách đối chiếu thành công {len(files)} tệp hồ sơ!",
+            "data": extracted
+        }
+    except Exception as exc:
+        logger.exception("Error extracting payment documents: %s", exc)
+        return {
+            "status": "error",
+            "message": f"Lỗi bóc tách tài liệu AI: {str(exc)}"
+        }
+
+
+def generate_payment_request_from_extracted_controller(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate official Excel payment request from extracted document data."""
+    from app.services.custom_payment_request_excel_service import generate_payment_request_from_extracted_data
+    try:
+        result = generate_payment_request_from_extracted_data(payload)
+        return result
+    except Exception as exc:
+        logger.exception("Error generating payment request from extracted data: %s", exc)
+        return {
+            "status": "error",
+            "message": f"Lỗi tạo phiếu yêu cầu thanh toán: {str(exc)}"
+        }
