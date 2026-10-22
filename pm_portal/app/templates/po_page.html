@@ -173,19 +173,100 @@
       <table class="procurement-table">
         <thead>
           <tr>
-            <th class="col-stt">STT</th>
-            <th class="col-project">Dự án & Khách hàng</th>
-            <th class="col-item">Tên vật tư / Thiết bị & Quy cách</th>
-            <th class="col-cat">Hạng mục</th>
-            <th style="width: 85px; text-align: center;">Số lượng</th>
-            <th style="min-width: 135px;">Nhà cung cấp</th>
-            <th style="width: 100px; text-align: center;">Ngày đặt</th>
-            <th style="width: 105px; text-align: center;">ETA dự kiến</th>
-            <th style="width: 105px; text-align: center;">Giao thực tế</th>
-            <th style="min-width: 160px;">Thanh toán NCC</th>
-            <th style="width: 135px; text-align: center;">Trạng thái giao</th>
-            <th style="min-width: 190px;" title="Nhấp trực tiếp vào ô để sửa nhanh ghi chú & rủi ro">Ghi chú & Rủi ro ✏️</th>
-            <th style="width: 85px; text-align: center;">Thao tác</th>
+            <th class="col-stt">
+              <div class="th-header-cell">
+                <span class="th-title">STT</span>
+                <button type="button" class="btn-th-reset" onclick="resetHeaderFiltersPo()" title="Xóa tất cả đầu lọc về mặc định">
+                  🔄 Reset
+                </button>
+              </div>
+            </th>
+            <th class="col-project">
+              <div class="th-header-cell">
+                <span class="th-title">Dự án & Khách hàng</span>
+                <input type="text" id="thPoFilterProject" class="th-filter-input" placeholder="Lọc dự án, KH..." oninput="applyHeaderFiltersPo()">
+              </div>
+            </th>
+            <th class="col-item">
+              <div class="th-header-cell">
+                <span class="th-title">Tên vật tư / Thiết bị & Quy cách</span>
+                <input type="text" id="thPoFilterItem" class="th-filter-input" placeholder="Lọc vật tư, quy cách..." oninput="applyHeaderFiltersPo()">
+              </div>
+            </th>
+            <th class="col-cat">
+              <div class="th-header-cell">
+                <span class="th-title">Hạng mục</span>
+                <select id="thPoFilterCategory" class="th-filter-select" onchange="applyHeaderFiltersPo()">
+                  <option value="all">Tất cả</option>
+                </select>
+              </div>
+            </th>
+            <th style="width: 85px; text-align: center;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Số lượng</span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th style="min-width: 140px;">
+              <div class="th-header-cell">
+                <span class="th-title">Nhà cung cấp</span>
+                <select id="thPoFilterSupplier" class="th-filter-select" onchange="applyHeaderFiltersPo()">
+                  <option value="all">Tất cả</option>
+                </select>
+              </div>
+            </th>
+            <th style="width: 100px; text-align: center;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Ngày đặt</span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th style="width: 105px; text-align: center;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">ETA dự kiến</span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th style="width: 105px; text-align: center;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Giao thực tế</span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th style="min-width: 160px;">
+              <div class="th-header-cell">
+                <span class="th-title">Thanh toán NCC</span>
+                <select id="thPoFilterPayment" class="th-filter-select" onchange="applyHeaderFiltersPo()">
+                  <option value="all">Tất cả thanh toán</option>
+                  <option value="paid">Đã thanh toán (已付款)</option>
+                  <option value="pending">Chờ thanh toán (待付款)</option>
+                </select>
+              </div>
+            </th>
+            <th style="width: 145px; text-align: center;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Trạng thái giao</span>
+                <select id="thPoFilterDeliveryStatus" class="th-filter-select" onchange="applyHeaderFiltersPo()">
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="DELIVERED">Đã giao hàng (已交貨)</option>
+                  <option value="IN_TRANSIT">Đang vận chuyển (運輸中)</option>
+                  <option value="PENDING">Chờ xử lý (待處理)</option>
+                  <option value="DELAYED">Trễ hạn (延遲)</option>
+                </select>
+              </div>
+            </th>
+            <th style="min-width: 190px;" title="Nhấp trực tiếp vào ô để sửa nhanh ghi chú & rủi ro">
+              <div class="th-header-cell">
+                <span class="th-title">Ghi chú & Rủi ro ✏️</span>
+                <input type="text" id="thPoFilterNotes" class="th-filter-input" placeholder="Lọc ghi chú..." oninput="applyHeaderFiltersPo()">
+              </div>
+            </th>
+            <th style="width: 85px; text-align: center;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Thao tác</span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody id="procurementTableBody">

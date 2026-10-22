@@ -105,6 +105,7 @@
         cachedOrders = data.orders || [];
         renderKpis(data.stats || {});
         populateFilterDropdowns(data.stats || {});
+        populateHeaderFilterDropdowns(cachedOrders);
         renderOrdersTable(cachedOrders);
       }
     } catch (err) {
@@ -238,8 +239,120 @@
     }
   }
 
+  // Populate Header Filter Dropdowns (Category, Supplier)
+  function populateHeaderFilterDropdowns(orders) {
+    const catSelect = document.getElementById("thPoFilterCategory");
+    if (catSelect) {
+      const curCat = catSelect.value;
+      const cats = new Set();
+      orders.forEach(o => {
+        if (o.category && o.category.trim() && o.category.trim() !== "-") {
+          cats.add(o.category.trim());
+        }
+      });
+      catSelect.innerHTML = '<option value="all">Tất cả</option>';
+      Array.from(cats).sort().forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        if (cat === curCat) opt.selected = true;
+        catSelect.appendChild(opt);
+      });
+    }
+
+    const supSelect = document.getElementById("thPoFilterSupplier");
+    if (supSelect) {
+      const curSup = supSelect.value;
+      const sups = new Set();
+      orders.forEach(o => {
+        if (o.supplier_name && o.supplier_name.trim() && o.supplier_name.trim() !== "-") {
+          sups.add(o.supplier_name.trim());
+        }
+      });
+      supSelect.innerHTML = '<option value="all">Tất cả</option>';
+      Array.from(sups).sort().forEach(sup => {
+        const opt = document.createElement("option");
+        opt.value = sup;
+        opt.textContent = sup;
+        if (sup === curSup) opt.selected = true;
+        supSelect.appendChild(opt);
+      });
+    }
+  }
+
+  // Apply Header Column Filters
+  window.applyHeaderFiltersPo = function() {
+    const projectVal = (document.getElementById("thPoFilterProject")?.value || "").trim().toLowerCase();
+    const itemVal = (document.getElementById("thPoFilterItem")?.value || "").trim().toLowerCase();
+    const catVal = document.getElementById("thPoFilterCategory")?.value || "all";
+    const supVal = document.getElementById("thPoFilterSupplier")?.value || "all";
+    const payVal = document.getElementById("thPoFilterPayment")?.value || "all";
+    const statusVal = document.getElementById("thPoFilterDeliveryStatus")?.value || "all";
+    const notesVal = (document.getElementById("thPoFilterNotes")?.value || "").trim().toLowerCase();
+
+    const isAnyFilterActive = Boolean(projectVal || itemVal || (catVal !== "all") || (supVal !== "all") || (payVal !== "all") || (statusVal !== "all") || notesVal);
+
+    const filtered = cachedOrders.filter(o => {
+      if (projectVal) {
+        const pName = (o.project_name || "").toLowerCase();
+        const cComp = (o.customer_company || "").toLowerCase();
+        if (!pName.includes(projectVal) && !cComp.includes(projectVal)) return false;
+      }
+      if (itemVal) {
+        const iName = (o.item_name || "").toLowerCase();
+        const mDesc = (o.material_desc || "").toLowerCase();
+        if (!iName.includes(itemVal) && !mDesc.includes(itemVal)) return false;
+      }
+      if (catVal && catVal !== "all") {
+        if ((o.category || "").trim() !== catVal) return false;
+      }
+      if (supVal && supVal !== "all") {
+        if ((o.supplier_name || "").trim() !== supVal) return false;
+      }
+      if (payVal && payVal !== "all") {
+        const payRaw = (o.supplier_payment_status || "").toLowerCase();
+        if (payVal === "paid") {
+          if (!payRaw.includes("đã") && !payRaw.includes("已") && !payRaw.includes("100%")) return false;
+        } else if (payVal === "pending") {
+          if (!payRaw.includes("chờ") && !payRaw.includes("待") && !payRaw.includes("50%")) return false;
+        }
+      }
+      if (statusVal && statusVal !== "all") {
+        if (o.delivery_status !== statusVal) return false;
+      }
+      if (notesVal) {
+        const nText = (o.shipping_notes || "").toLowerCase();
+        if (!nText.includes(notesVal)) return false;
+      }
+      return true;
+    });
+
+    renderOrdersTable(filtered, isAnyFilterActive);
+  };
+
+  // Reset Header Column Filters
+  window.resetHeaderFiltersPo = function() {
+    const elProj = document.getElementById("thPoFilterProject");
+    const elItem = document.getElementById("thPoFilterItem");
+    const elCat = document.getElementById("thPoFilterCategory");
+    const elSup = document.getElementById("thPoFilterSupplier");
+    const elPay = document.getElementById("thPoFilterPayment");
+    const elStat = document.getElementById("thPoFilterDeliveryStatus");
+    const elNotes = document.getElementById("thPoFilterNotes");
+
+    if (elProj) elProj.value = "";
+    if (elItem) elItem.value = "";
+    if (elCat) elCat.value = "all";
+    if (elSup) elSup.value = "all";
+    if (elPay) elPay.value = "all";
+    if (elStat) elStat.value = "all";
+    if (elNotes) elNotes.value = "";
+
+    applyHeaderFiltersPo();
+  };
+
   // Render Orders Table
-  function renderOrdersTable(orders) {
+  function renderOrdersTable(orders, isHeaderFiltered = false) {
     const tbody = document.getElementById("procurementTableBody");
     const emptyState = document.getElementById("procurementEmptyState");
     const tableCard = document.getElementById("procurementTableCard");
@@ -248,6 +361,21 @@
     tbody.innerHTML = "";
 
     if (!orders || orders.length === 0) {
+      if (isHeaderFiltered) {
+        if (tableCard) tableCard.style.display = "block";
+        if (emptyState) emptyState.style.display = "none";
+        const poCounter = document.getElementById("poTableItemCount");
+        if (poCounter) poCounter.textContent = `0 / ${cachedOrders.length} đơn`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="13" class="text-center py-5" style="color: #64748B;">
+              <p style="font-size: 0.95rem; margin-bottom: 0.5rem;">Không tìm thấy đơn hàng nào khớp với các đầu lọc ở tiêu đề.</p>
+              <button type="button" class="btn btn-outline btn-xs" onclick="resetHeaderFiltersPo()">Đặt lại đầu lọc</button>
+            </td>
+          </tr>
+        `;
+        return;
+      }
       if (emptyState) emptyState.style.display = "block";
       if (tableCard) tableCard.style.display = "none";
       return;
@@ -256,7 +384,11 @@
     if (emptyState) emptyState.style.display = "none";
     if (tableCard) tableCard.style.display = "block";
     const poCounter = document.getElementById("poTableItemCount");
-    if (poCounter) poCounter.textContent = `${orders.length} đơn`;
+    if (poCounter) {
+      poCounter.textContent = isHeaderFiltered
+        ? `${orders.length} / ${cachedOrders.length} đơn`
+        : `${orders.length} đơn`;
+    }
 
     orders.forEach((o, index) => {
       const tr = document.createElement("tr");

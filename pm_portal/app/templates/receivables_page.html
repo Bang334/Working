@@ -228,24 +228,136 @@
       <table class="table table-bordered table-hover receivables-table" id="receivablesTable">
         <thead>
           <tr>
-            <th class="col-stt text-center sticky-col col-1">STT<br><span class="zh">序號</span></th>
-            <th class="col-project sticky-col col-2">Dự Án<br><span class="zh">專案名稱</span></th>
-            <th class="col-customer sticky-col col-3">Khách Hàng<br><span class="zh">客戶名稱</span></th>
-            <th class="col-contract text-center">Hợp Đồng<br><span class="zh">合約編號</span></th>
-            <th class="col-money text-end">Giá Trị HĐ (chưa VAT)<br><span class="zh">合約總額 (未稅)</span></th>
-            <th class="col-money text-end">Số Tiền Đợt TT (chưa VAT)<br><span class="zh">本期請款 (未稅)</span></th>
-            <th class="col-vat-rate text-center" style="min-width: 130px;">Thuế Suất (Click sửa)<br><span class="zh">稅率 (點擊調整)</span></th>
-            <th class="col-money text-end">Thuế VAT<br><span class="zh">營業稅</span></th>
-            <th class="col-money text-end">Tổng Tiền TT (gồm VAT)<br><span class="zh">應收總額 (含稅)</span></th>
-            <th class="col-money text-end" style="min-width: 140px;">Số Tiền Đã Nhận (Sửa)<br><span class="zh">已收金額 (點擊修改)</span></th>
-            <th class="col-money text-end highlight-debt">Số Tiền Còn Lại<br><span class="zh">剩餘尾款</span></th>
-            <th class="col-date text-center" style="min-width: 145px;">Ngày KH Hẹn TT<br><span class="zh">預計付款日 (可調)</span></th>
-            <th class="col-date text-center" style="min-width: 145px;">Ngày Đến Hạn<br><span class="zh">到期日 (可調)</span></th>
-            <th class="col-date text-center" style="min-width: 145px;">Ngày Đã TT<br><span class="zh">實際付款日 (可調)</span></th>
-            <th class="col-doc text-center" style="min-width: 130px;">Trạng Thái CT<br><span class="zh">單據狀態 (點擊編輯)</span></th>
-            <th class="col-status text-center" style="min-width: 135px;">Trạng Thái Thu<br><span class="zh">收款狀態 (下拉選擇)</span></th>
-            <th class="col-notes" style="min-width: 180px;">Ghi Chú Tiến Độ<br><span class="zh">備註 (Nhấp để sửa)</span></th>
-            <th class="col-actions text-center" style="min-width: 110px;">Thao Tác<br><span class="zh">操作</span></th>
+            <th class="col-stt text-center sticky-col col-1">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">STT<br><span class="zh">序號</span></span>
+                <button type="button" class="btn-th-reset" onclick="resetHeaderFiltersAr()" title="Xóa tất cả đầu lọc về mặc định">
+                  🔄 Reset
+                </button>
+              </div>
+            </th>
+            <th class="col-project sticky-col col-2">
+              <div class="th-header-cell">
+                <span class="th-title">Dự Án<br><span class="zh">專案名稱</span></span>
+                <input type="text" id="thArFilterProject" class="th-filter-input" placeholder="Lọc dự án..." oninput="applyHeaderFiltersAr()">
+              </div>
+            </th>
+            <th class="col-customer sticky-col col-3">
+              <div class="th-header-cell">
+                <span class="th-title">Khách Hàng<br><span class="zh">客戶名稱</span></span>
+                <select id="thArFilterCustomer" class="th-filter-select" onchange="applyHeaderFiltersAr()">
+                  <option value="all">Tất cả KH</option>
+                </select>
+              </div>
+            </th>
+            <th class="col-contract text-center">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Hợp Đồng<br><span class="zh">合約編號</span></span>
+                <select id="thArFilterContract" class="th-filter-select" onchange="applyHeaderFiltersAr()">
+                  <option value="all">Tất cả HĐ</option>
+                  <option value="__no_contract__">(Không có HĐ)</option>
+                </select>
+              </div>
+            </th>
+            <th class="col-money text-end">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: flex-end;">Giá Trị HĐ (chưa VAT)<br><span class="zh">合約總額 (未稅)</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th class="col-money text-end">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: flex-end;">Số Tiền Đợt TT (chưa VAT)<br><span class="zh">本期請款 (未稅)</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th class="col-vat-rate text-center" style="min-width: 130px;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Thuế Suất (Click sửa)<br><span class="zh">稅率 (點擊調整)</span></span>
+                <select id="thArFilterVatRate" class="th-filter-select" onchange="applyHeaderFiltersAr()">
+                  <option value="all">Tất cả thuế</option>
+                  <option value="0">0% (Miễn thuế)</option>
+                  <option value="0.08">8% (Thuế GTGT)</option>
+                  <option value="0.10">10% (Thuế GTGT)</option>
+                </select>
+              </div>
+            </th>
+            <th class="col-money text-end">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: flex-end;">Thuế VAT<br><span class="zh">營業稅</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th class="col-money text-end">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: flex-end;">Tổng Tiền TT (gồm VAT)<br><span class="zh">應收總額 (含稅)</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th class="col-money text-end" style="min-width: 140px;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: flex-end;">Số Tiền Đã Nhận (Sửa)<br><span class="zh">已收金額 (點擊修改)</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th class="col-money text-end highlight-debt">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: flex-end;">Số Tiền Còn Lại<br><span class="zh">剩餘尾款</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th class="col-date text-center" style="min-width: 145px;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Ngày KH Hẹn TT<br><span class="zh">預計付款日 (可調)</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th class="col-date text-center" style="min-width: 145px;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Ngày Đến Hạn<br><span class="zh">到期日 (可調)</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th class="col-date text-center" style="min-width: 145px;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Ngày Đã TT<br><span class="zh">實際付款日 (可調)</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
+            <th class="col-doc text-center" style="min-width: 130px;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Trạng Thái CT<br><span class="zh">單據狀態 (點擊編輯)</span></span>
+                <select id="thArFilterDoc" class="th-filter-select" onchange="applyHeaderFiltersAr()">
+                  <option value="all">Tất cả CT</option>
+                  <option value="invoiced">Đã xuất HĐ</option>
+                  <option value="pending">Chưa xuất HĐ</option>
+                </select>
+              </div>
+            </th>
+            <th class="col-status text-center" style="min-width: 135px;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Trạng Thái Thu<br><span class="zh">收款狀態 (下拉選擇)</span></span>
+                <select id="thArFilterStatus" class="th-filter-select" onchange="applyHeaderFiltersAr()">
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="PAID">Đã thu xong (已收款)</option>
+                  <option value="PENDING">Chờ thu (待收款)</option>
+                  <option value="URGENT">Sắp đến hạn (即將到期)</option>
+                  <option value="DELAYED">Quá hạn (已逾期)</option>
+                </select>
+              </div>
+            </th>
+            <th class="col-notes" style="min-width: 180px;">
+              <div class="th-header-cell">
+                <span class="th-title">Ghi Chú Tiến Độ<br><span class="zh">備註 (Nhấp để sửa)</span></span>
+                <input type="text" id="thArFilterNotes" class="th-filter-input" placeholder="Lọc ghi chú..." oninput="applyHeaderFiltersAr()">
+              </div>
+            </th>
+            <th class="col-actions text-center" style="min-width: 110px;">
+              <div class="th-header-cell">
+                <span class="th-title" style="justify-content: center;">Thao Tác<br><span class="zh">操作</span></span>
+                <div class="th-filter-placeholder"></div>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody id="receivablesTableBody">

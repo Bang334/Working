@@ -78,6 +78,7 @@ async function loadReceivablesData() {
       allReceivables = items;
       updateKpis(allStats);
       populateFilters(allStats.customers || [], allStats.contracts || []);
+      populateHeaderFilterDropdownsAr(allReceivables);
       renderTable(allReceivables);
     } else {
       showToast(data.message || "Không thể tải dữ liệu công nợ", "error");
@@ -151,13 +152,137 @@ function populateFilters(customers, contracts) {
   }
 }
 
-// Render Table Rows
+// Populate Header Filter Dropdowns for AR Tracker
+function populateHeaderFilterDropdownsAr(items) {
+  const custSelect = document.getElementById("thArFilterCustomer");
+  if (custSelect) {
+    const curCust = custSelect.value;
+    const custs = new Set();
+    items.forEach(it => {
+      if (it.customer_name && it.customer_name.trim() && it.customer_name.trim() !== "-") {
+        custs.add(it.customer_name.trim());
+      }
+    });
+    custSelect.innerHTML = '<option value="all">Tất cả KH</option>';
+    Array.from(custs).sort().forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      if (c === curCust) opt.selected = true;
+      custSelect.appendChild(opt);
+    });
+  }
+
+  const cntSelect = document.getElementById("thArFilterContract");
+  if (cntSelect) {
+    const curCnt = cntSelect.value;
+    const cnts = new Set();
+    items.forEach(it => {
+      if (it.contract_code && it.contract_code.trim() && it.contract_code.trim() !== "-" && it.contract_code.trim() !== "None") {
+        cnts.add(it.contract_code.trim());
+      }
+    });
+    cntSelect.innerHTML = '<option value="all">Tất cả HĐ</option><option value="__no_contract__">(Không có HĐ)</option>';
+    Array.from(cnts).sort().forEach(cnt => {
+      const opt = document.createElement("option");
+      opt.value = cnt;
+      opt.textContent = cnt;
+      if (cnt === curCnt) opt.selected = true;
+      cntSelect.appendChild(opt);
+    });
+    if (curCnt === "__no_contract__") cntSelect.value = "__no_contract__";
+  }
+}
+
+// Apply Header Column Filters for AR Tracker
+function applyHeaderFiltersAr() {
+  const projectVal = (document.getElementById("thArFilterProject")?.value || "").trim().toLowerCase();
+  const custVal = document.getElementById("thArFilterCustomer")?.value || "all";
+  const cntVal = document.getElementById("thArFilterContract")?.value || "all";
+  const vatVal = document.getElementById("thArFilterVatRate")?.value || "all";
+  const docVal = document.getElementById("thArFilterDoc")?.value || "all";
+  const statusVal = document.getElementById("thArFilterStatus")?.value || "all";
+  const notesVal = (document.getElementById("thArFilterNotes")?.value || "").trim().toLowerCase();
+
+  const isAnyFilterActive = Boolean(
+    projectVal ||
+    (custVal !== "all") ||
+    (cntVal !== "all") ||
+    (vatVal !== "all") ||
+    (docVal !== "all") ||
+    (statusVal !== "all") ||
+    notesVal
+  );
+
+  const filtered = allReceivables.filter(it => {
+    if (projectVal) {
+      const pName = (it.project_name || "").toLowerCase();
+      if (!pName.includes(projectVal)) return false;
+    }
+    if (custVal && custVal !== "all") {
+      if ((it.customer_name || "").trim() !== custVal) return false;
+    }
+    if (cntVal && cntVal !== "all") {
+      if (cntVal === "__no_contract__") {
+        if (it.contract_code && it.contract_code !== "-" && it.contract_code !== "None") return false;
+      } else {
+        if ((it.contract_code || "").trim() !== cntVal) return false;
+      }
+    }
+    if (vatVal && vatVal !== "all") {
+      const vr = it.vat_rate !== null && it.vat_rate !== undefined ? Number(it.vat_rate) : 0;
+      if (Math.abs(vr - Number(vatVal)) > 0.001) return false;
+    }
+    if (docVal && docVal !== "all") {
+      const cleanDoc = (it.doc_status || "").trim();
+      const isInvoiced = cleanDoc && cleanDoc !== "Chưa xuất" && cleanDoc !== "-";
+      if (docVal === "invoiced" && !isInvoiced) return false;
+      if (docVal === "pending" && isInvoiced) return false;
+    }
+    if (statusVal && statusVal !== "all") {
+      if (it.collection_status !== statusVal) return false;
+    }
+    if (notesVal) {
+      const nText = (it.notes || "").toLowerCase();
+      if (!nText.includes(notesVal)) return false;
+    }
+    return true;
+  });
+
+  renderTable(filtered, isAnyFilterActive);
+}
+
+// Reset Header Column Filters for AR Tracker
+function resetHeaderFiltersAr() {
+  const elProj = document.getElementById("thArFilterProject");
+  const elCust = document.getElementById("thArFilterCustomer");
+  const elCnt = document.getElementById("thArFilterContract");
+  const elVat = document.getElementById("thArFilterVatRate");
+  const elDoc = document.getElementById("thArFilterDoc");
+  const elStat = document.getElementById("thArFilterStatus");
+  const elNotes = document.getElementById("thArFilterNotes");
+
+  if (elProj) elProj.value = "";
+  if (elCust) elCust.value = "all";
+  if (elCnt) elCnt.value = "all";
+  if (elVat) elVat.value = "all";
+  if (elDoc) elDoc.value = "all";
+  if (elStat) elStat.value = "all";
+  if (elNotes) elNotes.value = "";
+
+  applyHeaderFiltersAr();
+}
+
 // Render Table Rows with Interactive In-Place Editing
-function renderTable(items) {
+function renderTable(items, isHeaderFiltered = false) {
   const tbody = document.getElementById("receivablesTableBody");
   const tfoot = document.getElementById("receivablesTableFoot");
   const counter = document.getElementById("tableItemCount");
-  if (counter) counter.textContent = `${items.length} đợt`;
+  if (counter) {
+    counter.textContent = isHeaderFiltered 
+      ? `${items.length} / ${allReceivables.length} đợt` 
+      : `${items.length} đợt`;
+  }
   if (!tbody) return;
 
   if (items.length === 0) {
@@ -165,7 +290,7 @@ function renderTable(items) {
       <tr>
         <td colspan="18" class="text-center py-5" style="color: #64748B;">
           <p style="font-size: 1rem; margin-bottom: 0.4rem;">Không tìm thấy đợt thanh toán nào phù hợp với bộ lọc.</p>
-          <button type="button" class="btn btn-outline btn-sm" onclick="resetFilters()">Đặt lại bộ lọc</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="resetHeaderFiltersAr()">Đặt lại đầu lọc</button>
         </td>
       </tr>
     `;
@@ -599,6 +724,23 @@ function resetFilters() {
 
   document.querySelectorAll(".legend-chip").forEach(chip => chip.classList.remove("active"));
   document.getElementById("chipAll")?.classList.add("active");
+
+  // Reset Header Column Filters
+  const elProj = document.getElementById("thArFilterProject");
+  const elCustH = document.getElementById("thArFilterCustomer");
+  const elCntH = document.getElementById("thArFilterContract");
+  const elVatH = document.getElementById("thArFilterVatRate");
+  const elDocH = document.getElementById("thArFilterDoc");
+  const elStatH = document.getElementById("thArFilterStatus");
+  const elNotesH = document.getElementById("thArFilterNotes");
+
+  if (elProj) elProj.value = "";
+  if (elCustH) elCustH.value = "all";
+  if (elCntH) elCntH.value = "all";
+  if (elVatH) elVatH.value = "all";
+  if (elDocH) elDocH.value = "all";
+  if (elStatH) elStatH.value = "all";
+  if (elNotesH) elNotesH.value = "";
 
   loadReceivablesData();
 }
