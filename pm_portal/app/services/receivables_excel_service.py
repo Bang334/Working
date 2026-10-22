@@ -57,21 +57,7 @@ def export_receivables_excel(
     align_right = Alignment(horizontal="right", vertical="center")
     align_header = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
-    # 1. Company and Sheet Title
-    ws.merge_cells("A1:Q1")
-    ws["A1"] = "BẢNG THEO DÕI CÔNG NỢ DỰ ÁN NĂM 2026 / 2026年度專案應收帳款追蹤表"
-    ws["A1"].font = font_title
-    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
-    ws.row_dimensions[1].height = 36
-
-    ws.merge_cells("A2:Q2")
-    now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
-    ws["A2"] = f"CÔNG TY TNHH TOÀN CẦU HONG MING | Xuất ngày: {now_str} | Tổng phải thu: {stats.get('total_receivable_formatted', '0 ₫')} | Đã thu: {stats.get('total_received_formatted', '0 ₫')} | Còn nợ: {stats.get('total_debt_formatted', '0 ₫')}"
-    ws["A2"].font = font_subtitle
-    ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
-    ws.row_dimensions[2].height = 20
-
-    # 2. Table Column Headers (Row 3)
+    # 1. Table Column Headers (Bắt đầu trực tiếp từ Row 1, giữ thuần túy table)
     headers = [
         ("STT\n序號", 8),
         ("Dự án\n專案名稱", 28),
@@ -92,9 +78,10 @@ def export_receivables_excel(
         ("Ghi chú tiến độ\n備註", 32),
     ]
 
-    ws.row_dimensions[3].height = 42
+    header_row = 1
+    ws.row_dimensions[header_row].height = 42
     for col_idx, (header_text, col_width) in enumerate(headers, start=1):
-        cell = ws.cell(row=3, column=col_idx, value=header_text)
+        cell = ws.cell(row=header_row, column=col_idx, value=header_text)
         cell.font = font_header
         cell.fill = fill_header
         cell.alignment = align_header
@@ -102,8 +89,8 @@ def export_receivables_excel(
         col_letter = get_column_letter(col_idx)
         ws.column_dimensions[col_letter].width = col_width
 
-    # 3. Populate Data Rows
-    start_row = 4
+    # 2. Populate Data Rows (Bắt đầu từ Row 2)
+    start_row = 2
     for idx, item in enumerate(items, start=1):
         row_num = start_row + idx - 1
 
@@ -234,11 +221,11 @@ def export_receivables_excel(
                 cell.alignment = align_right
 
     # 5. KÍCH HOẠT AUTOFILTER TRÊN TOÀN BỘ 17 CỘT TIÊU ĐỀ
-    if last_data_row >= 3:
-        ws.auto_filter.ref = f"A3:Q{last_data_row}"
+    if last_data_row >= 1:
+        ws.auto_filter.ref = f"A1:Q{last_data_row}"
 
     # 6. Freeze Panes & Sheet View Settings (Ghim cố định STT & Tên Dự án, cuộn ngang dọc không mất)
-    ws.freeze_panes = "C4"
+    ws.freeze_panes = "C2"
     ws.views.sheetView[0].showGridLines = True
 
     # 7. Save to BytesIO

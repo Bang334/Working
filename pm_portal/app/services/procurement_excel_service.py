@@ -236,38 +236,14 @@ def export_procurement_excel(orders: List[Dict[str, Any]]) -> io.BytesIO:
     align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
     align_right = Alignment(horizontal="right", vertical="center")
 
-    # 1. Title Block (Header info)
-    ws.merge_cells("A1:N1")
-    ws["A1"] = "CÔNG TY TNHH TOÀN CẦU HONG MING / 宏明環球有限公司"
-    ws["A1"].font = company_font
-    ws["A1"].alignment = Alignment(horizontal="left", vertical="center")
-    ws.row_dimensions[1].height = 20
-
-    ws.merge_cells("A2:N2")
-    ws["A2"] = "BẢNG THEO DÕI ĐƠN MUA HÀNG VẬT TƯ & TIẾN ĐỘ ETA (PROCUREMENT TRACKER)"
-    ws["A2"].font = title_font
-    ws["A2"].alignment = Alignment(horizontal="left", vertical="center")
-    ws.row_dimensions[2].height = 28
-
     # Stats Calculation
     total_count = len(orders)
     delivered_count = sum(1 for o in orders if o.get("delivery_status") == "DELIVERED")
     in_transit_count = sum(1 for o in orders if o.get("delivery_status") == "IN_TRANSIT")
     delayed_count = sum(1 for o in orders if o.get("delivery_status") == "DELAYED")
     pending_count = sum(1 for o in orders if o.get("delivery_status") == "PENDING")
-    now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    ws.merge_cells("A3:N3")
-    ws["A3"] = f"Thời điểm xuất: {now_str}  |  Tổng đơn: {total_count}  |  ✓ Đã giao: {delivered_count}  |  🚚 Đang vận chuyển: {in_transit_count}  |  ⚠️ Trễ hạn: {delayed_count}  |  ⏳ Chờ xử lý: {pending_count}"
-    ws["A3"].font = summary_meta_font
-    ws["A3"].alignment = Alignment(horizontal="left", vertical="center")
-    ws["A3"].fill = meta_box_fill
-    ws.row_dimensions[3].height = 22
-
-    # Spacer row 4
-    ws.row_dimensions[4].height = 8
-
-    # 2. Table Column Headers (Row 5)
+    # 1. Table Column Headers (Bắt đầu trực tiếp từ Row 1, giữ thuần túy table)
     headers = [
         "STT\n序號",
         "Dự án\n專案名稱",
@@ -285,7 +261,7 @@ def export_procurement_excel(orders: List[Dict[str, Any]]) -> io.BytesIO:
         "Ghi chú vận chuyển / Rủi ro\n運輸備註 / 風險",
     ]
 
-    header_row = 5
+    header_row = 1
     # Chiều cao header 42pt đảm bảo 100% không bị cắt lẹm mép chữ tiếng Việt và tiếng Trung
     ws.row_dimensions[header_row].height = 42
 
@@ -296,11 +272,11 @@ def export_procurement_excel(orders: List[Dict[str, Any]]) -> io.BytesIO:
         cell.alignment = align_center
         cell.border = header_border
 
-    # 3. Freeze Panes: Ghim cố định 2 cột đầu STT & Dự án và toàn bộ 5 hàng phía trên
-    ws.freeze_panes = "C6"
+    # 2. Freeze Panes: Ghim cố định 2 cột đầu STT & Dự án và Hàng tiêu đề 1
+    ws.freeze_panes = "C2"
 
-    # 4. Populate Data Rows
-    current_row = header_row + 1
+    # 3. Populate Data Rows (Bắt đầu từ Row 2)
+    current_row = 2
     total_qty = 0.0
 
     for idx, o in enumerate(orders):
@@ -408,7 +384,7 @@ def export_procurement_excel(orders: List[Dict[str, Any]]) -> io.BytesIO:
         total_label_cell.alignment = align_center
 
         # Công thức tính tổng số lượng
-        qty_total_cell = ws.cell(row=total_row, column=5, value=f"=SUM(E6:E{last_data_row})")
+        qty_total_cell = ws.cell(row=total_row, column=5, value=f"=SUM(E2:E{last_data_row})")
         qty_total_cell.font = total_font
         qty_total_cell.alignment = align_center
 
