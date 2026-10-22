@@ -176,7 +176,7 @@ def parse_procurement_excel(file_bytes_or_path: Any) -> Tuple[List[Dict[str, Any
 
 
 def export_procurement_excel(orders: List[Dict[str, Any]]) -> io.BytesIO:
-    """Generate a high-fidelity, professional Excel workbook from procurement orders."""
+    """Generate a high-fidelity, professional Excel workbook from procurement orders with AutoFilter and anti-clipping."""
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Theo Dõi Mua Hàng"
@@ -186,55 +186,93 @@ def export_procurement_excel(orders: List[Dict[str, Any]]) -> io.BytesIO:
 
     # Styling definitions
     font_family = "Microsoft JhengHei"
-    title_font = Font(name=font_family, size=14, bold=True, color="1F4E79")
-    sub_font = Font(name=font_family, size=11, bold=True, color="595959")
+    title_font = Font(name=font_family, size=15, bold=True, color="1F4E79")
+    company_font = Font(name=font_family, size=10, bold=True, color="475569")
+    summary_meta_font = Font(name=font_family, size=9.5, bold=False, color="1E3A8A")
     header_font = Font(name=font_family, size=10, bold=True, color="FFFFFF")
-    data_font = Font(name=font_family, size=10, bold=False)
-    bold_data_font = Font(name=font_family, size=10, bold=True)
-    notes_font = Font(name=font_family, size=9, italic=True, color="555555")
+    data_font = Font(name=font_family, size=9.5, bold=False, color="1E293B")
+    bold_data_font = Font(name=font_family, size=9.5, bold=True, color="1E293B")
+    notes_font = Font(name=font_family, size=9, italic=True, color="475569")
+    total_font = Font(name=font_family, size=10.5, bold=True, color="1F4E79")
 
+    # Header and stripe fills
     header_fill = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
-    stripe_fill = PatternFill(start_color="F9FAFB", end_color="F9FAFB", fill_type="solid")
+    stripe_fill = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
+    meta_box_fill = PatternFill(start_color="EFF6FF", end_color="EFF6FF", fill_type="solid")
+    total_fill = PatternFill(start_color="E6F0FA", end_color="E6F0FA", fill_type="solid")
     
-    # Status fills
+    # Status fills (màu pastel cao cấp tương phản rõ nét)
     delivered_fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
-    in_transit_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
-    delayed_fill = PatternFill(start_color="FCE4D6", end_color="FCE4D6", fill_type="solid")
+    delivered_font = Font(name=font_family, size=9.5, bold=True, color="1E4620")
 
-    thin_border = Border(
-        left=Side(style="thin", color="D9D9D9"),
-        right=Side(style="thin", color="D9D9D9"),
-        top=Side(style="thin", color="D9D9D9"),
-        bottom=Side(style="thin", color="D9D9D9"),
+    in_transit_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+    in_transit_font = Font(name=font_family, size=9.5, bold=True, color="8A6D3B")
+
+    delayed_fill = PatternFill(start_color="FCE4D6", end_color="FCE4D6", fill_type="solid")
+    delayed_font = Font(name=font_family, size=9.5, bold=True, color="A61C1C")
+
+    pending_fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+    pending_font = Font(name=font_family, size=9.5, bold=True, color="475569")
+
+    # Borders
+    thin_side = Side(style="thin", color="CBD5E1")
+    thin_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
+    
+    header_border = Border(
+        left=thin_side,
+        right=thin_side,
+        top=thin_side,
+        bottom=Side(style="medium", color="0F2D4A")
+    )
+
+    total_border = Border(
+        left=thin_side,
+        right=thin_side,
+        top=Side(style="thin", color="1F4E79"),
+        bottom=Side(style="double", color="1F4E79")
     )
 
     align_center = Alignment(horizontal="center", vertical="center", wrap_text=True)
     align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
     align_right = Alignment(horizontal="right", vertical="center")
 
-    # Title Block
+    # 1. Title Block (Header info)
     ws.merge_cells("A1:N1")
     ws["A1"] = "CÔNG TY TNHH TOÀN CẦU HONG MING / 宏明環球有限公司"
-    ws["A1"].font = sub_font
-    ws["A1"].alignment = align_left
+    ws["A1"].font = company_font
+    ws["A1"].alignment = Alignment(horizontal="left", vertical="center")
+    ws.row_dimensions[1].height = 20
 
     ws.merge_cells("A2:N2")
-    ws["A2"] = "BẢNG THEO DÕI ĐƠN MUA HÀNG VẬT TƯ & NHÀ CUNG CẤP (PROCUREMENT TRACKER)"
+    ws["A2"] = "BẢNG THEO DÕI ĐƠN MUA HÀNG VẬT TƯ & TIẾN ĐỘ ETA (PROCUREMENT TRACKER)"
     ws["A2"].font = title_font
-    ws["A2"].alignment = align_left
+    ws["A2"].alignment = Alignment(horizontal="left", vertical="center")
+    ws.row_dimensions[2].height = 28
 
+    # Stats Calculation
+    total_count = len(orders)
+    delivered_count = sum(1 for o in orders if o.get("delivery_status") == "DELIVERED")
+    in_transit_count = sum(1 for o in orders if o.get("delivery_status") == "IN_TRANSIT")
+    delayed_count = sum(1 for o in orders if o.get("delivery_status") == "DELAYED")
+    pending_count = sum(1 for o in orders if o.get("delivery_status") == "PENDING")
     now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-    ws.merge_cells("A3:N3")
-    ws["A3"] = f"Thời điểm xuất báo cáo: {now_str} · Tổng số đơn: {len(orders)} hạng mục"
-    ws["A3"].font = notes_font
-    ws["A3"].alignment = align_left
 
-    # Table Headers
+    ws.merge_cells("A3:N3")
+    ws["A3"] = f"Thời điểm xuất: {now_str}  |  Tổng đơn: {total_count}  |  ✓ Đã giao: {delivered_count}  |  🚚 Đang vận chuyển: {in_transit_count}  |  ⚠️ Trễ hạn: {delayed_count}  |  ⏳ Chờ xử lý: {pending_count}"
+    ws["A3"].font = summary_meta_font
+    ws["A3"].alignment = Alignment(horizontal="left", vertical="center")
+    ws["A3"].fill = meta_box_fill
+    ws.row_dimensions[3].height = 22
+
+    # Spacer row 4
+    ws.row_dimensions[4].height = 8
+
+    # 2. Table Column Headers (Row 5)
     headers = [
         "STT\n序號",
-        "Dự án\n專案",
+        "Dự án\n專案名稱",
         "Hạng mục\n項目類別",
-        "Tên vật tư / Thiết bị\n物料 / 設備名稱",
+        "Tên vật tư / Thiết bị & Quy cách\n物料 / 設備規格",
         "Số lượng\n數量",
         "ĐVT\n單位",
         "Khách hàng\n客戶公司",
@@ -248,79 +286,164 @@ def export_procurement_excel(orders: List[Dict[str, Any]]) -> io.BytesIO:
     ]
 
     header_row = 5
-    ws.row_dimensions[header_row].height = 30
+    # Chiều cao header 42pt đảm bảo 100% không bị cắt lẹm mép chữ tiếng Việt và tiếng Trung
+    ws.row_dimensions[header_row].height = 42
+
     for col_idx, h in enumerate(headers, 1):
         cell = ws.cell(row=header_row, column=col_idx, value=h)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = align_center
-        cell.border = thin_border
+        cell.border = header_border
 
-    # Freeze panes below headers
-    ws.freeze_panes = "A6"
+    # 3. Freeze Panes: Ghim cố định 2 cột đầu STT & Dự án và toàn bộ 5 hàng phía trên
+    ws.freeze_panes = "C6"
 
-    # Populate Data Rows
+    # 4. Populate Data Rows
     current_row = header_row + 1
+    total_qty = 0.0
+
     for idx, o in enumerate(orders):
-        ws.row_dimensions[current_row].height = 26
         is_stripe = (idx % 2 == 1)
 
-        row_cells = [
-            (idx + 1, align_center, bold_data_font),
-            (o.get("project_name", ""), align_left, bold_data_font),
-            (o.get("category", "") or "-", align_center, data_font),
-            (o.get("item_name", ""), align_left, data_font),
-            (o.get("quantity", 1), align_center, bold_data_font),
-            (o.get("unit", "Bộ"), align_center, data_font),
-            (o.get("customer_company", "") or "-", align_left, data_font),
-            (o.get("supplier_name", ""), align_left, bold_data_font),
-            (o.get("order_date") or "-", align_center, data_font),
-            (o.get("eta_date") or "-", align_center, bold_data_font),
-            (o.get("actual_delivery_date") or "-", align_center, data_font),
-            (o.get("supplier_payment_status") or "-", align_left, data_font),
-            (o.get("delivery_status_label") or get_status_label(o.get("delivery_status", "PENDING")), align_center, bold_data_font),
-            (o.get("shipping_notes") or "-", align_left, notes_font),
-        ]
+        # Trích xuất dữ liệu
+        stt_val = o.get("order_no") or (idx + 1)
+        proj_name = o.get("project_name", "") or "-"
+        cat_name = o.get("category", "") or "-"
+        
+        # Ghép tên thiết bị và quy cách nếu có
+        item_raw = o.get("item_name", "") or ""
+        desc_raw = o.get("material_desc", "") or ""
+        if desc_raw and desc_raw != "-":
+            full_item_text = f"{item_raw}\n[Quy cách: {desc_raw}]"
+        else:
+            full_item_text = item_raw
+
+        qty = float(o.get("quantity") or 1.0)
+        total_qty += qty
+        unit = o.get("unit", "Bộ") or "Bộ"
+        customer = o.get("customer_company", "") or "-"
+        supplier = o.get("supplier_name", "") or "-"
+        order_date = o.get("order_date") or "-"
+        eta_date = o.get("eta_date") or "-"
+        actual_date = o.get("actual_delivery_date") or "-"
+        payment_status = o.get("supplier_payment_status") or "-"
+        status_label = o.get("delivery_status_label") or get_status_label(o.get("delivery_status", "PENDING"))
+        notes = o.get("shipping_notes") or "-"
+
+        # Tính toán chiều cao dòng tự động chống cắt chữ
+        text_lines = max(
+            len(str(proj_name).split("\n")),
+            len(str(full_item_text).split("\n")),
+            len(str(payment_status).split("\n")),
+            len(str(notes).split("\n")),
+            1
+        )
+        # Nếu chữ quá dài thì cộng thêm dòng
+        if len(str(full_item_text)) > 70 or len(str(notes)) > 60:
+            text_lines = max(text_lines, 2)
+        if len(str(full_item_text)) > 140:
+            text_lines = max(text_lines, 3)
+
+        calculated_height = max(26, min(120, text_lines * 19 + 6))
+        ws.row_dimensions[current_row].height = calculated_height
 
         d_status = o.get("delivery_status", "PENDING")
+
+        row_cells = [
+            (stt_val, align_center, bold_data_font),
+            (proj_name, align_left, bold_data_font),
+            (cat_name, align_center, data_font),
+            (full_item_text, align_left, data_font),
+            (qty, align_center, bold_data_font),
+            (unit, align_center, data_font),
+            (customer, align_left, data_font),
+            (supplier, align_left, bold_data_font),
+            (order_date, align_center, data_font),
+            (eta_date, align_center, bold_data_font),
+            (actual_date, align_center, data_font),
+            (payment_status, align_left, data_font),
+            (status_label, align_center, bold_data_font),
+            (notes, align_left, notes_font),
+        ]
 
         for col_idx, (val, alignment, font) in enumerate(row_cells, 1):
             cell = ws.cell(row=current_row, column=col_idx, value=val)
             cell.font = font
             cell.alignment = alignment
             cell.border = thin_border
-            
-            # Row stripe or status badge styling
-            if col_idx == 13:  # Status column
+
+            # Phối màu cột Trạng thái giao và Zebra stripe
+            if col_idx == 13:
                 if d_status == "DELIVERED":
                     cell.fill = delivered_fill
+                    cell.font = delivered_font
                 elif d_status == "IN_TRANSIT":
                     cell.fill = in_transit_fill
+                    cell.font = in_transit_font
                 elif d_status == "DELAYED":
                     cell.fill = delayed_fill
+                    cell.font = delayed_font
                 elif is_stripe:
                     cell.fill = stripe_fill
+                    cell.font = pending_font
+                else:
+                    cell.fill = pending_fill
+                    cell.font = pending_font
             elif is_stripe:
                 cell.fill = stripe_fill
 
         current_row += 1
 
-    # Auto-adjust column widths
+    last_data_row = current_row - 1
+
+    # 5. Row Tổng Cộng (Summary Row) với viền đôi kế toán
+    if orders:
+        total_row = current_row
+        ws.row_dimensions[total_row].height = 30
+        
+        ws.merge_cells(f"A{total_row}:D{total_row}")
+        total_label_cell = ws.cell(row=total_row, column=1, value="TỔNG CỘNG / 合計")
+        total_label_cell.font = total_font
+        total_label_cell.alignment = align_center
+
+        # Công thức tính tổng số lượng
+        qty_total_cell = ws.cell(row=total_row, column=5, value=f"=SUM(E6:E{last_data_row})")
+        qty_total_cell.font = total_font
+        qty_total_cell.alignment = align_center
+
+        # Thông tin tổng kết ở cột 13 & 14
+        ws.cell(row=total_row, column=6, value="Bộ").alignment = align_center
+        ws.cell(row=total_row, column=13, value=f"Đã giao: {delivered_count}/{total_count}").alignment = align_center
+        completion_pct = round((delivered_count / total_count * 100), 1) if total_count > 0 else 0
+        ws.cell(row=total_row, column=14, value=f"Tỷ lệ giao: {completion_pct}%").alignment = align_left
+
+        for c in range(1, 15):
+            cell = ws.cell(row=total_row, column=c)
+            cell.font = total_font
+            cell.fill = total_fill
+            cell.border = total_border
+
+    # 6. KÍCH HOẠT AUTOFILTER TRÊN TOÀN BỘ 14 CỘT TIÊU ĐỀ
+    if last_data_row >= header_row:
+        ws.auto_filter.ref = f"A{header_row}:N{last_data_row}"
+
+    # 7. Auto-adjust Column Widths (Độ rộng chuẩn xác, không bị cắt lẹm bất kỳ ký tự nào)
     col_widths = {
         1: 7,   # STT
-        2: 22,  # Dự án
-        3: 16,  # Hạng mục
-        4: 38,  # Tên vật tư
-        5: 10,  # Số lượng
-        6: 8,   # ĐVT
+        2: 24,  # Dự án
+        3: 18,  # Hạng mục
+        4: 42,  # Tên vật tư / Thiết bị & Quy cách
+        5: 11,  # Số lượng
+        6: 9,   # ĐVT
         7: 24,  # Khách hàng
-        8: 18,  # NCC
-        9: 14,  # Ngày đặt
-        10: 14, # ETA
-        11: 15, # Giao thực tế
-        12: 24, # Thanh toán NCC
-        13: 20, # Trạng thái giao
-        14: 30, # Ghi chú
+        8: 20,  # Nhà cung cấp
+        9: 16,  # Ngày đặt hàng
+        10: 16, # ETA dự kiến
+        11: 18, # Ngày giao thực tế
+        12: 28, # Thanh toán NCC
+        13: 22, # Trạng thái giao
+        14: 35, # Ghi chú vận chuyển / Rủi ro
     }
     for col_idx, width in col_widths.items():
         col_letter = get_column_letter(col_idx)
@@ -330,3 +453,4 @@ def export_procurement_excel(orders: List[Dict[str, Any]]) -> io.BytesIO:
     wb.save(buf)
     buf.seek(0)
     return buf
+

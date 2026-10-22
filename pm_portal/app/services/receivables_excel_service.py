@@ -73,26 +73,26 @@ def export_receivables_excel(
 
     # 2. Table Column Headers (Row 3)
     headers = [
-        ("STT\n序號", 6),
+        ("STT\n序號", 8),
         ("Dự án\n專案名稱", 28),
-        ("Khách hàng\n客戶名稱", 18),
+        ("Khách hàng\n客戶名稱", 22),
         ("Hợp đồng\n合約編號", 18),
-        ("Giá trị HĐ (chưa VAT)\n合約總額 (未稅)", 20),
+        ("Giá trị HĐ (chưa VAT)\n合約總額 (未稅)", 22),
         ("Số tiền Đợt TT (chưa VAT)\n本期請款 (未稅)", 22),
-        ("Thuế suất\n稅率", 10),
-        ("Thuế VAT\n營業稅", 18),
-        ("Tổng tiền TT (gồm VAT)\n應收總額 (含稅)", 22),
-        ("Số tiền đã nhận\n已收金額", 20),
-        ("Số tiền còn lại\n剩餘尾款", 20),
-        ("Ngày KH hẹn TT\n預計付款日", 14),
-        ("Ngày đến hạn\n到期日", 14),
-        ("Ngày đã thanh toán\n實際付款日", 14),
-        ("Trạng thái CT\n單據狀態", 16),
-        ("Trạng thái thu\n收款狀態", 16),
-        ("Ghi chú tiến độ\n備註", 30),
+        ("Thuế suất\n稅率", 12),
+        ("Thuế VAT\n營業稅", 20),
+        ("Tổng tiền TT (gồm VAT)\n應收總額 (含稅)", 24),
+        ("Số tiền đã nhận\n已收金額", 22),
+        ("Số tiền còn lại\n剩餘尾款", 22),
+        ("Ngày KH hẹn TT\n預計付款日", 16),
+        ("Ngày đến hạn\n到期日", 16),
+        ("Ngày đã thanh toán\n實際付款日", 16),
+        ("Trạng thái CT\n單據狀態", 18),
+        ("Trạng thái thu\n收款狀態", 18),
+        ("Ghi chú tiến độ\n備註", 32),
     ]
 
-    ws.row_dimensions[3].height = 38
+    ws.row_dimensions[3].height = 42
     for col_idx, (header_text, col_width) in enumerate(headers, start=1):
         cell = ws.cell(row=3, column=col_idx, value=header_text)
         cell.font = font_header
@@ -106,7 +106,6 @@ def export_receivables_excel(
     start_row = 4
     for idx, item in enumerate(items, start=1):
         row_num = start_row + idx - 1
-        ws.row_dimensions[row_num].height = 26
 
         # Zebra striping
         is_even = (idx % 2 == 0)
@@ -127,6 +126,21 @@ def export_receivables_excel(
         doc_status = item.get("doc_status") or ""
         status_label = item.get("status_label") or item.get("collection_status") or ""
         notes = item.get("notes") or ""
+
+        # Dynamic row height calculation (anti-clipping for wrapped text)
+        text_lines = max(
+            len(str(proj).split("\n")),
+            len(str(cust).split("\n")),
+            len(str(doc_status).split("\n")),
+            len(str(notes).split("\n")),
+            1
+        )
+        if len(str(proj)) > 30 or len(str(notes)) > 35:
+            text_lines = max(text_lines, 2)
+        if len(str(proj)) > 60 or len(str(notes)) > 70:
+            text_lines = max(text_lines, 3)
+
+        ws.row_dimensions[row_num].height = max(26, min(120, text_lines * 19 + 6))
 
         # Cells with live Excel formulas
         # F: net, G: vat_rate, H: vat_amt (=F*G), I: gross (=F+H), J: rec, K: remaining (=I-J)
@@ -219,11 +233,15 @@ def export_receivables_excel(
                 cell.number_format = '#,##0" ₫"'
                 cell.alignment = align_right
 
-    # 5. Freeze Panes & Sheet View Settings
-    ws.freeze_panes = "C4"  # Freeze STT and Project Name
+    # 5. KÍCH HOẠT AUTOFILTER TRÊN TOÀN BỘ 17 CỘT TIÊU ĐỀ
+    if last_data_row >= 3:
+        ws.auto_filter.ref = f"A3:Q{last_data_row}"
+
+    # 6. Freeze Panes & Sheet View Settings (Ghim cố định STT & Tên Dự án, cuộn ngang dọc không mất)
+    ws.freeze_panes = "C4"
     ws.views.sheetView[0].showGridLines = True
 
-    # 6. Save to BytesIO
+    # 7. Save to BytesIO
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
