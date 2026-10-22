@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/receivables_tracker.css?v=1.0">
+{% endblock %}
+
+{% block content %}
+<div class="workspace-single receivables-workspace">
+
+  <!-- Hero & Action Header -->
+  <div class="receivables-hero">
+    <div class="receivables-hero-title">
+      <h2>
+        <svg class="icon" viewBox="0 0 24 24" style="color: #1F4E79;" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+          <path d="M12 7v4M10 9h4"/>
+        </svg>
+        <span>Theo Dõi Công Nợ Dự Án & Quản Lý Dòng Tiền Phải Thu</span>
+        <span class="badge-pill blue">Sheet 3 · 應收帳款 (AR)</span>
+      </h2>
+      <p>Theo dõi chi tiết các đợt thanh toán, quản lý thuế VAT, ngày khách hẹn, đôn đốc nợ quá hạn và kết nối trực tiếp với Hợp đồng & Đề nghị thanh toán.</p>
+    </div>
+
+    <div class="receivables-hero-actions">
+      <button type="button" class="btn btn-primary btn-sm" onclick="syncFromContracts()" title="Đồng bộ chính xác các mốc thanh toán từ dữ liệu Hợp đồng trong Database">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+        <span>Đồng Bộ Từ Database</span>
+      </button>
+
+      <button type="button" class="btn btn-ai btn-sm" onclick="toggleAiDigest()" id="btnToggleAi" title="Bật/Tắt Bản tin AI phân tích rủi ro & khuyến nghị thu hồi">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>AI Cảnh Báo & Dự Báo</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="exportReceivablesExcel()" title="Tải bảng theo dõi công nợ định dạng Excel chuẩn live formula">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Xuất Báo Cáo Excel (AR)</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="loadReceivablesData()" title="Làm mới dữ liệu">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Grid -->
+  <div class="receivables-kpi-grid">
+    <div class="receivables-kpi-card">
+      <div class="receivables-kpi-icon blue">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="receivables-kpi-meta">
+        <span class="receivables-kpi-label">Tổng Công Nợ Quản Lý</span>
+        <span class="receivables-kpi-value" id="kpiTotalReceivable">0 ₫</span>
+        <span class="receivables-kpi-sub" id="kpiTotalCount">0 đợt thanh toán</span>
+      </div>
+    </div>
+
+    <div class="receivables-kpi-card">
+      <div class="receivables-kpi-icon green">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="receivables-kpi-meta">
+        <span class="receivables-kpi-label">Đã Thu Hồi Về Tài Khoản</span>
+        <span class="receivables-kpi-value" id="kpiTotalReceived" style="color: #059669;">0 ₫</span>
+        <span class="receivables-kpi-sub" id="kpiCompletionRate">Tỷ lệ thu: 0%</span>
+      </div>
+    </div>
+
+    <div class="receivables-kpi-card">
+      <div class="receivables-kpi-icon orange">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="receivables-kpi-meta">
+        <span class="receivables-kpi-label">Còn Phải Thu (Dư Nợ)</span>
+        <span class="receivables-kpi-value" id="kpiTotalDebt" style="color: #D97706;">0 ₫</span>
+        <span class="receivables-kpi-sub" id="kpiPendingCount">Chờ thanh toán</span>
+      </div>
+    </div>
+
+    <div class="receivables-kpi-card">
+      <div class="receivables-kpi-icon red">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="receivables-kpi-meta">
+        <span class="receivables-kpi-label">Cảnh Báo Quá Hạn & Gấp</span>
+        <span class="receivables-kpi-value" id="kpiOverdueCount" style="color: #DC2626;">0</span>
+        <span class="receivables-kpi-sub" id="kpiUrgentSub">0 mốc sắp đến hạn</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Executive Risk Digest Panel (Collapsible) -->
+  <div class="ai-digest-panel" id="aiDigestPanel" style="display: none;">
+    <div class="ai-digest-header">
+      <div class="ai-digest-badge">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>BẢN TIN ĐIỀU HÀNH AI · GEMINI AR INSIGHTS</span>
+      </div>
+      <div class="ai-digest-status" id="aiHealthBadge">
+        <span class="dot"></span>
+        <span id="aiHealthText">Đang phân tích...</span>
+      </div>
+      <button type="button" class="ai-close-btn" onclick="toggleAiDigest()" title="Đóng bản tin AI">×</button>
+    </div>
+
+    <div class="ai-digest-body">
+      <div class="ai-digest-headline" id="aiHeadline">
+        Đang tải thông tin phân tích công nợ...
+      </div>
+
+      <div class="ai-digest-grid">
+        <div class="ai-digest-col">
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" width="16" height="16" style="color: #DC2626;"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Top Rủi Ro Nợ Quá Hạn Cần Xử Lý Gấp</span>
+          </h4>
+          <div class="ai-risks-list" id="aiRisksList">
+            <!-- Dynamic AI Top Risks -->
+          </div>
+        </div>
+
+        <div class="ai-digest-col">
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" width="16" height="16" style="color: #2563EB;"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Đề Xuất Hành Động Ngay Cho PM</span>
+          </h4>
+          <div class="ai-actions-list" id="aiActionsList">
+            <!-- Dynamic AI Action Items -->
+          </div>
+
+          <div class="ai-executive-note" id="aiExecutiveNote">
+            <!-- Dynamic Bilingual Note -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="receivables-filter-bar">
+    <div class="filter-group">
+      <label for="filterCustomer">Khách hàng / 客戶:</label>
+      <select id="filterCustomer" class="form-select form-select-sm" onchange="onFilterChange()">
+        <option value="all">Tất cả khách hàng (全部客戶)</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="filterStatus">Trạng thái thu / 收款狀態:</label>
+      <select id="filterStatus" class="form-select form-select-sm" onchange="onFilterChange()">
+        <option value="all">Tất cả trạng thái (全部狀態)</option>
+        <option value="PENDING">Chờ thu tiền (待收款)</option>
+        <option value="URGENT">Sắp đến hạn &lt;= 7 ngày (即將到期)</option>
+        <option value="DELAYED">Quá hạn thanh toán (已逾期)</option>
+        <option value="PAID">Đã thu xong (已收款)</option>
+      </select>
+    </div>
+
+    <div class="filter-group flex-1">
+      <label for="filterSearch">Tìm kiếm / 搜尋:</label>
+      <div class="search-input-wrapper">
+        <svg class="icon search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="filterSearch" class="form-control form-control-sm" placeholder="Tìm theo tên dự án, số hợp đồng, ghi chú..." oninput="debounceSearch()">
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button type="button" class="btn btn-outline btn-sm" id="btnToggleOverdue" onclick="toggleOverdueOnly()">
+        <span class="dot-overdue"></span>
+        <span>Chỉ Nợ Quá Hạn</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="resetFilters()">
+        <span>Đặt Lại</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Receivables Table (17 Columns Live Tracking) -->
+  <div class="receivables-table-card" id="receivablesCard">
+    <div class="table-card-toolbar">
+      <div class="table-card-title">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16" style="color: #1F4E79;" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        <span>Bảng Chi Tiết Công Nợ Phải Thu Theo Hợp Đồng</span>
+        <span class="badge-item-count" id="tableItemCount">0 đợt</span>
+      </div>
+      <div class="table-card-actions">
+        <button type="button" class="btn btn-primary btn-xs" onclick="openCreateReceivableModal()" title="Thêm một đợt thanh toán / mốc công nợ mới">
+          <svg class="icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>+ Thêm Đợt Mới</span>
+        </button>
+        <button type="button" class="btn btn-outline btn-xs" onclick="scrollTableHorizontally('left')" title="Cuộn bảng sang trái">
+          <span>◀ Cuộn Trái</span>
+        </button>
+        <button type="button" class="btn btn-outline btn-xs" onclick="scrollTableHorizontally('right')" title="Cuộn bảng sang phải">
+          <span>Cuộn Phải ▶</span>
+        </button>
+        <button type="button" class="btn btn-outline btn-xs" onclick="toggleTableFullscreen()" id="btnToggleTableFullscreen" title="Mở full toàn màn hình (Phím tắt: Esc để thoát)">
+          <svg class="icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <span id="btnToggleFullscreenText">Full Màn Hình</span>
+        </button>
+      </div>
+    </div>
+    <div class="table-responsive receivables-table-wrapper" id="tableContainer">
+      <table class="table table-bordered table-hover receivables-table" id="receivablesTable">
+        <thead>
+          <tr>
+            <th class="col-stt text-center sticky-col col-1">STT<br><span class="zh">序號</span></th>
+            <th class="col-project sticky-col col-2">Dự Án<br><span class="zh">專案名稱</span></th>
+            <th class="col-customer sticky-col col-3">Khách Hàng<br><span class="zh">客戶名稱</span></th>
+            <th class="col-contract text-center">Hợp Đồng<br><span class="zh">合約編號</span></th>
+            <th class="col-money text-end">Giá Trị HĐ (chưa VAT)<br><span class="zh">合約總額 (未稅)</span></th>
+            <th class="col-money text-end">Số Tiền Đợt TT (chưa VAT)<br><span class="zh">本期請款 (未稅)</span></th>
+            <th class="col-vat-rate text-center" style="min-width: 130px;">Thuế Suất (Click sửa)<br><span class="zh">稅率 (點擊調整)</span></th>
+            <th class="col-money text-end">Thuế VAT<br><span class="zh">營業稅</span></th>
+            <th class="col-money text-end">Tổng Tiền TT (gồm VAT)<br><span class="zh">應收總額 (含稅)</span></th>
+            <th class="col-money text-end" style="min-width: 140px;">Số Tiền Đã Nhận (Sửa)<br><span class="zh">已收金額 (點擊修改)</span></th>
+            <th class="col-money text-end highlight-debt">Số Tiền Còn Lại<br><span class="zh">剩餘尾款</span></th>
+            <th class="col-date text-center" style="min-width: 145px;">Ngày KH Hẹn TT<br><span class="zh">預計付款日 (可調)</span></th>
+            <th class="col-date text-center" style="min-width: 145px;">Ngày Đến Hạn<br><span class="zh">到期日 (可調)</span></th>
+            <th class="col-date text-center" style="min-width: 145px;">Ngày Đã TT<br><span class="zh">實際付款日 (可調)</span></th>
+            <th class="col-doc text-center" style="min-width: 130px;">Trạng Thái CT<br><span class="zh">單據狀態 (點擊編輯)</span></th>
+            <th class="col-status text-center" style="min-width: 135px;">Trạng Thái Thu<br><span class="zh">收款狀態 (下拉選擇)</span></th>
+            <th class="col-notes" style="min-width: 180px;">Ghi Chú Tiến Độ<br><span class="zh">備註 (Nhấp để sửa)</span></th>
+            <th class="col-actions text-center" style="min-width: 110px;">Thao Tác<br><span class="zh">操作</span></th>
+          </tr>
+        </thead>
+        <tbody id="receivablesTableBody">
+          <!-- Dynamic Data Rows -->
+          <tr>
+            <td colspan="18" class="text-center py-5">
+              <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Đang tải danh sách công nợ dự án...</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot id="receivablesTableFoot">
+          <!-- Dynamic Summary Row -->
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal 1: Chỉnh Sửa Chi Tiết Mốc Công Nợ (Edit Receivable Modal) -->
+<div class="modal fade" id="modalEditReceivable" tabindex="-1" aria-labelledby="modalEditReceivableLabel" aria-hidden="true" style="display: none; background: rgba(15, 23, 42, 0.65); z-index: 1000000;">
+  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 780px;">
+    <div class="modal-content" style="border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1F4E79 0%, #153E65 100%); color: #FFFFFF; padding: 0.9rem 1.25rem;">
+        <h5 class="modal-title" id="modalEditReceivableLabel" style="font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <span>Cập Nhật Chi Tiết Đợt Công Nợ · 編輯應收款明細</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" onclick="closeEditReceivableModal()" aria-label="Close" style="filter: brightness(0) invert(1); opacity: 0.85;"></button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem; background: #F8FAFC; max-height: 75vh; overflow-y: auto;">
+        <input type="hidden" id="editRecId">
+
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Tên Đợt / Dự Án (專案名稱 & 期數) <span class="text-danger">*</span></label>
+            <input type="text" id="editProjectName" class="form-control form-control-sm" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số HĐ / PO (合約編號)</label>
+            <input type="text" id="editContractCode" class="form-control form-control-sm" style="font-family: monospace;">
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Tên Khách Hàng / Công Ty (客戶名稱) <span class="text-danger">*</span></label>
+            <input type="text" id="editCustomerName" class="form-control form-control-sm" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số Tiền Đợt TT Chưa VAT (未稅金額)</label>
+            <input type="number" id="editNetAmount" class="form-control form-control-sm" oninput="recalcEditModalAmounts()" step="1000">
+            <small class="text-muted" id="previewNetAmount">0 ₫</small>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Thuế Suất VAT (稅率)</label>
+            <select id="editVatRate" class="form-select form-select-sm" onchange="recalcEditModalAmounts()">
+              <option value="0">0% (Không áp dụng VAT / 免稅)</option>
+              <option value="0.08">8% (Thuế GTGT ưu đãi / 8% 增值稅)</option>
+              <option value="0.10">10% (Thuế GTGT tiêu chuẩn / 10% 增值稅)</option>
+            </select>
+            <small class="text-muted" id="previewVatAmount">VAT: 0 ₫</small>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 700; font-size: 0.82rem; color: #1F4E79;">Tổng Tiền Gồm VAT (含稅總額)</label>
+            <input type="text" id="previewGrossAmount" class="form-control form-control-sm" readonly style="font-weight: 700; color: #1F4E79; background: #EEF2F6;">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #059669;">Số Tiền Đã Nhận (已收金額)</label>
+            <input type="number" id="editReceivedAmount" class="form-control form-control-sm" oninput="recalcEditModalAmounts()" step="1000">
+            <small class="text-muted" id="previewReceivedAmount">0 ₫</small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight: 700; font-size: 0.82rem; color: #DC2626;">Số Tiền Còn Lại (剩餘尾款)</label>
+            <input type="text" id="previewRemainingDebt" class="form-control form-control-sm" readonly style="font-weight: 700; color: #DC2626; background: #FEF2F2;">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ngày KH Hẹn TT (預計付款日)</label>
+            <input type="date" id="editCustomerPromisedDate" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ngày Đến Hạn (到期日)</label>
+            <input type="date" id="editDueDate" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ngày Thực Tế Đã TT (實際付款日)</label>
+            <input type="date" id="editPaidDate" class="form-control form-control-sm" onchange="onEditPaidDateChange(this.value)">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Trạng Thái Chứng Từ (單據狀態)</label>
+            <input type="text" id="editDocStatus" class="form-control form-control-sm" placeholder="Ví dụ: HD-TEST-001, Đã xuất HĐ, Chưa xuất...">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Trạng Thái Thu Nợ (收款狀態)</label>
+            <select id="editCollectionStatus" class="form-select form-select-sm">
+              <option value="PENDING">Chờ thu (待收款)</option>
+              <option value="URGENT">Sắp đến hạn &lt;= 7 ngày (即將到期)</option>
+              <option value="DELAYED">Quá hạn thanh toán (已逾期)</option>
+              <option value="PAID">Đã thu xong (已收款)</option>
+            </select>
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ghi Chú Tiến Độ / Kế Hoạch Đòi Nợ (催收行動備註)</label>
+            <textarea id="editNotes" class="form-control" rows="2" placeholder="Ghi chú đợt thanh toán, trao đổi với kế toán khách hàng..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 0.75rem 1.25rem; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between;">
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDeleteCurrentReceivable()">
+          <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span>Xóa Đợt Này</span>
+        </button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeEditReceivableModal()">Hủy Bỏ</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="saveReceivableModal()">
+            <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Lưu Thay Đổi (保存)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 2: Thêm Mới Đợt Công Nợ (Create Receivable Modal) -->
+<div class="modal fade" id="modalCreateReceivable" tabindex="-1" aria-labelledby="modalCreateReceivableLabel" aria-hidden="true" style="display: none; background: rgba(15, 23, 42, 0.65); z-index: 1000000;">
+  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 780px;">
+    <div class="modal-content" style="border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);">
+      <div class="modal-header" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #FFFFFF; padding: 0.9rem 1.25rem;">
+        <h5 class="modal-title" id="modalCreateReceivableLabel" style="font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm Mới Đợt Thanh Toán Công Nợ · 新增請款期數</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" onclick="closeCreateReceivableModal()" aria-label="Close" style="filter: brightness(0) invert(1); opacity: 0.85;"></button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem; background: #F8FAFC; max-height: 75vh; overflow-y: auto;">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Tên Đợt / Dự Án (專案名稱 & 期數) <span class="text-danger">*</span></label>
+            <input type="text" id="createProjectName" class="form-control form-control-sm" placeholder="Ví dụ: Đợt 4 (10%) - Bàn giao hoàn tất" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số HĐ / PO (合約編號)</label>
+            <input type="text" id="createContractCode" class="form-control form-control-sm" placeholder="HD-..." style="font-family: monospace;">
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Tên Khách Hàng / Công Ty (客戶名稱) <span class="text-danger">*</span></label>
+            <input type="text" id="createCustomerName" class="form-control form-control-sm" placeholder="Tên công ty khách hàng..." required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số Tiền Đợt TT Chưa VAT (未稅金額) <span class="text-danger">*</span></label>
+            <input type="number" id="createNetAmount" class="form-control form-control-sm" oninput="recalcCreateModalAmounts()" placeholder="0" step="1000" required>
+            <small class="text-muted" id="previewCreateNetAmount">0 ₫</small>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Thuế Suất VAT (稅率)</label>
+            <select id="createVatRate" class="form-select form-select-sm" onchange="recalcCreateModalAmounts()">
+              <option value="0" selected>0% (Không áp dụng VAT / 免稅)</option>
+              <option value="0.08">8% (Thuế GTGT ưu đãi / 8% 增值稅)</option>
+              <option value="0.10">10% (Thuế GTGT tiêu chuẩn / 10% 增值稅)</option>
+            </select>
+            <small class="text-muted" id="previewCreateVatAmount">VAT: 0 ₫</small>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 700; font-size: 0.82rem; color: #1F4E79;">Tổng Tiền Gồm VAT (含稅總額)</label>
+            <input type="text" id="previewCreateGrossAmount" class="form-control form-control-sm" readonly style="font-weight: 700; color: #1F4E79; background: #EEF2F6;">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #059669;">Số Tiền Đã Nhận (已收金額)</label>
+            <input type="number" id="createReceivedAmount" class="form-control form-control-sm" oninput="recalcCreateModalAmounts()" value="0" step="1000">
+            <small class="text-muted" id="previewCreateReceivedAmount">0 ₫</small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight: 700; font-size: 0.82rem; color: #DC2626;">Số Tiền Còn Lại (剩餘尾款)</label>
+            <input type="text" id="previewCreateRemainingDebt" class="form-control form-control-sm" readonly style="font-weight: 700; color: #DC2626; background: #FEF2F2;">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ngày KH Hẹn TT (預計付款日)</label>
+            <input type="date" id="createCustomerPromisedDate" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ngày Đến Hạn (到期日)</label>
+            <input type="date" id="createDueDate" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ngày Đã TT (實際付款日)</label>
+            <input type="date" id="createPaidDate" class="form-control form-control-sm">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Trạng Thái Chứng Từ (單據狀態)</label>
+            <input type="text" id="createDocStatus" class="form-control form-control-sm" placeholder="Chưa xuất / HD-...">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Trạng Thái Thu Nợ (收款狀態)</label>
+            <select id="createCollectionStatus" class="form-select form-select-sm">
+              <option value="PENDING" selected>Chờ thu (待收款)</option>
+              <option value="URGENT">Sắp đến hạn &lt;= 7 ngày (即將到期)</option>
+              <option value="DELAYED">Quá hạn thanh toán (已逾期)</option>
+              <option value="PAID">Đã thu xong (已收款)</option>
+            </select>
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ghi Chú Tiến Độ (備註)</label>
+            <textarea id="createNotes" class="form-control" rows="2" placeholder="Ghi chú đợt thanh toán..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 0.75rem 1.25rem; background: #FFFFFF; border-top: 1px solid #E2E8F0;">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeCreateReceivableModal()">Hủy Bỏ</button>
+        <button type="button" class="btn btn-success btn-sm" onclick="saveCreateReceivableModal()">
+          <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Tạo Đợt Thanh Toán (建立)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toastNotification" class="toast-notification"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/receivables_tracker.js?v=2.0"></script>
+{% endblock %}

@@ -19,6 +19,13 @@
       <span>Trang Chủ · Tổng Quan Dự Án</span>
     </a>
 
+    <a href="/files" data-nav-id="files" class="nav-item {% if active_tab == 'files' %}active{% endif %}" {% if active_tab == 'files' %}aria-current="page"{% endif %} title="Trung tâm quản lý toàn bộ hồ sơ, báo giá, hợp đồng & biên bản">
+      <span class="nav-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </span>
+      <span>Quản Lý Hồ Sơ & File</span>
+    </a>
+
     <div class="nav-section-title" data-section-id="project_flow">Chuỗi hồ sơ dự án</div>
 
     <a href="/quotations" data-nav-id="quotations" class="nav-item {% if active_tab == 'quotations' %}active{% endif %}" {% if active_tab == 'quotations' %}aria-current="page"{% endif %}>
@@ -50,11 +57,18 @@
       <span>Hợp Đồng Sửa Chữa</span>
     </a>
 
-    <a href="/purchase-orders" data-nav-id="po" class="nav-item {% if active_tab == 'po' %}active{% endif %}" {% if active_tab == 'po' %}aria-current="page"{% endif %}>
+    <a href="/purchase-orders" data-nav-id="po" class="nav-item {% if active_tab == 'po' %}active{% endif %}" {% if active_tab == 'po' %}aria-current="page"{% endif %} title="Theo dõi đơn mua hàng từ NCC, kiểm soát ETA, ngày giao và xuất Excel (Sheet 2)">
       <span class="nav-icon" aria-hidden="true">
         <svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
       </span>
-      <span>Đơn Đặt Mua Hàng (PO)</span>
+      <span>Theo Dõi Mua Hàng (PO)</span>
+    </a>
+
+    <a href="/receivables" data-nav-id="receivables" class="nav-item {% if active_tab == 'receivables' %}active{% endif %}" {% if active_tab == 'receivables' %}aria-current="page"{% endif %} title="Theo dõi công nợ dự án, đợt thanh toán, quản lý dòng tiền AR & xuất Excel (Sheet 3)">
+      <span class="nav-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M12 7v4M10 9h4"/></svg>
+      </span>
+      <span>Theo Dõi Công Nợ (AR)</span>
     </a>
 
     <a href="/delivery" data-nav-id="delivery" class="nav-item {% if active_tab == 'delivery' %}active{% endif %}" {% if active_tab == 'delivery' %}aria-current="page"{% endif %}>

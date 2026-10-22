@@ -184,6 +184,55 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS procurement_orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_no INTEGER,
+        project_name TEXT NOT NULL,
+        category TEXT,
+        item_name TEXT NOT NULL,
+        quantity REAL DEFAULT 1,
+        unit TEXT DEFAULT 'Bộ',
+        customer_company TEXT,
+        supplier_name TEXT NOT NULL,
+        order_date TEXT,
+        eta_date TEXT,
+        actual_delivery_date TEXT,
+        material_desc TEXT,
+        supplier_payment_status TEXT,
+        delivery_status TEXT DEFAULT 'PENDING',
+        delivery_status_label TEXT,
+        shipping_notes TEXT,
+        unit_price REAL DEFAULT 0,
+        total_amount REAL DEFAULT 0,
+        currency TEXT DEFAULT 'VND',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS project_receivables (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_no INTEGER,
+        project_name TEXT NOT NULL,
+        customer_name TEXT NOT NULL,
+        contract_code TEXT,
+        total_contract_amount REAL DEFAULT 0,
+        net_amount REAL DEFAULT 0,
+        vat_rate REAL DEFAULT 0,
+        vat_amount REAL DEFAULT 0,
+        gross_amount REAL DEFAULT 0,
+        received_amount REAL DEFAULT 0,
+        remaining_debt REAL DEFAULT 0,
+        customer_promised_date TEXT,
+        due_date TEXT,
+        paid_date TEXT,
+        doc_status TEXT,
+        collection_status TEXT DEFAULT 'PENDING',
+        notes TEXT,
+        linked_milestone_id INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_contracts_code ON contracts(contract_code);
     CREATE INDEX IF NOT EXISTS idx_milestones_contract ON payment_milestones(contract_code);
     CREATE INDEX IF NOT EXISTS idx_documents_contract ON documents(contract_code);
@@ -196,6 +245,9 @@ def init_db():
     CREATE INDEX IF NOT EXISTS idx_beneficiaries_short ON beneficiaries(short_name);
     CREATE INDEX IF NOT EXISTS idx_voucher_report_code ON payment_voucher_requests(report_code);
     CREATE INDEX IF NOT EXISTS idx_voucher_beneficiary ON payment_voucher_requests(beneficiary_name);
+    CREATE INDEX IF NOT EXISTS idx_procurement_project ON procurement_orders(project_name);
+    CREATE INDEX IF NOT EXISTS idx_procurement_supplier ON procurement_orders(supplier_name);
+    CREATE INDEX IF NOT EXISTS idx_procurement_delivery ON procurement_orders(delivery_status);
     """)
 
     # Backward-compatible migration for databases created before event-based

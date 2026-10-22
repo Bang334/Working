@@ -125,8 +125,11 @@ async def delivery_page(request: Request):
 
 
 @router.get("/purchase-orders", response_class=HTMLResponse)
+@router.get("/procurement", response_class=HTMLResponse)
+@router.get("/po", response_class=HTMLResponse)
+@router.get("/theo-doi-mua-hang", response_class=HTMLResponse)
 async def purchase_orders_page(request: Request):
-    """Purchase order (PO) generator view."""
+    """Theo Dõi Đơn Mua Hàng & Quản Lý Nhà Cung Cấp."""
     return templates.TemplateResponse(
         "po_page.html",
         {
@@ -134,7 +137,24 @@ async def purchase_orders_page(request: Request):
             "active_tab": "po",
             "models": CANDIDATE_MODELS,
             "default_model": DEFAULT_MODEL,
-            "page_title": "Đơn Đặt Mua Hàng Nhà Cung Cấp (PO)"
+            "page_title": "Theo Dõi Đơn Mua Hàng & Quản Lý Nhà Cung Cấp · 採購訂單暨供應商追蹤"
+        }
+    )
+
+
+@router.get("/receivables", response_class=HTMLResponse)
+@router.get("/cong-no", response_class=HTMLResponse)
+@router.get("/theo-doi-cong-no", response_class=HTMLResponse)
+async def receivables_page(request: Request):
+    """Theo Dõi Công Nợ Dự Án & Quản Lý Dòng Tiền Phải Thu (AR)."""
+    return templates.TemplateResponse(
+        "receivables_page.html",
+        {
+            "request": request,
+            "active_tab": "receivables",
+            "models": CANDIDATE_MODELS,
+            "default_model": DEFAULT_MODEL,
+            "page_title": "Theo Dõi Công Nợ Dự Án · 專案應收帳款追蹤表 (AR)"
         }
     )
 
@@ -257,4 +277,24 @@ async def payment_requests_page(request: Request):
             "history": history
         }
     )
+
+
+@router.get("/files", response_class=HTMLResponse)
+@router.get("/file-manager", response_class=HTMLResponse)
+@router.get("/quan-ly-file", response_class=HTMLResponse)
+async def file_manager_page(request: Request):
+    """Trung tâm quản lý toàn bộ hồ sơ, chứng từ, báo giá, hợp đồng & file mẫu tập trung."""
+    from app.services.file_manager_service import CATEGORY_CONFIG
+    return templates.TemplateResponse(
+        "file_manager_page.html",
+        {
+            "request": request,
+            "active_tab": "files",
+            "models": CANDIDATE_MODELS,
+            "default_model": DEFAULT_MODEL,
+            "page_title": "Quản Lý Hồ Sơ & File Dự Án · 專案檔案管理",
+            "category_config": CATEGORY_CONFIG,
+        }
+    )
+
 

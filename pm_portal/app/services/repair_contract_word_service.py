@@ -551,14 +551,12 @@ def generate_repair_contract_docx(data: Dict[str, Any], custom_output_dir: Optio
     # Save DOCX file
     target_dir = Path(custom_output_dir) if custom_output_dir else (WORKING_DIR / "Ho So Du An" / "Hop Dong")
     os.makedirs(target_dir, exist_ok=True)
-    os.makedirs(OUTPUTS_DIR, exist_ok=True)
 
     clean_code = re.sub(r'[\/:*?"<>|]', '_', so_hd)
     clean_cust = re.sub(r'[\/:*?"<>|]', '_', company_a[:35])
     file_name = f"HopDongSuaChua_{clean_code}_{clean_cust}.docx"
 
     file_path = target_dir / file_name
-    server_copy_path = OUTPUTS_DIR / file_name
 
     try:
         doc.save(str(file_path))
@@ -567,12 +565,6 @@ def generate_repair_contract_docx(data: Dict[str, Any], custom_output_dir: Optio
         file_name = f"HopDongSuaChua_{clean_code}_{clean_cust}_{datetime.now().strftime('%H%M%S')}.docx"
         file_path = target_dir / file_name
         doc.save(str(file_path))
-
-    # Also save to OUTPUTS_DIR for instant browser download
-    try:
-        doc.save(str(server_copy_path))
-    except Exception:
-        pass
 
     return {
         "status": "success",
@@ -595,7 +587,6 @@ def fill_existing_repair_template(template_path: Path, data: Dict[str, Any], cus
 
     target_dir = Path(custom_output_dir) if custom_output_dir else (WORKING_DIR / "Ho So Du An" / "Hop Dong")
     os.makedirs(target_dir, exist_ok=True)
-    os.makedirs(OUTPUTS_DIR, exist_ok=True)
 
     clean_code = re.sub(r'[\/:*?"<>|]', '_', so_hd)
     clean_cust = re.sub(r'[\/:*?"<>|]', '_', company_a[:35])
@@ -603,7 +594,6 @@ def fill_existing_repair_template(template_path: Path, data: Dict[str, Any], cus
     file_path = target_dir / file_name
 
     doc.save(str(file_path))
-    doc.save(str(OUTPUTS_DIR / file_name))
 
     numeric_total = parse_positive_integer(data.get("tong_tien_hop_dong_so", 0))
     return {

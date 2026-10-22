@@ -90,7 +90,20 @@ def generate_eco_prime_excel(
             if sname != ws.title:
                 del wb[sname]
 
-    # 1. Cập nhật thông tin Người mua
+    thin_border = Border(
+        left=Side(style="thin", color="000000"),
+        right=Side(style="thin", color="000000"),
+        top=Side(style="thin", color="000000"),
+        bottom=Side(style="thin", color="000000"),
+    )
+
+    # 1. Cập nhật thông tin Người mua & Đảm bảo merge F2:H2..F7:H7 liền mạch đến hết cột H
+    for r in (3, 4, 5):
+        for rng in list(ws.merged_cells.ranges):
+            if rng.min_row == r and rng.min_col == 6 and rng.max_col == 7:
+                ws.unmerge_cells(str(rng))
+        ws.merge_cells(start_row=r, start_column=6, end_row=r, end_column=8)
+
     if quote_data.customer_name:
         ws["F2"].value = str(quote_data.customer_name).strip()
     if quote_data.customer_dept:
@@ -101,6 +114,11 @@ def generate_eco_prime_excel(
     if quote_data.customer_address:
         ws["F6"].value = str(quote_data.customer_address).strip()
     ws["F7"].value = str(quote_data.customer_email or "").strip()
+
+    # Kẻ viền (border) cho khối Người bán (C1:D7) và Người mua (E1:H7)
+    for r in range(1, 8):
+        for col_idx in range(3, 9):  # Cột C (3) đến cột H (8)
+            ws.cell(r, col_idx).border = thin_border
 
     # 2. Cập nhật Tiêu đề Báo giá & Ngày tháng & Tỷ giá
     if quote_data.quote_title:
@@ -191,7 +209,7 @@ def generate_eco_prime_excel(
 
         for col_idx in range(9, 16):
             c = ws.cell(r, col_idx)
-            c.border = thin_border
+            c.border = Border()  # Cột J:O (Bảng giá vốn nội bộ) là NO BORDER theo mẫu gốc
             c.font = font_item_black
             c.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
 

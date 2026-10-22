@@ -77,13 +77,30 @@ def generate_pouhui_with_reference_format(template_path, output_path):
     if 'BHT2' in wb.sheetnames:
         del wb['BHT2']
 
-    # 1. Cập nhật thông tin Người mua (Pou Hui Vietnam)
+    # 1. Cập nhật thông tin Người mua (Pou Hui Vietnam) & Đảm bảo merge F2:H2..F7:H7 liền mạch đến hết cột H
+    for r in (3, 4, 5):
+        for rng in list(ws.merged_cells.ranges):
+            if rng.min_row == r and rng.min_col == 6 and rng.max_col == 7:
+                ws.unmerge_cells(str(rng))
+        ws.merge_cells(start_row=r, start_column=6, end_row=r, end_column=8)
+
     ws['F2'].value = "CÔNG TY TNHH VIỆT NAM PHỔ HUỆ Y TẾ CÔNG NGHỆ (POU HUI)"
     ws['F3'].value = "Ban Quản lý Dự án & Cơ điện 機電與專案部"
     ws['F4'].value = "(Liên hệ khách hàng)"
     ws['F5'].value = ""
     ws['F6'].value = "Lô D7/I, Đường số 1B, KCN Vĩnh Lộc, Phường Bình Hưng Hòa B, Q. Bình Tân, TP. Hồ Chí Minh"
     ws['F7'].value = "(Email khách hàng)"
+
+    # Kẻ viền (border) cho khối Người bán (C1:D7) và Người mua (E1:H7)
+    thin_border_box = Border(
+        left=Side(style='thin', color='000000'),
+        right=Side(style='thin', color='000000'),
+        top=Side(style='thin', color='000000'),
+        bottom=Side(style='thin', color='000000'),
+    )
+    for r in range(1, 8):
+        for col_idx in range(3, 9):  # Cột C (3) đến cột H (8)
+            ws.cell(r, col_idx).border = thin_border_box
 
     # 2. Cập nhật Tiêu đề Báo giá & Tỷ giá
     ws['A9'].value = "Báo giá hệ thống đo đếm điện năng 4 trạm biến áp 高壓變電站電能計量系統硬體報價訂購確認單"
@@ -409,10 +426,20 @@ def generate_pouhui_with_reference_format(template_path, output_path):
             ws.cell(r_c, c_c).value = None
 
     # Khóa chặt vùng in đúng số dòng thực tế trên 1 trang A4 duy nhất
+    ws.freeze_panes = None
     ws.print_area = f"$A$1:$H${r_n3}"
-    ws.views.sheetView[0].view = "pageBreakPreview"
-    ws.views.sheetView[0].zoomScale = 60
-    ws.views.sheetView[0].showGridLines = None
+    ws.sheet_view.topLeftCell = "A1"
+    if hasattr(ws, "views") and hasattr(ws.views, "sheetView") and ws.views.sheetView:
+        for sv in ws.views.sheetView:
+            sv.view = "pageBreakPreview"
+            sv.zoomScale = 60
+            sv.showGridLines = None
+            sv.topLeftCell = "A1"
+            sv.pane = None
+            if hasattr(sv, "selection") and sv.selection:
+                sv.selection[0].pane = None
+                sv.selection[0].activeCell = "A1"
+                sv.selection[0].sqref = "A1"
 
     ws.page_setup.orientation = "portrait"
     ws.page_setup.paperSize = 9

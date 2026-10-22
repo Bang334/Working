@@ -1,0 +1,451 @@
+<!-- ==========================================================================
+     247EXPRESS SHIPPING ACCOUNT WIDGET (GỬI HÀNG CHO KHÁCH)
+     ========================================================================== -->
+
+<style>
+/* Header Trigger Badge */
+.header-shipping {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 102, 0, 0.08);
+  border: 1px solid rgba(255, 102, 0, 0.25);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.header-shipping:hover {
+  background: rgba(255, 102, 0, 0.16);
+  border-color: #FF6600;
+  transform: translateY(-1px);
+}
+.header-shipping-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #FF6600;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header-shipping-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.header-shipping span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.header-shipping span small {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+.header-shipping span strong {
+  font-size: 0.82rem;
+  color: #E65100;
+  font-weight: 700;
+}
+
+/* Floating Quick Button (Góc dưới bên phải) */
+.floating-shipping-btn {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: linear-gradient(135deg, #FF6600 0%, #E65100 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 50px;
+  padding: 0.65rem 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  box-shadow: 0 4px 14px rgba(230, 81, 0, 0.38);
+  cursor: pointer;
+  z-index: 900;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.floating-shipping-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(230, 81, 0, 0.5);
+}
+.floating-shipping-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Modal Overlay & Popover */
+.shipping-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  padding: 1.25rem;
+}
+.shipping-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.shipping-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.shipping-modal-overlay.active .shipping-card {
+  transform: translateY(0) scale(1);
+}
+
+.shipping-card-header {
+  background: linear-gradient(135deg, #1F4E79 0%, #153450 100%);
+  color: #FFFFFF;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+.shipping-card-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #FF6600, #FFA726);
+}
+.shipping-title-block {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.shipping-logo-badge {
+  background: #FF6600;
+  color: #FFFFFF;
+  font-weight: 900;
+  font-size: 0.95rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  letter-spacing: -0.5px;
+}
+.shipping-title-block h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.shipping-title-block p {
+  margin: 0.15rem 0 0 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+.shipping-close-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #FFFFFF;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+.shipping-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.shipping-card-body {
+  padding: 1.5rem;
+}
+
+/* Item row with copy */
+.shipping-field {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.shipping-field-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.shipping-field-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.shipping-field-value {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-main);
+  font-family: monospace, var(--font-sans);
+  word-break: break-all;
+}
+.shipping-field-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.copy-pill-btn {
+  background: rgba(31, 78, 121, 0.08);
+  border: 1px solid rgba(31, 78, 121, 0.2);
+  color: #1F4E79;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.15s ease;
+}
+.copy-pill-btn:hover {
+  background: #1F4E79;
+  color: #FFFFFF;
+}
+.copy-pill-btn.copied {
+  background: #059669;
+  color: #FFFFFF;
+  border-color: #059669;
+}
+
+/* Action button to open 247 */
+.open-247-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #FF6600 0%, #E65100 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(230, 81, 0, 0.25);
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+}
+.open-247-btn:hover {
+  background: linear-gradient(135deg, #E65100 0%, #BF360C 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(230, 81, 0, 0.35);
+  color: #FFFFFF;
+}
+</style>
+
+<!-- Floating Button Góc Màn Hình (Xuất hiện trên mọi trang) -->
+<button type="button" class="floating-shipping-btn" onclick="open247ExpressModal()" title="Mở thông tin tài khoản 247Express gửi hàng">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="1" y="3" width="15" height="13"/>
+    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+    <circle cx="5.5" cy="18.5" r="2.5"/>
+    <circle cx="18.5" cy="18.5" r="2.5"/>
+  </svg>
+  <span>247Express Gửi Hàng</span>
+</button>
+
+<!-- Modal Card Chi Tiết Tài Khoản -->
+<div class="shipping-modal-overlay" id="shipping247Modal" onclick="handleShippingOverlayClick(event)">
+  <div class="shipping-card">
+    <div class="shipping-card-header">
+      <div class="shipping-title-block">
+        <div class="shipping-logo-badge">247</div>
+        <div>
+          <h3>Tài Khoản Giao Nhận 247Express</h3>
+          <p>Tạo đơn gửi hàng cho khách · Cty Hong Ming Global</p>
+        </div>
+      </div>
+      <button type="button" class="shipping-close-btn" onclick="close247ExpressModal()" title="Đóng">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="shipping-card-body">
+      <!-- 1. Tên đăng nhập -->
+      <div class="shipping-field">
+        <div class="shipping-field-meta">
+          <span class="shipping-field-label">Tên Đăng Nhập / Mã Khách Hàng</span>
+          <span class="shipping-field-value" id="val247Username">KBH-KH26-0173</span>
+        </div>
+        <div class="shipping-field-actions">
+          <button type="button" class="copy-pill-btn" onclick="copyShippingText('KBH-KH26-0173', this)">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Sao chép</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Mật khẩu -->
+      <div class="shipping-field">
+        <div class="shipping-field-meta">
+          <span class="shipping-field-label">Mật Khẩu Đăng Nhập</span>
+          <span class="shipping-field-value" id="val247Password">•••••••••••••</span>
+        </div>
+        <div class="shipping-field-actions">
+          <button type="button" class="copy-pill-btn" onclick="toggleShippingPassword(this)" title="Hiện / Ẩn mật khẩu">
+            <span id="txtTogglePw">Hiện</span>
+          </button>
+          <button type="button" class="copy-pill-btn" onclick="copyShippingText('Hongming@2026', this)">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Sao chép</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Email đăng ký -->
+      <div class="shipping-field">
+        <div class="shipping-field-meta">
+          <span class="shipping-field-label">Email Đăng Ký Hệ Thống</span>
+          <span class="shipping-field-value" id="val247Email" style="font-size: 0.85rem;">invoice@hongming-global.com</span>
+        </div>
+        <div class="shipping-field-actions">
+          <button type="button" class="copy-pill-btn" onclick="copyShippingText('invoice@hongming-global.com', this)">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Sao chép</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. Ngày kích hoạt & Thông tin thêm -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.25rem; font-size: 0.78rem; color: var(--text-muted);">
+        <span>Ngày kích hoạt: <strong style="color: var(--text-main);">21/10/2026</strong></span>
+        <span>Khu vực: <strong>TP. Hồ Chí Minh</strong></span>
+      </div>
+
+      <!-- 5. Nút mở cổng 247Express -->
+      <a href="https://247express.vn/khach-hang/tao-don-hang/mau-cu" target="_blank" rel="noopener noreferrer" class="open-247-btn">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        <span>Mở Trang Tạo Đơn Hàng 247Express (Mẫu Cũ)</span>
+      </a>
+
+      <!-- 6. Nút sao chép tất cả -->
+      <div style="margin-top: 0.75rem; text-align: center;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="copyAll247Info(this)" style="font-size: 0.78rem; padding: 0.35rem 0.85rem;">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Sao chép toàn bộ thông tin đăng nhập</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.open247ExpressModal = function() {
+  const modal = document.getElementById("shipping247Modal");
+  if (modal) modal.classList.add("active");
+};
+
+window.close247ExpressModal = function() {
+  const modal = document.getElementById("shipping247Modal");
+  if (modal) modal.classList.remove("active");
+};
+
+window.handleShippingOverlayClick = function(e) {
+  if (e.target && e.target.id === "shipping247Modal") {
+    close247ExpressModal();
+  }
+};
+
+window.toggleShippingPassword = function(btn) {
+  const el = document.getElementById("val247Password");
+  const txt = document.getElementById("txtTogglePw");
+  if (!el || !txt) return;
+  if (el.textContent === "•••••••••••••") {
+    el.textContent = "Hongming@2026";
+    txt.textContent = "Ẩn";
+  } else {
+    el.textContent = "•••••••••••••";
+    txt.textContent = "Hiện";
+  }
+};
+
+window.copyShippingText = function(text, btn) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showCopiedFeedback(btn);
+    }).catch(() => fallbackCopy(text, btn));
+  } else {
+    fallbackCopy(text, btn);
+  }
+};
+
+window.copyAll247Info = function(btn) {
+  const allInfo = "CỔNG TẠO ĐƠN 247EXPRESS (HONG MING GLOBAL)\n" +
+    "• Link tạo đơn: https://247express.vn/khach-hang/tao-don-hang/mau-cu\n" +
+    "• Tên đăng nhập: KBH-KH26-0173\n" +
+    "• Mật khẩu: Hongming@2026\n" +
+    "• Mã khách hàng: KBH-KH26-0173\n" +
+    "• Email đăng ký: invoice@hongming-global.com\n" +
+    "• Ngày kích hoạt: 21/10/2026";
+  copyShippingText(allInfo, btn);
+};
+
+function fallbackCopy(text, btn) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    showCopiedFeedback(btn);
+  } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function showCopiedFeedback(btn) {
+  if (!btn) return;
+  const originalHtml = btn.innerHTML;
+  btn.classList.add("copied");
+  btn.innerHTML = '<span>✓ Đã chép!</span>';
+  setTimeout(() => {
+    btn.classList.remove("copied");
+    btn.innerHTML = originalHtml;
+  }, 1800);
+}
+
+// Hỗ trợ bấm phím Escape để đóng modal
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") {
+    close247ExpressModal();
+  }
+});
+</script>

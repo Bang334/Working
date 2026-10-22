@@ -80,9 +80,11 @@ async def export_excel_endpoint(data: EcoPrimeQuotationData):
         file_name = result["file_name"]
 
         # Mã hóa filename theo RFC 5987 để trình duyệt tải đúng tiếng Việt / Trung
+        # Fallback filename chỉ chứa ASCII an toàn để tránh UnicodeEncodeError latin-1 trong Starlette/HTTP header
+        ascii_fallback = "".join(c for c in file_name if c.isascii() and c not in r'\"\\').strip() or "ECO_PRIME_Bao_Gia.xlsx"
         encoded_filename = urllib.parse.quote(file_name)
         headers = {
-            "Content-Disposition": f"attachment; filename=\"{file_name}\"; filename*=UTF-8''{encoded_filename}",
+            "Content-Disposition": f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{encoded_filename}",
             "Access-Control-Expose-Headers": "Content-Disposition"
         }
 

@@ -16,6 +16,14 @@ const SidebarTabManager = {
       desc: "Tiến độ hồ sơ, cảnh báo công việc và tổng quan tài chính dự án",
     },
     {
+      id: "files",
+      section: "admin",
+      name: "Quản Lý Hồ Sơ & File",
+      icon: "📁",
+      url: "/files",
+      desc: "Trung tâm quản lý toàn bộ hồ sơ, báo giá, hợp đồng & biên bản tập trung",
+    },
+    {
       id: "quotations",
       section: "project_flow",
       name: "Bảng Báo Giá Song Ngữ",

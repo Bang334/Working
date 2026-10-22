@@ -1,0 +1,1072 @@
+/* ==========================================================================
+   RECEIVABLES TRACKER STYLES (Sheet 3 · AR Debt Portfolio)
+   Hong Ming Global PM Portal
+   ========================================================================== */
+
+.receivables-workspace {
+  padding: 1rem 1.25rem;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* 1. Hero & Actions Header */
+.receivables-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.receivables-hero-title h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.receivables-hero-title p {
+  color: #475569;
+  font-size: 0.86rem;
+  margin: 0;
+  max-width: 850px;
+  line-height: 1.4;
+}
+
+.receivables-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.badge-pill.blue {
+  background: #E0F2FE;
+  color: #0369A1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid #BAE6FD;
+}
+
+/* 2. KPI Metrics Grid */
+.receivables-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.receivables-kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.receivables-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.receivables-kpi-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.receivables-kpi-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.receivables-kpi-icon.blue {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.receivables-kpi-icon.green {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.receivables-kpi-icon.orange {
+  background: #FFFBEB;
+  color: #D97706;
+}
+
+.receivables-kpi-icon.red {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.receivables-kpi-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.receivables-kpi-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 0.2rem;
+}
+
+.receivables-kpi-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.receivables-kpi-sub {
+  font-size: 0.78rem;
+  color: #64748B;
+  margin-top: 0.25rem;
+}
+
+/* 3. AI Executive Digest Panel */
+.ai-digest-panel {
+  background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
+  border: 1px solid #BFDBFE;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.08);
+  animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-digest-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #DBEAFE;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ai-digest-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1E40AF;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ai-digest-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: #FFFFFF;
+  border: 1px solid #BFDBFE;
+}
+
+.ai-digest-status .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+}
+
+.ai-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  color: #64748B;
+  cursor: pointer;
+  padding: 0 0.4rem;
+  line-height: 1;
+}
+
+.ai-close-btn:hover {
+  color: #0F172A;
+}
+
+.ai-digest-headline {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #1E293B;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  background: #FFFFFF;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #2563EB;
+}
+
+.ai-digest-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .ai-digest-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ai-digest-col h4 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.ai-risks-list, .ai-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ai-risk-card {
+  background: #FFFFFF;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.84rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ai-risk-card .risk-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ai-risk-card .risk-cust {
+  font-weight: 700;
+  color: #991B1B;
+}
+
+.ai-risk-card .risk-proj {
+  color: #475569;
+  font-size: 0.78rem;
+}
+
+.ai-risk-card .risk-badge {
+  background: #FEE2E2;
+  color: #991B1B;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.ai-action-item {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.84rem;
+  color: #1E293B;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.ai-action-item::before {
+  content: "•";
+  color: #2563EB;
+  font-weight: 800;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.ai-executive-note {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: #FFFFFF;
+  border: 1px dashed #93C5FD;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #1E3A8A;
+  white-space: pre-line;
+  line-height: 1.45;
+}
+
+/* 4. Filter Bar */
+.receivables-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.filter-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.filter-group.flex-1 {
+  flex: 1;
+  min-width: 240px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.search-input-wrapper input {
+  padding-left: 2rem;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-ai {
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+  color: #FFFFFF !important;
+  border: none;
+  font-weight: 600;
+}
+
+.btn-ai:hover {
+  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
+}
+
+.dot-overdue {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #DC2626;
+  margin-right: 0.25rem;
+}
+
+#btnToggleOverdue.active {
+  background: #FEE2E2;
+  color: #991B1B;
+  border-color: #F87171;
+}
+
+/* 5. Main Table & Sticky Columns */
+.receivables-table-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.table-card-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 1rem;
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+  gap: 0.5rem;
+}
+
+.table-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.badge-item-count {
+  background: #E2E8F0;
+  color: #1E293B;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.btn-xs {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.receivables-table-wrapper {
+  height: calc(100vh - 270px);
+  min-height: 540px;
+  max-height: calc(100vh - 200px);
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
+  position: relative;
+  background-color: #FFFFFF;
+  scrollbar-width: auto !important;
+  scrollbar-color: #1F4E79 #E2E8F0 !important;
+}
+
+/* Custom styled horizontal and vertical scrollbar (Thanh cuộn to bản, nổi bật) */
+.receivables-table-wrapper::-webkit-scrollbar {
+  height: 14px !important;
+  width: 12px !important;
+  display: block !important;
+}
+
+.receivables-table-wrapper::-webkit-scrollbar-track {
+  background: #E2E8F0 !important;
+  border-top: 1.5px solid #CBD5E1 !important;
+}
+
+.receivables-table-wrapper::-webkit-scrollbar-thumb {
+  background: #1F4E79 !important;
+  border-radius: 7px !important;
+  border: 2px solid #E2E8F0 !important;
+}
+
+.receivables-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #0F2D4A !important;
+}
+
+/* Expanded & Fullscreen Modes */
+.receivables-table-card.expanded .receivables-table-wrapper {
+  height: calc(100vh - 130px);
+  min-height: 750px;
+  max-height: none;
+}
+
+/* FULLSCREEN VIEWPORT MODE (100vw x 100vh) */
+.receivables-table-card.fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  z-index: 999999 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #FFFFFF !important;
+}
+
+.receivables-table-card.fullscreen .table-card-toolbar {
+  flex: 0 0 46px !important;
+  height: 46px !important;
+  max-height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 1.25rem !important;
+  background: #0F2D4A !important;
+  color: #FFFFFF !important;
+  border-bottom: 2px solid #081B2E !important;
+  box-sizing: border-box !important;
+}
+
+.receivables-table-card.fullscreen .table-card-title {
+  color: #FFFFFF !important;
+  font-size: 0.95rem !important;
+}
+
+.receivables-table-card.fullscreen .table-card-title svg {
+  color: #60A5FA !important;
+}
+
+.receivables-table-card.fullscreen .badge-item-count {
+  background: #1E3A8A !important;
+  color: #BFDBFE !important;
+}
+
+.receivables-table-card.fullscreen .receivables-table-wrapper {
+  flex: 1 1 0 !important;
+  height: calc(100vh - 46px) !important;
+  max-height: calc(100vh - 46px) !important;
+  min-height: 0 !important;
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-sizing: border-box !important;
+}
+
+body.table-modal-fullscreen-open {
+  overflow: hidden !important;
+}
+
+.receivables-table {
+  width: 100%;
+  min-width: 2500px !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.86rem;
+  margin: 0;
+}
+
+.receivables-table th {
+  background-color: #1F4E79 !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  padding: 0.75rem 0.65rem;
+  vertical-align: middle;
+  border-bottom: 2px solid #0B2545;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: pre-line;
+  line-height: 1.25;
+  position: sticky;
+  top: 0;
+  z-index: 15;
+}
+
+.receivables-table th .zh {
+  font-size: 0.73rem;
+  font-weight: 400;
+  opacity: 0.9;
+  display: block;
+}
+
+.receivables-table td {
+  padding: 0.75rem 0.75rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #F1F5F9;
+  line-height: 1.45;
+  background-color: #FFFFFF;
+  transition: background-color 0.1s ease;
+}
+
+/* Hover effect */
+.receivables-table tbody tr:hover td {
+  background-color: #F4F8FA !important;
+}
+
+/* STRICT SOLID OPAQUE STICKY COLUMNS */
+.receivables-table th.sticky-col {
+  position: sticky;
+  z-index: 25 !important;
+  background-color: #1F4E79 !important;
+}
+
+.receivables-table td.sticky-col {
+  position: sticky;
+  z-index: 10 !important;
+  background-color: #FFFFFF !important;
+}
+
+.receivables-table tbody tr:hover td.sticky-col {
+  background-color: #F4F8FA !important;
+}
+
+/* Sticky Column Offsets */
+.col-1 {
+  left: 0;
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+}
+
+.col-2 {
+  left: 56px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 340px;
+}
+
+.col-3 {
+  left: 336px;
+  width: 240px;
+  min-width: 240px;
+  max-width: 290px;
+  box-shadow: 3px 0 5px -2px rgba(0, 0, 0, 0.12); /* Shadow divider */
+}
+
+/* Column dimensions & formatting */
+.col-contract { min-width: 150px; }
+.col-money { min-width: 140px; font-variant-numeric: tabular-nums; }
+.col-vat-rate { min-width: 75px; }
+.col-date { min-width: 110px; font-variant-numeric: tabular-nums; }
+.col-doc { min-width: 130px; }
+.col-status { min-width: 150px; }
+.col-notes { min-width: 260px; max-width: 360px; }
+.col-actions { min-width: 120px; }
+
+.highlight-debt {
+  font-weight: 700;
+  color: #B91C1C;
+}
+
+.overdue-pill {
+  display: inline-block;
+  background: #FEE2E2;
+  color: #991B1B;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  margin-top: 0.2rem;
+}
+
+.urgent-pill {
+  display: inline-block;
+  background: #FEF08A;
+  color: #713F12;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  margin-top: 0.2rem;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge.paid {
+  background: #DEF7EC;
+  color: #03543F;
+  border: 1px solid #BCF0DA;
+}
+
+.status-badge.delayed {
+  background: #FDE8E8;
+  color: #9B1C1C;
+  border: 1px solid #F8B4B4;
+}
+
+.status-badge.urgent {
+  background: #FEF08A;
+  color: #713F12;
+  border: 1px solid #FDE047;
+}
+
+.status-badge.pending {
+  background: #E1EFFE;
+  color: #1E429F;
+  border: 1px solid #B3D7FF;
+}
+
+/* Quick Status Dropdown */
+.status-select-inline {
+  width: 100%;
+  font-size: 0.76rem;
+  padding: 0.25rem 0.35rem;
+  border-radius: 6px;
+  font-weight: 600;
+  border: 1px solid #CBD5E1;
+  background-color: #F8FAFC;
+  cursor: pointer;
+}
+
+.status-select-inline:focus {
+  outline: none;
+  border-color: #2563EB;
+  background-color: #FFFFFF;
+}
+
+/* Editable Notes Cell */
+.editable-notes-cell {
+  cursor: pointer;
+  position: relative;
+  min-height: 28px;
+  border-radius: 4px;
+  padding: 0.2rem 0.3rem;
+  transition: background 0.15s;
+}
+
+.editable-notes-cell:hover {
+  background: #FEF9C3;
+  outline: 1px dashed #EAB308;
+}
+
+.notes-editor-textarea {
+  width: 100%;
+  min-height: 58px;
+  font-size: 0.8rem;
+  padding: 0.35rem;
+  border: 1px solid #2563EB;
+  border-radius: 4px;
+  resize: vertical;
+  outline: none;
+  background: #FFFFFF;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Footer / Total Row */
+.receivables-table tfoot td {
+  background-color: #E6F0FA !important;
+  font-weight: 700;
+  color: #1F4E79;
+  border-top: 2px solid #1F4E79;
+  border-bottom: 2px solid #1F4E79;
+  padding: 0.7rem 0.6rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 16;
+}
+
+.receivables-table tfoot td.sticky-col {
+  z-index: 26 !important;
+  background-color: #E6F0FA !important;
+}
+
+/* Row Action Buttons */
+.btn-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-action-icon:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+  border-color: #94A3B8;
+}
+
+.btn-action-icon.primary:hover {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-color: #3B82F6;
+}
+
+/* Toast */
+.toast-notification {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #0F172A;
+  color: #FFFFFF;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  animation: slideUp 0.25s ease;
+}
+
+.toast-notification.success {
+  background: #065F46;
+  border: 1px solid #34D399;
+}
+
+.toast-notification.error {
+  background: #991B1B;
+  border: 1px solid #F87171;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   INTERACTIVE INLINE EDITING STYLES (Tax, Dates, Amounts, Docs)
+   ========================================================================== */
+
+/* 1. VAT Rate Inline Select */
+.inline-vat-select {
+  padding: 0.25rem 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #CBD5E1;
+  background-color: #F8FAFC;
+  color: #1E293B;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.inline-vat-select:hover, .inline-vat-select:focus {
+  border-color: #1F4E79;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.15);
+}
+
+/* 2. Date Pickers Inline */
+.inline-date-picker-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 0.15rem 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.inline-date-picker-wrap:hover, .inline-date-picker-wrap:focus-within {
+  border-color: #1F4E79;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.12);
+}
+
+.inline-date-input {
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  color: #1E293B;
+  font-family: inherit;
+  outline: none;
+  padding: 0;
+  width: 106px;
+  cursor: pointer;
+}
+
+.btn-clear-date {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-clear-date:hover {
+  color: #EF4444;
+  background: #FEE2E2;
+}
+
+/* 3. Editable Amount Cell */
+.editable-amount-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px dashed transparent;
+}
+
+.editable-amount-cell:hover {
+  background-color: #ECFDF5;
+  border-color: #A7F3D0;
+}
+
+.editable-amount-cell .edit-hint-icon {
+  font-size: 0.72rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.editable-amount-cell:hover .edit-hint-icon {
+  opacity: 0.75;
+}
+
+.inline-amount-edit-wrap, .inline-doc-edit-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.inline-amount-input {
+  width: 120px !important;
+  font-size: 0.82rem !important;
+  padding: 0.2rem 0.4rem !important;
+  text-align: right;
+  border-radius: 4px !important;
+}
+
+.inline-doc-input {
+  width: 125px !important;
+  font-size: 0.82rem !important;
+  padding: 0.2rem 0.4rem !important;
+  text-align: center;
+  border-radius: 4px !important;
+}
+
+.btn-check-save {
+  background: #10B981;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-check-save:hover {
+  background: #059669;
+}
+
+.btn-cancel-save {
+  background: #EF4444;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-cancel-save:hover {
+  background: #DC2626;
+}
+
+/* 4. Editable Doc Status Cell */
+.editable-doc-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px dashed transparent;
+}
+
+.editable-doc-cell:hover {
+  background-color: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+.editable-doc-cell .edit-hint-icon {
+  font-size: 0.72rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.editable-doc-cell:hover .edit-hint-icon {
+  opacity: 0.75;
+}
+
+.badge-doc {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+  font-family: monospace;
+}
+
+.badge-doc.invoiced {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-color: #BFDBFE;
+}
+
+.btn-action-icon.warning:hover {
+  background: #FEF3C7;
+  color: #B45309;
+  border-color: #FCD34D;
+}
+

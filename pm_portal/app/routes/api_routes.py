@@ -95,6 +95,17 @@ from app.controllers.payment_voucher_controller import (
     list_voucher_history_controller,
     save_beneficiary_controller,
 )
+from app.controllers.file_manager_controller import (
+    delete_file_controller,
+    download_file_controller,
+    get_files_controller,
+    open_explorer_controller,
+    open_file_controller,
+    open_folder_controller,
+    preview_file_controller,
+    rename_file_controller,
+    upload_file_controller,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1066,6 +1077,78 @@ async def delete_voucher_history_endpoint(voucher_id: int):
 async def download_voucher_file_endpoint(filename: str):
     """Tải file Excel đơn xin thanh toán đã tạo."""
     return download_voucher_file_controller(filename)
+
+
+# =========================================================================
+# FILE MANAGER / QUẢN LÝ HỒ SƠ & FILE DỰ ÁN TẬP TRUNG
+# =========================================================================
+
+@router.get("/files")
+async def list_files_endpoint(
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    extension: Optional[str] = None,
+    sort_by: str = "updated_at_desc"
+):
+    """Lấy danh sách tất cả file hồ sơ dự án, biểu mẫu và outputs tập trung."""
+    return get_files_controller(
+        category=category,
+        search=search,
+        extension=extension,
+        sort_by=sort_by
+    )
+
+
+@router.get("/files/download/{file_id}")
+async def download_file_endpoint(file_id: str):
+    """Tải file bất kỳ trong hệ thống hồ sơ về máy tính."""
+    return download_file_controller(file_id)
+
+
+@router.get("/files/preview/{file_id}")
+async def preview_file_endpoint(file_id: str):
+    """Xem trước file hình ảnh hoặc PDF trực tiếp trên trình duyệt."""
+    return preview_file_controller(file_id)
+
+
+@router.post("/files/open-file")
+async def open_file_directly_endpoint(payload: Dict[str, Any]):
+    """Mở file trực tiếp trên máy tính bằng phần mềm mặc định (Word, Excel, PDF...)."""
+    return open_file_controller(payload)
+
+
+@router.post("/files/open-explorer")
+async def open_explorer_endpoint(payload: Dict[str, Any]):
+    """Mở File Explorer trên Windows và chọn vị trí file."""
+    return open_explorer_controller(payload)
+
+
+@router.post("/files/open-folder")
+async def open_category_folder_endpoint(payload: Dict[str, Any]):
+    """Mở thư mục danh mục hồ sơ trên Windows."""
+    return open_folder_controller(payload)
+
+
+@router.post("/files/rename")
+async def rename_file_endpoint(payload: Dict[str, Any]):
+    """Đổi tên file trong kho hồ sơ."""
+    return rename_file_controller(payload)
+
+
+@router.delete("/files/{file_id}")
+async def delete_file_endpoint(file_id: str):
+    """Xóa file khỏi kho hồ sơ (chặn xóa biểu mẫu gốc)."""
+    return delete_file_controller(file_id)
+
+
+@router.post("/files/upload")
+async def upload_file_endpoint(
+    file: UploadFile = File(...),
+    category: str = Form("hop_dong")
+):
+    """Tải file mới lên kho hồ sơ theo đúng danh mục."""
+    return await upload_file_controller(file=file, category=category)
+
 
 
 

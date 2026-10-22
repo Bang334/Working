@@ -17,4 +17,5 @@ pm_portal/template_full_details.txt
 *.sqlite
 *.sqlite3
 *.db
-
+*.bak
+*_backup.*

@@ -1,309 +1,459 @@
 {% extends "base.html" %}
 
+{% block head %}
+<link rel="stylesheet" href="/static/css/procurement_tracker.css?v=1.2">
+{% endblock %}
+
 {% block content %}
-<div class="workspace-single">
+<div class="workspace-single procurement-workspace">
 
-  <!-- Action & Status Bar (Tiêu đề đã hiển thị trên thanh Header chính) -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
-      <span class="badge-pill blue">Mua Hàng & Cung Ứng</span>
-      <span class="badge-pill purple">Vendor Management</span>
-      <span style="font-size: 0.82rem; color: var(--text-muted);">Lập đơn đặt hàng linh kiện ngoại tệ từ Đài Loan/Trung Quốc, kiểm soát Lead time 60-80 ngày.</span>
+  <!-- Hero & Action Header -->
+  <div class="procurement-hero">
+    <div class="procurement-hero-title">
+      <h2>
+        <svg class="icon" viewBox="0 0 24 24" style="color: #1F4E79;" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span>Theo Dõi Mua Hàng & Quản Lý Nhà Cung Cấp</span>
+        <span class="badge-pill blue">Sheet 2 · 採購追蹤</span>
+      </h2>
+      <p>Theo dõi tiến độ đặt hàng từ các NCC (TBL, Advantech, A&B, Viet A Tech, BDA...), kiểm soát ETA, ngày giao thực tế và tình trạng thanh toán.</p>
     </div>
 
-    <div style="display: flex; gap: 0.75rem;">
-      <button type="button" class="btn btn-secondary btn-sm" onclick="simulateAIParsePo()">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>
-        <span>Điền Dữ Liệu PO Mẫu</span>
+    <div class="procurement-hero-actions">
+      <button type="button" class="btn btn-outline btn-sm" onclick="openUploadExcelModal()" title="Tải file Excel theo dõi mua hàng lên hệ thống">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Tải Lên File Excel</span>
       </button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="alert('Đã lưu đơn đặt hàng PO vào hệ thống!')">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        <span>Lưu Dữ Liệu</span>
-      </button>
-    </div>
-  </div>
 
-  <!-- Card 1: AI Prompt Input -->
-  <div class="card ai-prompt-box">
-    <div class="card-header">
-      <div class="card-title">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
-        <span>Bóc Tách Báo Giá Nhà Cung Cấp Bằng Gemini AI</span>
-      </div>
-      <span style="font-size: 0.75rem; color: var(--text-muted);">Trích xuất Part Number, Đơn giá USD/TWD, Điều kiện Incoterms</span>
-    </div>
-
-    <div class="form-group" style="margin-bottom: 0.85rem;">
-      <textarea id="aiPoInput" class="form-control" rows="4" placeholder="Dán bảng chào giá (Proforma Invoice / Quotation) từ nhà cung cấp Đài Loan / Trung Quốc / VN vào đây..."></textarea>
-    </div>
-
-    <div style="display: flex; justify-content: flex-end; gap: 0.65rem;">
-      <button type="button" class="btn btn-ai" onclick="simulateAIParsePo()">
+      <button type="button" class="btn btn-ai btn-sm" onclick="openAiExtractModal()" title="Dán báo giá/PO nhà cung cấp để AI trích xuất tự động">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
-        <span>Trích Xuất & Điền Vào Đơn PO</span>
+        <span>Trích Xuất Bằng AI</span>
+      </button>
+
+      <button type="button" class="btn btn-primary btn-sm" onclick="openAddOrderModal()" title="Thêm một đơn mua hàng mới thủ công">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>Thêm Đơn Mua Hàng</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="exportProcurementExcel()" title="Tải bảng theo dõi định dạng Excel chuẩn">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Xuất Excel</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="loadProcurementData()" title="Làm mới dữ liệu">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       </button>
     </div>
   </div>
 
-  <!-- Card 2: Interactive Editor with Tabs -->
-  <div class="card">
-    <div class="tabs-nav">
-      <button type="button" class="tab-btn active" data-tab="tabPoItems">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-9 5-9-5 9-5 9 5z"/><path d="m3 8 9 5 9-5M3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
-        <span>Bảng Danh Mục Linh Kiện Đặt Hàng</span>
-      </button>
-      <button type="button" class="tab-btn" data-tab="tabPoVendor">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span>Thông Tin Nhà Cung Cấp (Vendor)</span>
-      </button>
-      <button type="button" class="tab-btn" data-tab="tabPoCommercial">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>
-        <span>Tiến Độ, Lead Time & Điều Kiện Giao Hàng</span>
-      </button>
-    </div>
-
-    <!-- Tab 1: Items Table -->
-    <div class="tab-content active" id="tabPoItems">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <div>
-          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Danh mục linh kiện & quy cách đặt mua</span>
-          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Hạch toán theo đơn vị tiền tệ ngoại tệ USD / TWD)</span>
-        </div>
-        <button type="button" class="btn btn-outline btn-sm" onclick="addPoRow()">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Thêm Dòng Đặt Hàng</span>
-        </button>
+  <!-- KPI Metrics Grid -->
+  <div class="procurement-kpi-grid">
+    <div class="procurement-kpi-card">
+      <div class="procurement-kpi-icon blue">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       </div>
-
-      <div class="modern-table-card">
-        <table class="modern-table po-table" style="min-width: 1000px;">
-          <thead>
-            <tr>
-              <th style="width: 50px; text-align: center;">STT</th>
-              <th style="min-width: 320px;">Part Number & Mô Tả Chi Tiết Thiết Bị</th>
-              <th style="width: 110px; text-align: center;">ĐVT (Unit)</th>
-              <th style="width: 100px; text-align: center;">Số Lượng</th>
-              <th style="width: 180px; text-align: right;">Đơn Giá (USD)</th>
-              <th style="width: 200px; text-align: right;">Thành Tiền (USD)</th>
-              <th style="width: 60px; text-align: center;">Xóa</th>
-            </tr>
-          </thead>
-          <tbody id="poItemsTableBody">
-            <!-- Populated via JS -->
-          </tbody>
-        </table>
-      </div>
-
-      <!-- KPI Stats -->
-      <div class="summary-cards-grid">
-        <div class="summary-stat-card">
-          <span class="stat-label">Tổng Hạng Mục Linh Kiện</span>
-          <span class="stat-value" id="statPoItemCount">3 Hạng mục</span>
-          <span class="stat-subtext">Danh mục đặt mua</span>
-        </div>
-
-        <div class="summary-stat-card primary">
-          <span class="stat-label">Tổng Giá Trị Đơn PO</span>
-          <span class="stat-value" id="statPoTotal" style="color: #1d4ed8;">$0 USD</span>
-          <span class="stat-subtext">Chưa bao gồm thuế NK</span>
-        </div>
-
-        <div class="summary-stat-card warning">
-          <span class="stat-label">Thời Hạn Giao Hàng (Lead Time)</span>
-          <span class="stat-value" style="font-size: 1.25rem; color: #b45309;">60 - 80 Ngày</span>
-          <span class="stat-subtext">Kể từ ngày xác nhận thanh toán cọc</span>
-        </div>
-
-        <div class="summary-stat-card success">
-          <span class="stat-label">Điều Kiện Phát Hành</span>
-          <span class="stat-value" style="font-size: 1.15rem; color: #047857;">Khách Hàng Đã Cọc</span>
-          <span class="stat-subtext">Đảm bảo an toàn dòng tiền</span>
-        </div>
+      <div class="procurement-kpi-meta">
+        <span class="procurement-kpi-label">Tổng đơn mua hàng</span>
+        <span class="procurement-kpi-value" id="kpiTotalOrders">0</span>
+        <span class="procurement-kpi-sub">Đang quản lý trong hệ thống</span>
       </div>
     </div>
 
-    <!-- Tab 2: Vendor Info -->
-    <div class="tab-content" id="tabPoVendor">
-      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
-        <div class="form-group">
-          <label class="form-label">Tên Nhà Cung Cấp (Vendor Name) <span class="badge-req">*</span></label>
-          <input type="text" id="poVendorName" class="form-control" value="ADVANTECH TAIWAN CO., LTD.">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Mã Số Đơn PO / 採購單號 <span class="badge-req">*</span></label>
-          <input type="text" id="poNumber" class="form-control" value="HM-PO-202610-01">
-        </div>
+    <div class="procurement-kpi-card">
+      <div class="procurement-kpi-icon amber">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
       </div>
-
-      <div class="form-grid-3" style="margin-bottom: 1.25rem;">
-        <div class="form-group">
-          <label class="form-label">Người Phụ Trách Bán Hàng (Contact)</label>
-          <input type="text" id="poVendorContact" class="form-control" value="Ms. Kelly Lin (Sales Representative)">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email / Điện Thoại NCC</label>
-          <input type="text" id="poVendorEmail" class="form-control" value="kelly.lin@advantech.tw | +886 2 2792 7818">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Ngày Phát Hành Đơn PO</label>
-          <input type="date" id="poDate" class="form-control" value="2026-10-14">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Căn Cứ Hợp Đồng Dự Án Khách Hàng Cuối (End-Customer Project)</label>
-        <input type="text" id="poProjectRef" class="form-control" value="Dự án CX Technology Giai đoạn 2 (HĐ: 001/HĐMB/HM-CX/2026)">
+      <div class="procurement-kpi-meta">
+        <span class="procurement-kpi-label">Đang giao / Chờ ETA</span>
+        <span class="procurement-kpi-value" id="kpiInTransitOrders" style="color: #D97706;">0</span>
+        <span class="procurement-kpi-sub">Theo dõi lịch hẹn nhà cung cấp</span>
       </div>
     </div>
 
-    <!-- Tab 3: Commercial Terms -->
-    <div class="tab-content" id="tabPoCommercial">
-      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
-        <div class="form-group">
-          <label class="form-label">Thời Hạn Giao Hàng (Lead Time) <span class="badge-req">*</span></label>
-          <input type="text" id="poLeadTime" class="form-control" value="60 - 80 ngày kể từ ngày nhận đủ tiền cọc">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Điều Kiện Thương Mại Quốc Tế (Incoterms)</label>
-          <input type="text" id="poIncoterm" class="form-control" value="CIF Cảng Cát Lái / Sân Bay Tân Sơn Nhất TP.HCM">
-        </div>
+    <div class="procurement-kpi-card">
+      <div class="procurement-kpi-icon green">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
-
-      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
-        <div class="form-group">
-          <label class="form-label">Phương Thức Thanh Toán (Payment Terms)</label>
-          <input type="text" id="poPayment" class="form-control" value="T/T 50% đặt cọc khi xác nhận PO, 50% trước khi giao hàng (Shipment)">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Yêu Cầu Bộ Chứng Từ Xuất Nhập Khẩu</label>
-          <input type="text" id="poDocs" class="form-control" value="Commercial Invoice, Packing List, CO/CQ bản gốc từ nhà sản xuất">
-        </div>
+      <div class="procurement-kpi-meta">
+        <span class="procurement-kpi-label">Đã nhận hàng thành công</span>
+        <span class="procurement-kpi-value" id="kpiDeliveredOrders" style="color: #059669;">0</span>
+        <span class="procurement-kpi-sub">Đã nhập kho / giao tới nhà máy</span>
       </div>
     </div>
 
+    <div class="procurement-kpi-card">
+      <div class="procurement-kpi-icon purple">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><path d="M6 15h2M10 15h6"/></svg>
+      </div>
+      <div class="procurement-kpi-meta">
+        <span class="procurement-kpi-label">Chờ thanh toán NCC</span>
+        <span class="procurement-kpi-value" id="kpiPendingPaymentOrders" style="color: #7C3AED;">0</span>
+        <span class="procurement-kpi-sub">Đơn cần làm phiếu đề nghị chi</span>
+      </div>
+    </div>
   </div>
 
-  <!-- Bottom Action Footer -->
-  <div class="action-footer-bar">
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <span class="badge-pill yellow">Chế độ Form Mẫu</span>
-      <span style="font-size: 0.8rem; color: var(--text-muted);">
-        Khi bạn có file Word/Excel mẫu PO chính thức của Hong Ming, hệ thống sẽ tự động ghép dữ liệu để xuất file 1:1.
+  <!-- Search & Filter Toolbar -->
+  <div class="procurement-toolbar">
+    <div class="procurement-search-group">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="procurementSearch" class="procurement-search-input" placeholder="Tìm theo tên thiết bị, dự án, NCC, khách hàng...">
+    </div>
+
+    <div class="procurement-filters">
+      <select id="filterStatus" class="procurement-select" title="Lọc theo trạng thái giao hàng">
+        <option value="all">Tất cả trạng thái</option>
+        <option value="in_transit">Đang vận chuyển / 運輸中</option>
+        <option value="delivered">Đã giao hàng / 已交貨</option>
+        <option value="delayed">Trễ hạn / 延遲</option>
+        <option value="pending">Chờ xử lý / 待處理</option>
+      </select>
+
+      <select id="filterSupplier" class="procurement-select" title="Lọc theo nhà cung cấp">
+        <option value="all">Tất cả nhà cung cấp</option>
+      </select>
+
+      <select id="filterProject" class="procurement-select" title="Lọc theo dự án">
+        <option value="all">Tất cả dự án</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Quick Filter & Legend Bar (Đơn Cần Chú Ý) -->
+  <div class="procurement-legend-bar" id="procurementLegendBar">
+    <div class="legend-chips-group">
+      <span class="legend-chip active" id="chipAll" onclick="filterByAttention('all', this)">
+        <span>Tất cả đơn (<strong id="chipCountAll">17</strong>)</span>
+      </span>
+      <span class="legend-chip chip-attention" id="chipAttention" onclick="filterByAttention('attention', this)" title="Các đơn cần PM xử lý (chờ chi tiền NCC hoặc đang chờ hàng về)">
+        <span class="legend-dot purple"></span>
+        <span>⚡ Cần chú ý theo dõi (<strong id="chipCountAttention">5</strong>)</span>
+      </span>
+      <span class="legend-chip chip-payment" id="chipPayment" onclick="filterByAttention('payment', this)" title="Đơn cần làm phiếu đề nghị thanh toán NCC">
+        <span class="legend-dot purple-solid"></span>
+        <span>💳 Chờ thanh toán NCC (<strong id="chipCountPayment">5</strong>)</span>
+      </span>
+      <span class="legend-chip chip-shipping" id="chipShipping" onclick="filterByAttention('shipping', this)" title="Đơn đang chờ NCC giao hàng">
+        <span class="legend-dot amber-solid"></span>
+        <span>🚚 Đang vận chuyển / Chờ ETA (<strong id="chipCountShipping">0</strong>)</span>
+      </span>
+      <span class="legend-chip chip-delivered" id="chipDelivered" onclick="filterByAttention('delivered', this)" title="Đơn đã nhận hàng thành công">
+        <span class="legend-dot green-solid"></span>
+        <span>✅ Đã giao hoàn tất (<strong id="chipCountDelivered">16</strong>)</span>
       </span>
     </div>
-    <div style="display: flex; gap: 0.75rem;">
-      <button type="button" class="btn btn-outline" onclick="window.print()">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        <span>In / Lưu PDF Trực Tiếp</span>
-      </button>
-      <button type="button" class="btn btn-primary" onclick="alert('Đã sẵn sàng! Hãy gửi file mẫu PO của công ty khi bạn có nhé.')">
+
+    <div class="table-scroll-hint">
+      <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <span>2 cột <strong>Dự án & KH</strong> & <strong>Tên thiết bị</strong> đã fix cứng bên trái</span>
+    </div>
+  </div>
+
+  <!-- Main Data Table Card -->
+  <div class="procurement-table-card" id="procurementTableCard" style="display: none;">
+    <div class="table-card-toolbar">
+      <div class="table-card-title">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16" style="color: #1F4E79;" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Bảng Chi Tiết Theo Dõi Đơn Mua Hàng & Tiến Độ ETA</span>
+        <span class="badge-item-count" id="poTableItemCount">0 đơn</span>
+      </div>
+      <div class="table-card-actions">
+        <button type="button" class="btn btn-outline btn-xs" onclick="scrollPoTableHorizontally('left')" title="Cuộn bảng sang trái">
+          <span>◀ Cuộn Trái</span>
+        </button>
+        <button type="button" class="btn btn-outline btn-xs" onclick="scrollPoTableHorizontally('right')" title="Cuộn bảng sang phải">
+          <span>Cuộn Phải ▶</span>
+        </button>
+        <button type="button" class="btn btn-outline btn-xs" onclick="toggleProcurementFullscreen()" id="btnTogglePoFullscreen" title="Mở full toàn màn hình (Phím tắt: Esc để thoát)">
+          <svg class="icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <span id="btnTogglePoFullscreenText">Full Màn Hình</span>
+        </button>
+      </div>
+    </div>
+    <div class="procurement-table-responsive" id="procurementTableResponsive">
+      <table class="procurement-table">
+        <thead>
+          <tr>
+            <th class="col-stt">STT</th>
+            <th class="col-project">Dự án & Khách hàng</th>
+            <th class="col-item">Tên vật tư / Thiết bị & Quy cách</th>
+            <th class="col-cat">Hạng mục</th>
+            <th style="width: 85px; text-align: center;">Số lượng</th>
+            <th style="min-width: 135px;">Nhà cung cấp</th>
+            <th style="width: 100px; text-align: center;">Ngày đặt</th>
+            <th style="width: 105px; text-align: center;">ETA dự kiến</th>
+            <th style="width: 105px; text-align: center;">Giao thực tế</th>
+            <th style="min-width: 160px;">Thanh toán NCC</th>
+            <th style="width: 135px; text-align: center;">Trạng thái giao</th>
+            <th style="min-width: 190px;" title="Nhấp trực tiếp vào ô để sửa nhanh ghi chú & rủi ro">Ghi chú & Rủi ro ✏️</th>
+            <th style="width: 85px; text-align: center;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="procurementTableBody">
+          <!-- Populated dynamically via JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Empty State (Khi chưa có dữ liệu) -->
+  <div class="card procurement-empty-state" id="procurementEmptyState">
+    <svg class="procurement-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+    </svg>
+    <h3>Chưa có dữ liệu theo dõi mua hàng</h3>
+    <p>Hệ thống hiện đang trống. Bạn có thể tải lên file Excel theo dõi sẵn có (như file <code>QLDA_TRANG_PM_2026.xlsx</code>) hoặc dán văn bản báo giá để AI tự bóc tách thông tin.</p>
+    <div style="display: flex; justify-content: center; gap: 0.75rem;">
+      <button type="button" class="btn btn-primary" onclick="openUploadExcelModal()">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-        <span>Sẵn Sàng Xuất File PO (.docx)</span>
+        <span>Tải Lên File Excel</span>
+      </button>
+      <button type="button" class="btn btn-ai" onclick="openAiExtractModal()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>Dán Báo Giá Cho AI Đọc</span>
       </button>
     </div>
   </div>
 
 </div>
-{% endblock %}
 
-{% block scripts %}
-<script>
-let poItems = [
-  { desc: "Edge Gateway IoT-200 (Modbus RTU / MQTT Gateway)", unit: "PCS", qty: 6, price: 420 },
-  { desc: "Industrial Temperature & Vibration Sensor Trio-Node", unit: "SET", qty: 12, price: 180 },
-  { desc: "Industrial DIN-Rail Power Supply 24VDC 5A", unit: "PCS", qty: 6, price: 65 }
-];
+<!-- ==========================================
+     MODAL 1: TẢI LÊN FILE EXCEL
+     ========================================== -->
+<div class="modal-overlay" id="uploadExcelModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-title">
+        <svg class="icon" viewBox="0 0 24 24" style="color: #1F4E79;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Tải Lên File Excel Theo Dõi Mua Hàng</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeUploadExcelModal()">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
 
-function renderPoTable() {
-  const tbody = document.getElementById("poItemsTableBody");
-  tbody.innerHTML = "";
-  let subtotal = 0;
+    <div class="modal-body">
+      <div class="upload-dropzone" id="excelDropzone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        <h4>Kéo & Thả file Excel vào đây hoặc nhấp chuột để chọn</h4>
+        <p>Hỗ trợ định dạng <code>.xlsx</code>, <code>.xls</code>. Hệ thống sẽ tự động quét và nhận diện Sheet <strong>"Theo Dõi Mua Hàng"</strong>.</p>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display: none;">
+      </div>
 
-  poItems.forEach((item, index) => {
-    const rowTotal = item.qty * item.price;
-    subtotal += rowTotal;
+      <div id="selectedFileInfo" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <strong id="selectedFileName" style="color: var(--text-main); font-size: 0.88rem;">file.xlsx</strong>
+            <div id="selectedFileSize" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">0 KB</div>
+          </div>
+          <span class="badge-pill blue">Đã sẵn sàng tải lên</span>
+        </div>
+      </div>
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${index + 1}</td>
-      <td>
-        <input type="text" class="table-input" value="${item.desc}" placeholder="Part Number và mô tả" oninput="poItems[${index}].desc = this.value;">
-      </td>
-      <td style="text-align: center;">
-        <input type="text" class="table-input" style="text-align: center;" value="${item.unit}" oninput="poItems[${index}].unit = this.value;">
-      </td>
-      <td style="text-align: center;">
-        <input type="number" class="table-input" style="text-align: center;" value="${item.qty}" min="1" oninput="poItems[${index}].qty = Number(this.value); updatePoCalculations();">
-      </td>
-      <td style="text-align: right;">
-        <input type="number" class="table-input" style="text-align: right;" value="${item.price}" oninput="poItems[${index}].price = Number(this.value); updatePoCalculations();">
-      </td>
-      <td style="text-align: right; font-weight: 700; color: #1e293b; font-size: 0.9rem;" id="poRowTotal_${index}">
-        $${rowTotal.toLocaleString("en-US")}
-      </td>
-      <td style="text-align: center;">
-        <button type="button" class="btn-delete-row" title="Xóa dòng" onclick="removePoRow(${index})">
-          <svg class="icon" style="width: 15px; height: 15px;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
+      <div style="margin-top: 1.25rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text-main); cursor: pointer;">
+          <input type="checkbox" id="overwriteCheckbox" style="cursor: pointer;">
+          <span>Ghi đè (Xóa sạch các đơn cũ trước khi nạp dữ liệu từ file mới này)</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeUploadExcelModal()">Hủy Bỏ</button>
+      <button type="button" class="btn btn-primary" onclick="submitUploadExcel()">
+        <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Xác Nhận & Nạp Dữ Liệu</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     MODAL 2: TRÍCH XUẤT THÔNG TIN BẰNG AI
+     ========================================== -->
+<div class="modal-overlay" id="aiExtractModal">
+  <div class="modal-container large">
+    <div class="modal-header">
+      <div class="modal-title">
+        <svg class="icon" viewBox="0 0 24 24" style="color: #8B5CF6;" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+        <span>Trích Xuất Thông Tin Báo Giá / Đơn Đặt Hàng Bằng Gemini AI</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeAiExtractModal()">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+        <label for="aiExtractInput" style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);">
+          Dán nội dung báo giá, email xác nhận hoặc tin nhắn WeChat/Zalo từ Nhà Cung Cấp:
+        </label>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Mô hình AI:</span>
+          <select id="aiModelSelect" class="procurement-select" style="padding: 2px 6px; font-size: 0.75rem;">
+            {% for model in models %}
+            <option value="{{ model }}" {% if model == default_model %}selected{% endif %}>{{ model }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <textarea id="aiExtractInput" class="form-control" rows="5" placeholder="Ví dụ: Báo giá từ TBL gửi ngày 01/10/2026 cho dự án Cheng Feng:
+1. Máy tính để bàn Asus D701MER - CPU: i7-14700 - Ram: 64GB - SSD: 2x1TB - Số lượng: 1 bộ. Đơn giá: 28.500.000 VND. Dự kiến giao 06/10/2026.
+2. Bảng thông tin năng suất Smart Google TV TCL 65 inch + giá treo - SL: 1 chiếc. Giao 06/10/2026. Điều khoản thanh toán: Thanh toán 100% sau khi nhận hàng..."></textarea>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem;">
+        <button type="button" class="btn btn-ai" onclick="executeAiExtract()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+          <span>Tiến Hành Phân Tích & Bóc Tách</span>
         </button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+      </div>
 
-  updatePoCalculations();
-}
+      <!-- Kết quả AI trích xuất -->
+      <div id="aiExtractResults" style="display: none; margin-top: 1.5rem; border-top: 1px dashed var(--border-color); padding-top: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <div>
+            <strong style="color: var(--text-main); font-size: 0.95rem;">Kết quả AI trích xuất được:</strong>
+            <div id="aiExtractSummaryText" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;"></div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" onclick="saveAiExtractedItems()">
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Lưu Tất Cả Vào Hệ Thống</span>
+          </button>
+        </div>
 
-function updatePoCalculations() {
-  let subtotal = 0;
-  poItems.forEach((item, index) => {
-    const rowTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
-    subtotal += rowTotal;
-    const rowTotalEl = document.getElementById(`poRowTotal_${index}`);
-    if (rowTotalEl) {
-      rowTotalEl.textContent = "$" + rowTotal.toLocaleString("en-US");
-    }
-  });
+        <div style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); max-height: 280px;">
+          <table class="procurement-table" style="font-size: 0.8rem;">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">STT</th>
+                <th>Tên thiết bị & Quy cách</th>
+                <th style="width: 100px; text-align: center;">Hạng mục</th>
+                <th style="width: 80px; text-align: center;">Số lượng</th>
+                <th>Nhà cung cấp</th>
+                <th style="width: 95px; text-align: center;">ETA</th>
+                <th>Thanh toán NCC</th>
+              </tr>
+            </thead>
+            <tbody id="aiPreviewTableBody">
+              <!-- AI items populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-  document.getElementById("statPoItemCount").textContent = poItems.length + " Hạng mục";
-  document.getElementById("statPoTotal").textContent = "$" + subtotal.toLocaleString("en-US") + " USD";
-}
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeAiExtractModal()">Đóng</button>
+    </div>
+  </div>
+</div>
 
-function addPoRow() {
-  poItems.push({ desc: "New hardware component Part-No", unit: "PCS", qty: 1, price: 0 });
-  renderPoTable();
-}
+<!-- ==========================================
+     MODAL 3: THÊM / CHỈNH SỬA ĐƠN HÀNG THỦ CÔNG
+     ========================================== -->
+<div class="modal-overlay" id="orderFormModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-title">
+        <svg class="icon" viewBox="0 0 24 24" style="color: #1F4E79;" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span id="orderFormModalTitle">Thêm Đơn Mua Hàng Mới</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeOrderFormModal()">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
 
-function removePoRow(index) {
-  if (poItems.length <= 1) {
-    alert("Cần giữ ít nhất 1 dòng đặt hàng!");
-    return;
-  }
-  poItems.splice(index, 1);
-  renderPoTable();
-}
+    <div class="modal-body">
+      <form id="orderForm" onsubmit="event.preventDefault(); submitOrderForm();">
+        <input type="hidden" id="orderFormId">
 
-function simulateAIParsePo() {
-  document.getElementById("poVendorName").value = "MOXA INC. (TAIWAN HQ)";
-  document.getElementById("poVendorContact").value = "Mr. David Chen (david@moxa.com)";
-  poItems = [
-    { desc: "Moxa NPort 5150 Serial Device Server 1-port RS-232/422/485", unit: "PCS", qty: 10, price: 165 },
-    { desc: "Moxa EDS-208 Industrial Unmanaged Ethernet Switch 8-port", unit: "PCS", qty: 4, price: 195 }
-  ];
-  renderPoTable();
-}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+          <div class="form-group">
+            <label class="form-label" for="formProjectName">Tên Dự Án <span style="color: red;">*</span></label>
+            <input type="text" id="formProjectName" class="form-control" placeholder="VD: CHENG FENG LE HUA, Seiyo..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="formCustomerCompany">Công Ty Khách Hàng</label>
+            <input type="text" id="formCustomerCompany" class="form-control" placeholder="VD: Cheng Feng, Vonmax, CX...">
+          </div>
+        </div>
 
-// Tab Switching Logic
-document.querySelectorAll(".tab-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const parent = btn.closest(".card");
-    parent.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    parent.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-    btn.classList.add("active");
-    const target = parent.querySelector(`#${btn.dataset.tab}`);
-    if (target) target.classList.add("active");
-  });
-});
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+          <div class="form-group">
+            <label class="form-label" for="formSupplierName">Nhà Cung Cấp <span style="color: red;">*</span></label>
+            <input type="text" id="formSupplierName" class="form-control" placeholder="VD: TBL, Advantech, A&B, Viet A Tech..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="formCategory">Hạng Mục Thiết Bị</label>
+            <input type="text" id="formCategory" class="form-control" placeholder="VD: MÁY CHỦ SERVER, MAY TINH IPC, MANG...">
+          </div>
+        </div>
 
-document.addEventListener("DOMContentLoaded", renderPoTable);
-</script>
+        <div class="form-group" style="margin-bottom: 0.85rem;">
+          <label class="form-label" for="formItemName">Tên Vật Tư / Thiết Bị & Quy Cách <span style="color: red;">*</span></label>
+          <textarea id="formItemName" class="form-control" rows="2" placeholder="VD: Bộ chuyển mạch quản lý TL-SG3210 8 port Gigabit + 2 port SFP..." required></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+          <div class="form-group">
+            <label class="form-label" for="formQuantity">Số Lượng</label>
+            <input type="number" step="any" id="formQuantity" class="form-control" value="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="formUnit">Đơn Vị Tính</label>
+            <input type="text" id="formUnit" class="form-control" value="Bộ">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+          <div class="form-group">
+            <label class="form-label" for="formOrderDate">Ngày Đặt Hàng</label>
+            <input type="date" id="formOrderDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="formEtaDate">Ngày Giao Dự Kiến (ETA)</label>
+            <input type="date" id="formEtaDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="formActualDate">Ngày Giao Thực Tế</label>
+            <input type="date" id="formActualDate" class="form-control">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+          <div class="form-group">
+            <label class="form-label" for="formDeliveryStatus">Trạng Thái Giao Hàng</label>
+            <select id="formDeliveryStatus" class="form-control">
+              <option value="PENDING">Chờ xử lý / 待處理</option>
+              <option value="IN_TRANSIT">Đang vận chuyển / 運輸中</option>
+              <option value="DELIVERED">Đã giao hàng / 已交貨</option>
+              <option value="DELAYED">Trễ hạn / 延遲</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="formSupplierPayment">Tình Trạng Thanh Toán NCC</label>
+            <input type="text" id="formSupplierPayment" class="form-control" placeholder="VD: Chờ thanh toán, Đã cọc 50%...">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0.5rem;">
+          <label class="form-label" for="formShippingNotes">Ghi Chú Vận Chuyển / Rủi Ro</label>
+          <input type="text" id="formShippingNotes" class="form-control" placeholder="VD: Đã nhập kho ngày 13/08; Hàng chuyển phát nhanh KCN Quế Võ...">
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeOrderFormModal()">Hủy Bỏ</button>
+      <button type="button" class="btn btn-primary" onclick="submitOrderForm()">
+        <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Lưu Đơn Hàng</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/procurement_tracker.js?v=1.2"></script>
 {% endblock %}

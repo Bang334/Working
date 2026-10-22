@@ -1151,8 +1151,125 @@ window.currentInstallationData = null;
 let instDebounceTimer = null;
 
 async function initInstallationAcceptance() {
+  // Áp dụng trạng thái ẩn mặc định cho Phần 1, 2, 3 bên trái và Bản Xem Trước bên phải.
+  // Mặc định: Ẩn cả hai vì thông thường AI và trích xuất đã bóc tách chính xác.
+  const savedHideDetails = localStorage.getItem("pm_inst_hide_details");
+  const shouldHideDetails = savedHideDetails === null ? true : savedHideDetails === "true";
+  toggleInstallationDetails(!shouldHideDetails);
+
+  const savedHidePreview = localStorage.getItem("pm_inst_hide_preview");
+  const shouldHidePreview = savedHidePreview === null ? true : savedHidePreview === "true";
+  toggleInstallationPreview(!shouldHidePreview);
+
   await loadInstallationContractsDropdown();
   await handleLoadInstallationSampleData(false);
+  updateInstallationDetailsSummary();
+}
+
+function updateInstallationDetailsSummary() {
+  const getVal = (id) => (document.getElementById(id)?.value || "").trim();
+  const soHD = getVal("instSoHopDong") || "Chưa có số HĐ";
+  const tenBenA = getVal("instTenBenA") || "Chưa có Bên A";
+  const items = window.currentInstallationData?.hang_muc || [];
+  const itemCount = items.length;
+
+  const hdBdg = document.getElementById("instSummaryHdBdg");
+  if (hdBdg) hdBdg.textContent = `HĐ: ${soHD}`;
+
+  const itemBdg = document.getElementById("instSummaryItemBdg");
+  if (itemBdg) itemBdg.textContent = `${itemCount} Hạng mục`;
+
+  const hint = document.getElementById("instSummaryTextHint");
+  if (hint) {
+    const giaTri = getVal("instGiaTriHopDong");
+    const giaTriText = giaTri ? ` | Tổng: ${giaTri}` : "";
+    hint.textContent = `Bên A: ${tenBenA}${giaTriText}`;
+  }
+}
+
+function toggleInstallationDetails(forceState = null) {
+  const detailsEl = document.getElementById("instDetailsSections");
+  const summaryEl = document.getElementById("instDetailsSummaryCard");
+  const toggleBtnText = document.getElementById("instDetailsToggleText");
+  const toggleBtnIcon = document.getElementById("instDetailsToggleIcon");
+  const toggleBtn = document.getElementById("btnToggleInstDetails");
+
+  if (!detailsEl) return;
+
+  const isCurrentlyVisible = detailsEl.style.display !== "none";
+  let willShow;
+
+  if (forceState !== null) {
+    willShow = !!forceState;
+  } else {
+    willShow = !isCurrentlyVisible;
+  }
+
+  if (willShow) {
+    detailsEl.style.display = "flex";
+    if (summaryEl) summaryEl.style.display = "none";
+    if (toggleBtnText) toggleBtnText.textContent = "Ẩn Phần 1, 2, 3";
+    if (toggleBtnIcon) toggleBtnIcon.textContent = "▲";
+    if (toggleBtn) {
+      toggleBtn.style.background = "#eff6ff";
+      toggleBtn.style.color = "#1e40af";
+      toggleBtn.style.borderColor = "#93c5fd";
+    }
+    localStorage.setItem("pm_inst_hide_details", "false");
+  } else {
+    detailsEl.style.display = "none";
+    if (summaryEl) summaryEl.style.display = "block";
+    updateInstallationDetailsSummary();
+    if (toggleBtnText) toggleBtnText.textContent = "Hiện Phần 1, 2, 3";
+    if (toggleBtnIcon) toggleBtnIcon.textContent = "⚙️";
+    if (toggleBtn) {
+      toggleBtn.style.background = "#ffffff";
+      toggleBtn.style.color = "#334155";
+      toggleBtn.style.borderColor = "#cbd5e1";
+    }
+    localStorage.setItem("pm_inst_hide_details", "true");
+  }
+}
+
+function toggleInstallationPreview(forceState = null) {
+  const grid = document.getElementById("installationWorkspaceGrid");
+  const toggleBtnText = document.getElementById("instPreviewToggleText");
+  const toggleBtnIcon = document.getElementById("instPreviewToggleIcon");
+  const toggleBtn = document.getElementById("btnToggleInstPreview");
+
+  if (!grid) return;
+
+  const isCurrentlyHidden = grid.classList.contains("preview-hidden");
+  let willShow;
+
+  if (forceState !== null) {
+    willShow = !!forceState;
+  } else {
+    willShow = isCurrentlyHidden;
+  }
+
+  if (willShow) {
+    grid.classList.remove("preview-hidden");
+    if (toggleBtnText) toggleBtnText.textContent = "Ẩn Xem Trước";
+    if (toggleBtnIcon) toggleBtnIcon.textContent = "✕";
+    if (toggleBtn) {
+      toggleBtn.style.background = "#e0f2fe";
+      toggleBtn.style.color = "#0369a1";
+      toggleBtn.style.borderColor = "#7dd3fc";
+    }
+    localStorage.setItem("pm_inst_hide_preview", "false");
+    handleRefreshInstallationPreview();
+  } else {
+    grid.classList.add("preview-hidden");
+    if (toggleBtnText) toggleBtnText.textContent = "Hiện Xem Trước";
+    if (toggleBtnIcon) toggleBtnIcon.textContent = "👁️";
+    if (toggleBtn) {
+      toggleBtn.style.background = "#f0f9ff";
+      toggleBtn.style.color = "#0284c7";
+      toggleBtn.style.borderColor = "#7dd3fc";
+    }
+    localStorage.setItem("pm_inst_hide_preview", "true");
+  }
 }
 
 async function loadInstallationContractsDropdown() {
@@ -1282,7 +1399,12 @@ function populateInstallationForm(data) {
   renderInstallationItems();
   renderInstallationPaymentStages();
   recalculateInstallationPaymentSummary();
-  handleRefreshInstallationPreview();
+  updateInstallationDetailsSummary();
+  const grid = document.getElementById("installationWorkspaceGrid");
+  const isPreviewHidden = grid && grid.classList.contains("preview-hidden");
+  if (!isPreviewHidden) {
+    handleRefreshInstallationPreview();
+  }
 }
 
 function renderInstallationItems() {
@@ -1729,7 +1851,12 @@ function collectInstallationFormData() {
 }
 
 function handleInstallationFormChange() {
-  triggerDebouncedInstallationPreview();
+  updateInstallationDetailsSummary();
+  const grid = document.getElementById("installationWorkspaceGrid");
+  const isPreviewHidden = grid && grid.classList.contains("preview-hidden");
+  if (!isPreviewHidden) {
+    triggerDebouncedInstallationPreview();
+  }
 }
 
 function triggerDebouncedInstallationPreview() {

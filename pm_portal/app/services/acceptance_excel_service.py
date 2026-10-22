@@ -26,7 +26,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.page import PageMargins
 from openpyxl.worksheet.properties import PageSetupProperties
 
-from app.config import OUTPUTS_DIR
+from app.config import OUTPUTS_DIR, WORKING_DIR
 from app.utils.currency_helper import (
     format_currency_vnd,
     number_to_chinese_words,
@@ -561,25 +561,18 @@ def generate_acceptance_excel(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     # Safe File Naming & Saving
     clean_so_hd = re.sub(r'[\\/*?:"<>|]', '_', data["so_hop_dong"]).strip()
     file_name = f"Biên Bản Nghiệm Thu_維修設備驗收記錄_{clean_so_hd}.xlsx"
-    target_path = OUTPUTS_DIR / file_name
+    target_dir = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target_path = target_dir / file_name
 
-    # Save to portal outputs directory with PermissionError fallback
+    # Save to official Nghiem Thu directory with PermissionError fallback
     try:
         wb.save(target_path)
     except PermissionError:
         date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_name = f"Biên Bản Nghiệm Thu_維修設備驗收記錄_{clean_so_hd}_{date_str}.xlsx"
-        target_path = OUTPUTS_DIR / file_name
+        target_path = target_dir / file_name
         wb.save(target_path)
-
-    # Also automatically save a copy to Downloads folder if available
-    downloads_dir = Path(r"C:\Users\BANG\Downloads")
-    if downloads_dir.is_dir():
-        try:
-            dl_path = downloads_dir / file_name
-            wb.save(dl_path)
-        except Exception:
-            pass
 
     return {
         "status": "success",

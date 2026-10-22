@@ -12,7 +12,7 @@ from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import nsdecls, qn
 from docx.shared import Inches, Pt, RGBColor
 
-from app.config import OUTPUTS_DIR
+from app.config import OUTPUTS_DIR, WORKING_DIR
 from app.services.acceptance_excel_service import prepare_acceptance_data
 
 
@@ -204,13 +204,15 @@ def generate_acceptance_word(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     clean_so_hd = re.sub(r'[\\/*?:"<>|]', '_', data["so_hop_dong"])
     date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"Bien_Ban_Nghiem_Thu_{clean_so_hd}_{date_str}.docx"
-    target_path = OUTPUTS_DIR / file_name
+    target_dir = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target_path = target_dir / file_name
 
     try:
         doc.save(target_path)
     except PermissionError:
         file_name = f"Bien_Ban_Nghiem_Thu_{clean_so_hd}_{date_str}_v2.docx"
-        target_path = OUTPUTS_DIR / file_name
+        target_path = target_dir / file_name
         doc.save(target_path)
 
     return {

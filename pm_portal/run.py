@@ -24,6 +24,7 @@ if __name__ == "__main__":
     print("   HONG MING GLOBAL PM PORTAL - CONTRACT & DOCUMENT HUB")
     print(f"   Python Version : {sys.version.split()[0]}")
     print(f"   Ứng dụng Web   : http://{SERVER_HOST}:{SERVER_PORT}")
+    print(f"   Quản Lý File   : http://{SERVER_HOST}:{SERVER_PORT}/files")
     print(f"   Tạo Hợp Đồng   : http://{SERVER_HOST}:{SERVER_PORT}/contracts")
     print(f"   HĐ Sửa Chữa    : http://{SERVER_HOST}:{SERVER_PORT}/repair-contracts")
     print(f"   Nghiệm Thu     : http://{SERVER_HOST}:{SERVER_PORT}/acceptance")

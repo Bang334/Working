@@ -1,6 +1,29 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .installation-workspace-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+    margin-bottom: 1.5rem;
+    transition: all 0.25s ease-in-out;
+  }
+  .installation-workspace-grid.preview-hidden {
+    grid-template-columns: 1fr !important;
+  }
+  .installation-workspace-grid.preview-hidden #instPreviewColumn {
+    display: none !important;
+  }
+  .inst-toggle-btn {
+    transition: all 0.2s ease;
+  }
+  .inst-toggle-btn:hover {
+    transform: translateY(-1px);
+  }
+</style>
+
 <div class="workspace-single">
 
   <!-- Header Giới Thiệu -->
@@ -53,8 +76,13 @@
           <button type="button" class="btn btn-outline btn-sm" onclick="openInstallationAIModal()" style="font-weight: 700; color: #7c3aed; border-color: #c4b5fd; background: #f5f3ff;">
             🤖 AI Bóc Tách / Nhập Dữ Liệu
           </button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="handleRefreshInstallationPreview()" style="font-weight: 700;">
-            🔄 Xem Trước
+          <button type="button" class="btn btn-outline btn-sm inst-toggle-btn" id="btnToggleInstDetails" onclick="toggleInstallationDetails()" title="Ẩn/Hiện phần 1, 2, 3 bên trái (Thông tin HĐ, Căn cứ & Hạng mục)" style="font-weight: 700; color: #334155; border-color: #cbd5e1; background: #ffffff;">
+            <span id="instDetailsToggleIcon">⚙️</span>
+            <span id="instDetailsToggleText">Hiện Phần 1, 2, 3</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm inst-toggle-btn" id="btnToggleInstPreview" onclick="toggleInstallationPreview()" title="Ẩn/Hiện bản xem trước văn bản trực quan bên phải" style="font-weight: 700; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff;">
+            <span id="instPreviewToggleIcon">👁️</span>
+            <span id="instPreviewToggleText">Hiện Xem Trước</span>
           </button>
           <button type="button" class="btn btn-primary btn-sm" id="btnGenerateInstallationWord" onclick="handleGenerateInstallationWord()" style="font-weight: 750; background: #1e40af; border-color: #1d4ed8; padding: 0.45rem 1rem;">
             📄 Tạo & Tải File Word (.docx)
@@ -64,13 +92,48 @@
     </div>
 
     <!-- 2 Columns: Form Editor (Left) & Live Preview (Right) -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; margin-bottom: 1.5rem;" class="installation-workspace-grid">
+    <div id="installationWorkspaceGrid" class="installation-workspace-grid">
       
       <!-- CỘT TRÁI: FORM NHẬP LIỆU -->
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div id="instLeftColumn" style="display: flex; flex-direction: column; gap: 1rem;">
         
-        <!-- Khối 1: Hợp Đồng & Các Bên -->
-        <div class="card" style="padding: 1rem 1.25rem;">
+        <!-- Banner Tóm Tắt Khi Phần 1, 2, 3 Đang Thu Gọn / Ẩn -->
+        <div id="instDetailsSummaryCard" class="card" style="padding: 0.85rem 1.15rem; background: #f8fafc; border: 1.5px dashed #93c5fd; border-radius: 8px; display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+              <span style="font-size: 1.35rem; line-height: 1;">📋</span>
+              <div>
+                <div style="font-weight: 750; font-size: 0.88rem; color: #1e3a8a; display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+                  <span>Chi Tiết Phần 1, 2, 3 (Đã trích xuất & Thu gọn)</span>
+                  <span class="badge-pill blue" style="font-size: 0.72rem;" id="instSummaryHdBdg">HĐ: HMV151020250001</span>
+                  <span class="badge-pill green" style="font-size: 0.72rem;" id="instSummaryItemBdg">0 Hạng mục</span>
+                </div>
+                <div style="font-size: 0.77rem; color: #475569; margin-top: 0.2rem;" id="instSummaryTextHint">
+                  Bên A: CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleInstallationDetails(true)" style="font-weight: 700; font-size: 0.78rem; color: #1e40af; border-color: #93c5fd; background: #eff6ff;">
+              ✏️ Mở Rộng Chỉnh Sửa
+            </button>
+          </div>
+        </div>
+
+        <!-- Khối chứa Phần 1, 2, 3 có thể ẩn/hiện -->
+        <div id="instDetailsSections" style="display: flex; flex-direction: column; gap: 1rem;">
+          
+          <!-- Thanh điều khiển thu gọn nhanh trên đầu khi đang mở -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0.85rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
+            <span style="font-weight: 700; font-size: 0.8rem; color: #1e40af; display: flex; align-items: center; gap: 0.35rem;">
+              <span>⚙️ Đang mở rộng chi tiết Phần 1, 2, 3</span>
+            </span>
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleInstallationDetails(false)" style="font-size: 0.74rem; font-weight: 700; padding: 2px 8px; background: #ffffff; color: #1e40af; border-color: #93c5fd;">
+              ▲ Thu Gọn / Ẩn Lại
+            </button>
+          </div>
+
+          <!-- Khối 1: Hợp Đồng & Các Bên -->
+          <div class="card" style="padding: 1rem 1.25rem;">
           <div style="font-weight: 750; font-size: 0.92rem; color: #1e3a8a; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
             <span>1. Thông Tin Hợp Đồng & Các Bên</span>
             <span class="badge-pill" style="font-size: 0.72rem; background: #e0e7ff; color: #3730a3;">Bắt buộc</span>
@@ -173,6 +236,8 @@
             <!-- Render động bằng JS -->
           </div>
         </div>
+        <!-- HẾT KHỐI 1, 2, 3 (GOM TRONG #instDetailsSections ĐỂ CÓ THỂ ẨN/HIỆN) -->
+        </div>
 
         <!-- Khối 4: Các Giai Đoạn Thanh Toán (Chọn Đợt Nghiệm Thu Đợt Này) -->
         <div class="card" style="padding: 1rem 1.25rem;">
@@ -234,12 +299,17 @@
       </div>
 
       <!-- CỘT PHẢI: XEM TRƯỚC VĂN BẢN (LIVE PREVIEW) -->
-      <div style="position: sticky; top: 1rem;">
+      <div id="instPreviewColumn" style="position: sticky; top: 1rem;">
         <div class="card" style="padding: 1rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
           <span style="font-weight: 750; font-size: 0.88rem; color: #334155;">
             👁️ Bản Xem Trước Văn Bản Trực Quan
           </span>
-          <span class="badge-pill blue" style="font-size: 0.75rem;">Mẫu Word .docx 1:1</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="badge-pill blue" style="font-size: 0.75rem;">Mẫu Word .docx 1:1</span>
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleInstallationPreview(false)" title="Ẩn bản xem trước để tiết kiệm diện tích" style="font-size: 0.74rem; font-weight: 700; padding: 2px 8px; color: #64748b; border-color: #cbd5e1; background: #ffffff;">
+              ✕ Ẩn
+            </button>
+          </div>
         </div>
 
         <div id="instPreviewContainer" style="max-height: calc(100vh - 180px); overflow-y: auto; background: #e2e8f0; padding: 1.25rem 0.75rem; border-radius: 8px;">
@@ -457,7 +527,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/acceptance_editor.js?v=6.0"></script>
+<script src="/static/js/acceptance_editor.js?v=7.0"></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     initInstallationAcceptance();

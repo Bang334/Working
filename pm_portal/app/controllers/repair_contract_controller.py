@@ -112,11 +112,11 @@ def delete_repair_contract_controller(contract_code: str) -> Dict[str, Any]:
 
 def download_repair_contract_file_controller(filename: str):
     """Download a generated repair contract file."""
-    # Look in OUTPUTS_DIR or Ho So Du An/Hop Dong
+    # Ưu tiên tìm trong Ho So Du An/Hop Dong
     clean_filename = os.path.basename(filename)
     candidates = [
-        OUTPUTS_DIR / clean_filename,
         WORKING_DIR / "Ho So Du An" / "Hop Dong" / clean_filename,
+        OUTPUTS_DIR / clean_filename,
     ]
     for path in candidates:
         if path.exists():

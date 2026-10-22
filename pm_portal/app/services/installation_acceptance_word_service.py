@@ -604,13 +604,6 @@ def generate_installation_acceptance_word(raw_data: Dict[str, Any]) -> Dict[str,
         file_name = output_path.name
         doc.save(str(output_path))
 
-    # Sao chép vào outputs để tải nếu cần
-    download_copy = OUTPUTS_DIR / file_name
-    try:
-        doc.save(str(download_copy))
-    except Exception:
-        pass
-
     return {
         "status": "success",
         "file_name": file_name,

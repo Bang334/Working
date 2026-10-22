@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/file_manager.css?v=1.0">
+{% endblock %}
+
+{% block content %}
+<div class="workspace-single filemgr-workspace">
+
+  <!-- Quick Action & Navigation Bar -->
+  <div class="filemgr-quickbar">
+    <div class="filemgr-quickbar-left">
+      <span class="badge-pill blue" style="font-weight: 700;">Quản Lý Hồ Sơ & File</span>
+      <span class="badge-pill green">專案檔案管理中心 · Toàn Bộ Tài Liệu Tập Trung</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">
+        Tra cứu tức thì mọi file hợp đồng, báo giá, nghiệm thu, thanh toán ở một nơi duy nhất.
+      </span>
+    </div>
+
+    <div class="filemgr-quickbar-right">
+      <button type="button" class="btn btn-outline btn-sm" onclick="FileManagerApp.openActiveFolder()" title="Mở thư mục hồ sơ đang xem trên máy tính (Windows Explorer)">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>📂 Mở Thư Mục Trên Máy Tính</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="FileManagerApp.openUploadModal()" title="Tải thêm tài liệu, hợp đồng scan, hóa đơn vào đúng thư mục hồ sơ">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>📤 Tải Lên File Mới</span>
+      </button>
+
+      <button type="button" class="btn btn-primary btn-sm" onclick="FileManagerApp.loadFiles()" title="Quét lại toàn bộ ổ đĩa và thư mục">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        <span>Làm Mới</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="filemgr-stats-grid">
+    <div class="filemgr-stat-card">
+      <div class="filemgr-stat-icon blue">📁</div>
+      <div class="filemgr-stat-content">
+        <span class="filemgr-stat-value" id="statTotalFiles">0</span>
+        <span class="filemgr-stat-label">Tổng số hồ sơ & tệp tin</span>
+      </div>
+    </div>
+
+    <div class="filemgr-stat-card">
+      <div class="filemgr-stat-icon emerald">📑</div>
+      <div class="filemgr-stat-content">
+        <span class="filemgr-stat-value" id="statContracts">0</span>
+        <span class="filemgr-stat-label">Hợp đồng & Nghiệm thu</span>
+      </div>
+    </div>
+
+    <div class="filemgr-stat-card">
+      <div class="filemgr-stat-icon indigo">📊</div>
+      <div class="filemgr-stat-content">
+        <span class="filemgr-stat-value" id="statQuotes">0</span>
+        <span class="filemgr-stat-label">Báo giá & Đơn thanh toán</span>
+      </div>
+    </div>
+
+    <div class="filemgr-stat-card">
+      <div class="filemgr-stat-icon amber">💾</div>
+      <div class="filemgr-stat-content">
+        <span class="filemgr-stat-value" id="statStorageUsed">0 B</span>
+        <span class="filemgr-stat-label">Dung lượng hồ sơ dự án</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="filemgr-filter-card">
+    <!-- Search Bar -->
+    <div class="filemgr-search-row">
+      <div class="filemgr-search-input-wrap">
+        <span class="filemgr-search-icon">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" id="filemgrSearchInput" class="filemgr-search-input" placeholder="Tìm kiếm nhanh file: tên khách hàng (CX, Pou Hui...), số hợp đồng (HMV...), ngày tháng hoặc định dạng (.docx, .xlsx)..." autocomplete="off">
+        <button type="button" id="filemgrSearchClear" class="filemgr-search-clear" title="Xóa tìm kiếm">✕</button>
+      </div>
+    </div>
+
+    <!-- Category Pills -->
+    <div class="filemgr-categories-wrap">
+      <button type="button" class="filemgr-cat-pill active" data-cat="all" onclick="FileManagerApp.setCategory('all')">
+        <span>🌟 Tất Cả</span>
+        <span class="cat-count">0</span>
+      </button>
+
+      <button type="button" class="filemgr-cat-pill" data-cat="hop_dong" onclick="FileManagerApp.setCategory('hop_dong')">
+        <span>📑 Hợp Đồng</span>
+        <span class="cat-count">0</span>
+      </button>
+
+      <button type="button" class="filemgr-cat-pill" data-cat="bao_gia" onclick="FileManagerApp.setCategory('bao_gia')">
+        <span>📊 Báo Giá</span>
+        <span class="cat-count">0</span>
+      </button>
+
+      <button type="button" class="filemgr-cat-pill" data-cat="nghiem_thu" onclick="FileManagerApp.setCategory('nghiem_thu')">
+        <span>✅ Nghiệm Thu</span>
+        <span class="cat-count">0</span>
+      </button>
+
+      <button type="button" class="filemgr-cat-pill" data-cat="don_xin_thanh_toan" onclick="FileManagerApp.setCategory('don_xin_thanh_toan')">
+        <span>💳 Đơn Xin TT</span>
+        <span class="cat-count">0</span>
+      </button>
+
+      <button type="button" class="filemgr-cat-pill" data-cat="yeu_cau_thanh_toan" onclick="FileManagerApp.setCategory('yeu_cau_thanh_toan')">
+        <span>💰 Đề Nghị TT</span>
+        <span class="cat-count">0</span>
+      </button>
+
+      <button type="button" class="filemgr-cat-pill" data-cat="xuat_kho" onclick="FileManagerApp.setCategory('xuat_kho')">
+        <span>🚚 Xuất Kho</span>
+        <span class="cat-count">0</span>
+      </button>
+
+      <button type="button" class="filemgr-cat-pill" data-cat="outputs" onclick="FileManagerApp.setCategory('outputs')">
+        <span>⚡ File Vừa Xuất</span>
+        <span class="cat-count">0</span>
+      </button>
+
+      <button type="button" class="filemgr-cat-pill" data-cat="bieu_mau" onclick="FileManagerApp.setCategory('bieu_mau')">
+        <span>📋 Biểu Mẫu Gốc</span>
+        <span class="cat-count">0</span>
+      </button>
+    </div>
+
+    <!-- Subtoolbar (Filter + Sort + View mode) -->
+    <div class="filemgr-subtoolbar">
+      <div class="filemgr-subtoolbar-left">
+        <div style="display: flex; align-items: center; gap: 0.4rem;">
+          <label for="filemgrExtFilter" style="color: var(--text-muted); font-weight: 600;">Định dạng:</label>
+          <select id="filemgrExtFilter" class="filemgr-select" onchange="FileManagerApp.setExtension(this.value)">
+            <option value="all">Tất cả định dạng</option>
+            <option value="word">Word (.docx, .doc)</option>
+            <option value="excel">Excel (.xlsx, .xls)</option>
+            <option value="pdf">PDF (.pdf)</option>
+            <option value="image">Hình ảnh (.png, .jpg...)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.4rem;">
+          <label for="filemgrSortSelect" style="color: var(--text-muted); font-weight: 600;">Sắp xếp:</label>
+          <select id="filemgrSortSelect" class="filemgr-select" onchange="FileManagerApp.setSort(this.value)">
+            <option value="updated_at_desc">Mới cập nhật nhất</option>
+            <option value="updated_at_asc">Cũ nhất</option>
+            <option value="name_asc">Tên file A ➜ Z</option>
+            <option value="name_desc">Tên file Z ➜ A</option>
+            <option value="size_desc">Kích thước lớn nhất</option>
+            <option value="size_asc">Kích thước nhỏ nhất</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filemgr-subtoolbar-right">
+        <span id="filemgrFilteredCount" style="color: var(--text-dim); font-size: 0.78rem;">Đang tải...</span>
+
+        <div style="display: flex; gap: 0.25rem;">
+          <button type="button" id="btnViewTable" class="filemgr-view-btn active" onclick="FileManagerApp.setViewMode('table')" title="Chế độ xem dạng bảng">
+            <svg class="icon" viewBox="0 0 24 24" width="15" height="15"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </button>
+          <button type="button" id="btnViewGrid" class="filemgr-view-btn" onclick="FileManagerApp.setViewMode('grid')" title="Chế độ xem dạng thẻ">
+            <svg class="icon" viewBox="0 0 24 24" width="15" height="15"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table View Container -->
+  <div class="filemgr-table-card" id="filemgrTableCard">
+    <table class="filemgr-table">
+      <thead>
+        <tr>
+          <th>Tên Tệp Tin & Vị Trí Lưu</th>
+          <th>Phân Loại</th>
+          <th>Kích Thước</th>
+          <th>Cập Nhật Lần Cuối</th>
+          <th style="text-align: right; padding-right: 1.5rem;">Thao Tác Nhanh</th>
+        </tr>
+      </thead>
+      <tbody id="filemgrTableBody">
+        <!-- Rendered by file_manager.js -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Grid View Container -->
+  <div class="filemgr-grid" id="filemgrGridContainer" style="display: none;">
+    <!-- Rendered by file_manager.js -->
+  </div>
+
+  <!-- Empty State -->
+  <div class="filemgr-empty" id="filemgrEmpty" style="display: none;">
+    <div class="filemgr-empty-icon">📂</div>
+    <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.4rem;">Không tìm thấy tệp tin phù hợp</h3>
+    <p style="font-size: 0.85rem;">Hãy thử xóa bộ lọc tìm kiếm hoặc kiểm tra lại từ khóa tìm kiếm.</p>
+  </div>
+
+</div>
+
+<!-- Modal Tải Lên File Mới -->
+<div class="filemgr-modal-overlay" id="filemgrUploadModal" role="dialog" aria-modal="true">
+  <div class="filemgr-modal">
+    <div class="filemgr-modal-header">
+      <div class="filemgr-modal-title">
+        <svg class="icon" viewBox="0 0 24 24" width="20" height="20" style="color: var(--primary);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Tải Lên File Hồ Sơ Mới</span>
+      </div>
+      <button type="button" class="btn-close" onclick="FileManagerApp.closeUploadModal()" style="border:none; background:none; cursor:pointer; font-size:1.1rem;">✕</button>
+    </div>
+
+    <div class="filemgr-modal-body">
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="filemgrUploadCategory" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">
+          Chọn thư mục hồ sơ muốn lưu trữ:
+        </label>
+        <select id="filemgrUploadCategory" class="form-control" style="width: 100%; padding: 0.5rem;">
+          <option value="hop_dong">📑 Hợp Đồng (Ho So Du An / Hop Dong)</option>
+          <option value="bao_gia">📊 Báo Giá (Ho So Du An / Bao Gia)</option>
+          <option value="nghiem_thu">✅ Nghiệm Thu (Ho So Du An / Nghiem Thu)</option>
+          <option value="don_xin_thanh_toan">💳 Đơn Xin Thanh Toán (Ho So Du An / Don Xin Thanh Toan)</option>
+          <option value="yeu_cau_thanh_toan">💰 Đề Nghị TT & Nhắc Nợ (Ho So Du An / Yeu Cau Thanh Toan)</option>
+          <option value="xuat_kho">🚚 Xuất Kho (Ho So Du An / Xuat Kho)</option>
+          <option value="nhac_nho">🔔 Nhắc Nợ & Đính Kèm (Ho So Du An / Nhac Nho)</option>
+        </select>
+      </div>
+
+      <div class="filemgr-dropzone" id="filemgrDropzone">
+        <div class="filemgr-dropzone-icon">☁️</div>
+        <div style="font-weight: 600; color: var(--text-main); margin-bottom: 0.25rem;">
+          Kéo thả file vào đây hoặc bấm để chọn file
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-muted);">
+          Hỗ trợ .docx, .xlsx, .pdf, ảnh scan .png, .jpg...
+        </div>
+        <div id="filemgrSelectedFileLabel" style="margin-top: 0.75rem; font-size: 0.82rem; font-weight: 600;">
+          Chưa chọn file nào
+        </div>
+        <input type="file" id="filemgrUploadInput" style="display: none;">
+      </div>
+    </div>
+
+    <div class="filemgr-modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" onclick="FileManagerApp.closeUploadModal()">Hủy bỏ</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="FileManagerApp.handleUploadSubmit()">
+        <span>Tải Lên Ngay</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Đổi Tên File -->
+<div class="filemgr-modal-overlay" id="filemgrRenameModal" role="dialog" aria-modal="true">
+  <div class="filemgr-modal">
+    <div class="filemgr-modal-header">
+      <div class="filemgr-modal-title">
+        <svg class="icon" viewBox="0 0 24 24" width="20" height="20" style="color: #ea580c;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Đổi Tên File</span>
+      </div>
+      <button type="button" class="btn-close" onclick="FileManagerApp.closeRenameModal()" style="border:none; background:none; cursor:pointer; font-size:1.1rem;">✕</button>
+    </div>
+
+    <div class="filemgr-modal-body">
+      <label for="filemgrRenameInput" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">
+        Nhập tên mới cho file:
+      </label>
+      <input type="text" id="filemgrRenameInput" class="form-control" style="width: 100%; padding: 0.55rem;" placeholder="Nhập tên file...">
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">
+        💡 Gợi ý: Hệ thống sẽ tự động giữ nguyên phần mở rộng định dạng nếu bạn không nhập đuôi.
+      </p>
+    </div>
+
+    <div class="filemgr-modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" onclick="FileManagerApp.closeRenameModal()">Hủy</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="FileManagerApp.handleRenameSubmit()">
+        Lưu Tên Mới
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Xem Trước File -->
+<div class="filemgr-modal-overlay" id="filemgrPreviewModal" role="dialog" aria-modal="true">
+  <div class="filemgr-modal filemgr-preview-modal">
+    <div class="filemgr-modal-header">
+      <div class="filemgr-modal-title" id="filemgrPreviewTitle">
+        <span>Xem trước tài liệu</span>
+      </div>
+      <button type="button" class="btn-close" onclick="FileManagerApp.closePreviewModal()" style="border:none; background:none; cursor:pointer; font-size:1.1rem;">✕</button>
+    </div>
+
+    <div class="filemgr-modal-body" style="padding: 0.75rem;">
+      <div class="filemgr-preview-content" id="filemgrPreviewContainer">
+        <!-- Image or Iframe injected -->
+      </div>
+    </div>
+
+    <div class="filemgr-modal-footer">
+      <button type="button" class="btn btn-primary btn-sm" onclick="FileManagerApp.closePreviewModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- Client Scripts -->
+<script src="/static/js/file_manager.js?v=1.0"></script>
+{% endblock %}
