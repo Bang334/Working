@@ -88,3 +88,9 @@ class ProcurementStats(BaseModel):
     pending_payment_count: int = 0
     suppliers: List[str] = []
     projects: List[str] = []
+
+
+class QuickFieldUpdateRequest(BaseModel):
+    """Payload to fast inline update a single order field (order_date, eta_date, actual_delivery_date, etc.)."""
+    field: str
+    value: Any

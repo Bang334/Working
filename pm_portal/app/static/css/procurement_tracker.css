@@ -1188,3 +1188,93 @@
   visibility: hidden;
 }
 
+/* ==========================================================================
+   INLINE DATE PICKERS IN TABLE CELLS (CHỈNH SỬA NGÀY TRỰC TIẾP)
+   ========================================================================== */
+.inline-date-picker-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 0.2rem 0.35rem;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.inline-date-picker-wrap:hover,
+.inline-date-picker-wrap:focus-within {
+  border-color: #1F4E79;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.15);
+}
+
+.inline-date-picker-wrap.eta-wrap {
+  border-color: #FDE68A;
+  background: #FFFBEB;
+}
+
+.inline-date-picker-wrap.eta-wrap:hover,
+.inline-date-picker-wrap.eta-wrap:focus-within {
+  border-color: #D97706;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+}
+
+.inline-date-picker-wrap.actual-wrap {
+  border-color: #A7F3D0;
+  background: #ECFDF5;
+}
+
+.inline-date-picker-wrap.actual-wrap:hover,
+.inline-date-picker-wrap.actual-wrap:focus-within {
+  border-color: #059669;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+}
+
+.inline-date-input {
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  color: #1E293B;
+  font-family: inherit;
+  outline: none;
+  padding: 0;
+  width: 106px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.inline-date-input.eta-input {
+  color: #B45309;
+  font-weight: 700;
+}
+
+.inline-date-input.actual-input {
+  color: #047857;
+  font-weight: 700;
+}
+
+.btn-clear-date {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.btn-clear-date:hover {
+  color: #EF4444;
+  background: #FEE2E2;
+}
+
+

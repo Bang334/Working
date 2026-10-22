@@ -12,6 +12,7 @@ from app.models.procurement_models import (
     ProcurementAIParseRequest,
     ProcurementCreateRequest,
     ProcurementUpdateRequest,
+    QuickFieldUpdateRequest,
 )
 from app.services.procurement_ai_service import parse_procurement_ai
 from app.services.procurement_excel_service import export_procurement_excel, parse_procurement_excel
@@ -172,6 +173,48 @@ async def update_order_status_endpoint(order_id: int, payload: QuickStatusUpdate
         return JSONResponse(
             status_code=500,
             content={"status": "error", "message": f"Lỗi cập nhật trạng thái: {str(e)}"},
+        )
+
+
+@router.patch("/orders/{order_id}/inline")
+async def update_order_inline_endpoint(order_id: int, payload: QuickFieldUpdateRequest):
+    """Fast inline update of single order field: order_date, eta_date, actual_delivery_date, supplier_payment_status, quantity."""
+    try:
+        field = payload.field
+        val = payload.value
+        update_dict: Dict[str, Any] = {}
+
+        if field in ["order_date", "eta_date", "actual_delivery_date"]:
+            clean_str = str(val).strip() if val and str(val).strip() not in ["", "-", "null", "undefined"] else None
+            update_dict[field] = clean_str
+            # Tự động đồng bộ trạng thái giao hàng nếu điền ngày giao thực tế
+            if field == "actual_delivery_date":
+                if clean_str:
+                    update_dict["delivery_status"] = "DELIVERED"
+        elif field == "quantity":
+            update_dict["quantity"] = float(val or 1.0)
+        elif field == "supplier_payment_status":
+            update_dict["supplier_payment_status"] = str(val).strip() if val else None
+        else:
+            update_dict[field] = val
+
+        success = update_procurement_order(order_id, update_dict)
+        if not success:
+            raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng cần cập nhật.")
+        updated = get_procurement_order(order_id)
+        stats = get_procurement_stats()
+        return {
+            "status": "success",
+            "message": f"Đã lưu {field} thành công.",
+            "order": updated,
+            "stats": stats,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"Lỗi cập nhật: {str(e)}"},
         )
 
 

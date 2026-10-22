@@ -476,11 +476,34 @@
         <td>
           <span style="font-weight: 700; color: #1F4E79; font-size: 0.85rem;">${supplierName}</span>
         </td>
-        <td style="text-align: center; white-space: nowrap; font-size: 0.8rem; color: var(--text-muted);">${o.order_date || "-"}</td>
-        <td style="text-align: center; white-space: nowrap; font-size: 0.82rem; font-weight: 700; color: #D97706;">${o.eta_date || "-"}</td>
-        <td style="text-align: center; white-space: nowrap; font-size: 0.82rem; font-weight: 700; color: #059669;" id="actual-date-cell-${o.id}">${o.actual_delivery_date || "-"}</td>
-        <td style="max-width: 170px; font-size: 0.78rem;">
-          <div style="${isPaymentAttention ? 'color: #7C3AED; font-weight: 700;' : ''}">${paymentStatus}</div>
+        <td style="text-align: center; white-space: nowrap;">
+          <div class="inline-date-picker-wrap">
+            <input type="date" class="inline-date-input" value="${o.order_date || ''}" 
+                   onchange="updatePoInlineDate(${o.id}, 'order_date', this.value)" 
+                   title="Chọn ngày đặt hàng">
+            ${o.order_date ? `<button type="button" class="btn-clear-date" onclick="clearPoDateInline(${o.id}, 'order_date', event)" title="Xóa ngày đặt">×</button>` : ''}
+          </div>
+        </td>
+        <td style="text-align: center; white-space: nowrap;">
+          <div class="inline-date-picker-wrap eta-wrap">
+            <input type="date" class="inline-date-input eta-input" value="${o.eta_date || ''}" 
+                   onchange="updatePoInlineDate(${o.id}, 'eta_date', this.value)" 
+                   title="Chọn ngày giao dự kiến ETA">
+            ${o.eta_date ? `<button type="button" class="btn-clear-date" onclick="clearPoDateInline(${o.id}, 'eta_date', event)" title="Xóa ngày ETA">×</button>` : ''}
+          </div>
+        </td>
+        <td style="text-align: center; white-space: nowrap;" id="actual-date-cell-${o.id}">
+          <div class="inline-date-picker-wrap actual-wrap">
+            <input type="date" class="inline-date-input actual-input" value="${o.actual_delivery_date || ''}" 
+                   onchange="updatePoInlineDate(${o.id}, 'actual_delivery_date', this.value)" 
+                   title="Chọn ngày giao hàng thực tế">
+            ${o.actual_delivery_date ? `<button type="button" class="btn-clear-date" onclick="clearPoDateInline(${o.id}, 'actual_delivery_date', event)" title="Xóa ngày giao thực tế">×</button>` : ''}
+          </div>
+        <td style="max-width: 170px; font-size: 0.78rem; cursor: pointer;" onclick="startEditingPaymentStatus(${o.id}, '${escapeHtml(o.supplier_payment_status || '-')}', this)" title="Nhấp vào để sửa nhanh tình trạng thanh toán NCC">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+            <span style="${isPaymentAttention ? 'color: #7C3AED; font-weight: 700;' : ''}">${paymentStatus}</span>
+            <span style="font-size: 0.72rem; opacity: 0.5;">✏️</span>
+          </div>
         </td>
         <td style="text-align: center; white-space: nowrap;">
           <div class="status-dropdown-wrapper" onclick="event.stopPropagation()">
@@ -609,6 +632,118 @@
       selectEl.className = `status-select-badge ${badgeMap[oldStatus] || "pending"}`;
       o.delivery_status = oldStatus;
     }
+  };
+
+  // ==========================================
+  // INLINE DATE EDITING (NGÀY ĐẶT, ETA, GIAO THỰC TẾ)
+  // ==========================================
+  window.updatePoInlineDate = async function (orderId, field, value) {
+    try {
+      const res = await fetch(`/api/v1/procurement/orders/${orderId}/inline`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ field, value })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        let fieldName = field;
+        if (field === "order_date") fieldName = "ngày đặt hàng";
+        else if (field === "eta_date") fieldName = "ngày giao dự kiến (ETA)";
+        else if (field === "actual_delivery_date") fieldName = "ngày giao hàng thực tế";
+
+        showToast(`✓ Đã lưu ${fieldName} thành công!`, "success");
+        // Update cached order
+        const o = cachedOrders.find(item => item.id === orderId);
+        if (o && data.order) {
+          Object.assign(o, data.order);
+        }
+        if (data.stats) {
+          renderKpis(data.stats);
+        }
+        applyHeaderFiltersPo();
+      } else {
+        showToast(data.message || "Không thể cập nhật ngày", "error");
+      }
+    } catch (err) {
+      console.error("Lỗi cập nhật ngày PO:", err);
+      showToast("Lỗi máy chủ khi cập nhật ngày.", "error");
+    }
+  };
+
+  window.clearPoDateInline = function (orderId, field, event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    updatePoInlineDate(orderId, field, null);
+  };
+
+  // ==========================================
+  // INLINE EDITING: THANH TOÁN NCC (CLICK ĐỂ SỬA TRỰC TIẾP)
+  // ==========================================
+  window.startEditingPaymentStatus = function (orderId, currentVal, cellEl) {
+    if (cellEl.querySelector("input")) return;
+    const originalHtml = cellEl.innerHTML;
+    const rawVal = currentVal && currentVal !== "-" ? currentVal.replace(/&quot;/g, '"') : "";
+    cellEl.innerHTML = `
+      <div class="inline-edit-box" style="display: flex; gap: 4px; align-items: center;" onclick="event.stopPropagation()">
+        <input type="text" class="th-filter-input" value="${rawVal}" style="font-size: 0.78rem; height: 26px; padding: 2px 6px; min-width: 120px;" placeholder="Đã TT, Chờ TT 50%...">
+        <button type="button" class="btn-inline-save" style="background:#1F4E79; color:#FFF; border:none; border-radius:4px; padding:2px 6px; font-size:0.72rem; cursor:pointer;">Lưu</button>
+        <button type="button" class="btn-inline-cancel" style="background:#E2E8F0; color:#475569; border:none; border-radius:4px; padding:2px 5px; font-size:0.72rem; cursor:pointer;">✕</button>
+      </div>
+    `;
+
+    const input = cellEl.querySelector("input");
+    const btnSave = cellEl.querySelector(".btn-inline-save");
+    const btnCancel = cellEl.querySelector(".btn-inline-cancel");
+    if (input) {
+      input.focus();
+      input.select();
+    }
+
+    const doSave = async () => {
+      const newVal = input.value.trim();
+      try {
+        const res = await fetch(`/api/v1/procurement/orders/${orderId}/inline`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ field: "supplier_payment_status", value: newVal || "-" })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          showToast("✓ Đã lưu trạng thái thanh toán NCC!", "success");
+          const o = cachedOrders.find(item => item.id === orderId);
+          if (o && data.order) Object.assign(o, data.order);
+          applyHeaderFiltersPo();
+        } else {
+          showToast(data.message || "Lỗi lưu thanh toán", "error");
+          cellEl.innerHTML = originalHtml;
+        }
+      } catch (err) {
+        showToast("Lỗi kết nối máy chủ", "error");
+        cellEl.innerHTML = originalHtml;
+      }
+    };
+
+    btnSave.addEventListener("click", (e) => {
+      e.stopPropagation();
+      doSave();
+    });
+
+    btnCancel.addEventListener("click", (e) => {
+      e.stopPropagation();
+      cellEl.innerHTML = originalHtml;
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        doSave();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        cellEl.innerHTML = originalHtml;
+      }
+    });
   };
 
   // ==========================================
