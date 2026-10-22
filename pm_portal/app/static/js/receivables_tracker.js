@@ -36,13 +36,17 @@ function showToast(message, type = "success") {
 async function loadReceivablesData() {
   const customer = document.getElementById("filterCustomer")?.value || "all";
   const status = document.getElementById("filterStatus")?.value || "all";
+  const contract = document.getElementById("filterContract")?.value || "all";
   const search = document.getElementById("filterSearch")?.value || "";
 
   const params = new URLSearchParams();
   if (customer && customer !== "all") params.append("customer", customer);
   if (status && status !== "all") params.append("status", status);
   if (search && search.trim()) params.append("search", search.trim());
-  if (isOverdueOnly) params.append("overdue_only", "true");
+  if (contract && contract !== "all") {
+    // Nếu có chọn hợp đồng thì thêm từ khóa tìm kiếm hoặc lọc
+    if (!params.has("search")) params.append("search", contract);
+  }
 
   const tbody = document.getElementById("receivablesTableBody");
   if (tbody) {
@@ -63,11 +67,17 @@ async function loadReceivablesData() {
     const data = await res.json();
 
     if (data.status === "success") {
-      allReceivables = data.receivables || [];
+      let items = data.receivables || [];
       allStats = data.stats || {};
 
+      // Filter client-side by contract if selected
+      if (contract && contract !== "all") {
+        items = items.filter(it => it.contract_code === contract);
+      }
+
+      allReceivables = items;
       updateKpis(allStats);
-      populateCustomerFilter(allStats.customers || []);
+      populateFilters(allStats.customers || [], allStats.contracts || []);
       renderTable(allReceivables);
     } else {
       showToast(data.message || "Không thể tải dữ liệu công nợ", "error");
@@ -78,7 +88,7 @@ async function loadReceivablesData() {
   }
 }
 
-// Update KPI Header Cards
+// Update KPI Header Cards & Legend Chips
 function updateKpis(stats) {
   const totalReceivable = document.getElementById("kpiTotalReceivable");
   const totalCount = document.getElementById("kpiTotalCount");
@@ -97,23 +107,48 @@ function updateKpis(stats) {
   if (pendingCount) pendingCount.textContent = `Chờ thu: ${stats.pending_count || 0} đợt`;
   if (overdueCount) overdueCount.textContent = stats.overdue_count || 0;
   if (urgentSub) urgentSub.textContent = `${stats.urgent_count || 0} mốc sắp đến hạn (<=7 ngày)`;
+
+  // Update counts on quick legend chips
+  const chipCountAll = document.getElementById("chipCountAll");
+  const chipCountOverdue = document.getElementById("chipCountOverdue");
+  const chipCountUrgent = document.getElementById("chipCountUrgent");
+  const chipCountPending = document.getElementById("chipCountPending");
+  const chipCountPaid = document.getElementById("chipCountPaid");
+
+  if (chipCountAll) chipCountAll.textContent = stats.total_milestones || 0;
+  if (chipCountOverdue) chipCountOverdue.textContent = stats.overdue_count || 0;
+  if (chipCountUrgent) chipCountUrgent.textContent = stats.urgent_count || 0;
+  if (chipCountPending) chipCountPending.textContent = stats.pending_count || 0;
+  if (chipCountPaid) chipCountPaid.textContent = stats.paid_count || 0;
 }
 
-// Populate Customer Filter Dropdown
-function populateCustomerFilter(customers) {
-  const sel = document.getElementById("filterCustomer");
-  if (!sel) return;
-  const currentVal = sel.value;
+// Populate Customer and Contract Filter Dropdowns
+function populateFilters(customers, contracts) {
+  const selCust = document.getElementById("filterCustomer");
+  if (selCust) {
+    const curCust = selCust.value;
+    selCust.innerHTML = '<option value="all">Tất cả khách hàng</option>';
+    customers.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      if (c === curCust) opt.selected = true;
+      selCust.appendChild(opt);
+    });
+  }
 
-  // Keep first option
-  sel.innerHTML = '<option value="all">Tất cả khách hàng (全部客戶)</option>';
-  customers.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c;
-    opt.textContent = c;
-    if (c === currentVal) opt.selected = true;
-    sel.appendChild(opt);
-  });
+  const selContract = document.getElementById("filterContract");
+  if (selContract) {
+    const curContract = selContract.value;
+    selContract.innerHTML = '<option value="all">Tất cả hợp đồng</option>';
+    contracts.forEach(cnt => {
+      const opt = document.createElement("option");
+      opt.value = cnt;
+      opt.textContent = cnt;
+      if (cnt === curContract) opt.selected = true;
+      selContract.appendChild(opt);
+    });
+  }
 }
 
 // Render Table Rows
@@ -510,6 +545,9 @@ function startEditingNotes(itemId, cellElement) {
 
 // Filter triggers
 function onFilterChange() {
+  // Sync chips with selected status
+  const curStatus = document.getElementById("filterStatus")?.value || "all";
+  syncChipsWithStatus(curStatus);
   loadReceivablesData();
 }
 
@@ -520,30 +558,45 @@ function debounceSearch() {
   }, 350);
 }
 
-function toggleOverdueOnly() {
-  isOverdueOnly = !isOverdueOnly;
-  const btn = document.getElementById("btnToggleOverdue");
-  if (btn) {
-    if (isOverdueOnly) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
-  }
+// Filter by clicking on quick chips
+function filterByChip(statusVal, element) {
+  document.querySelectorAll(".legend-chip").forEach(chip => chip.classList.remove("active"));
+  if (element) element.classList.add("active");
+
+  const selStat = document.getElementById("filterStatus");
+  if (selStat) selStat.value = statusVal;
+
   loadReceivablesData();
+}
+
+function syncChipsWithStatus(statusVal) {
+  document.querySelectorAll(".legend-chip").forEach(chip => chip.classList.remove("active"));
+  if (statusVal === "all") {
+    document.getElementById("chipAll")?.classList.add("active");
+  } else if (statusVal === "DELAYED") {
+    document.getElementById("chipOverdue")?.classList.add("active");
+  } else if (statusVal === "URGENT") {
+    document.getElementById("chipUrgent")?.classList.add("active");
+  } else if (statusVal === "PENDING") {
+    document.getElementById("chipPending")?.classList.add("active");
+  } else if (statusVal === "PAID") {
+    document.getElementById("chipPaid")?.classList.add("active");
+  }
 }
 
 function resetFilters() {
   const selCust = document.getElementById("filterCustomer");
   const selStat = document.getElementById("filterStatus");
+  const selContract = document.getElementById("filterContract");
   const inputSearch = document.getElementById("filterSearch");
-  const btnOverdue = document.getElementById("btnToggleOverdue");
 
   if (selCust) selCust.value = "all";
   if (selStat) selStat.value = "all";
+  if (selContract) selContract.value = "all";
   if (inputSearch) inputSearch.value = "";
-  if (btnOverdue) btnOverdue.classList.remove("active");
-  isOverdueOnly = false;
+
+  document.querySelectorAll(".legend-chip").forEach(chip => chip.classList.remove("active"));
+  document.getElementById("chipAll")?.classList.add("active");
 
   loadReceivablesData();
 }

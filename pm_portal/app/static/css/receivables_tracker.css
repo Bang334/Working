@@ -331,46 +331,30 @@
   line-height: 1.45;
 }
 
-/* 4. Filter Bar */
-.receivables-filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
+/* 4. Filter Toolbar & Legend Bar (Đồng bộ chuẩn 1:1 với PO Tracker) */
+.receivables-toolbar {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
   margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
   flex-wrap: wrap;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.filter-group label {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #475569;
-  white-space: nowrap;
-}
-
-.filter-group.flex-1 {
-  flex: 1;
-  min-width: 240px;
-}
-
-.search-input-wrapper {
+.receivables-search-group {
   position: relative;
-  width: 100%;
+  flex: 1 1 280px;
+  max-width: 420px;
 }
 
-.search-icon {
+.receivables-search-group svg {
   position: absolute;
-  left: 0.6rem;
+  left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
@@ -379,41 +363,157 @@
   pointer-events: none;
 }
 
-.search-input-wrapper input {
-  padding-left: 2rem;
+.receivables-search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+  font-size: 0.85rem;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  background: #F8FAFC;
+  color: #0F172A;
+  outline: none;
+  transition: all 0.15s ease;
 }
 
-.filter-actions {
+.receivables-search-input:focus {
+  border-color: #1F4E79;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.12);
+}
+
+.receivables-filters {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.65rem;
+  flex-wrap: wrap;
 }
 
-.btn-ai {
-  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
-  color: #FFFFFF !important;
-  border: none;
+.receivables-select {
+  padding: 0.5rem 2.2rem 0.5rem 0.85rem;
+  font-size: 0.83rem;
+  font-weight: 500;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  background-color: #F8FAFC;
+  color: #1E293B;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 14px 14px;
+  transition: all 0.15s ease;
+}
+
+.receivables-select:hover {
+  border-color: #94A3B8;
+  background-color: #FFFFFF;
+}
+
+.receivables-select:focus {
+  border-color: #1F4E79;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.12);
+}
+
+/* Legend & Quick Status Filter Bar */
+.receivables-legend-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  padding: 0.55rem 0.85rem;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.legend-chips-group {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.legend-chip {
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  padding: 0.35rem 0.8rem;
+  border-radius: 50px;
+  font-size: 0.78rem;
   font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.15s ease;
+  user-select: none;
 }
 
-.btn-ai:hover {
-  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
+.legend-chip:hover {
+  border-color: #1F4E79;
+  color: #0F172A;
+  transform: translateY(-1px);
 }
 
-.dot-overdue {
-  display: inline-block;
+.legend-chip.active {
+  background: #1F4E79;
+  color: #FFFFFF;
+  border-color: #1F4E79;
+}
+
+.legend-chip.chip-overdue.active {
+  background: #DC2626;
+  border-color: #DC2626;
+  color: #FFFFFF;
+}
+
+.legend-chip.chip-urgent.active {
+  background: #D97706;
+  border-color: #D97706;
+  color: #FFFFFF;
+}
+
+.legend-chip.chip-pending.active {
+  background: #2563EB;
+  border-color: #2563EB;
+  color: #FFFFFF;
+}
+
+.legend-chip.chip-paid.active {
+  background: #059669;
+  border-color: #059669;
+  color: #FFFFFF;
+}
+
+.legend-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #DC2626;
-  margin-right: 0.25rem;
+  display: inline-block;
 }
 
-#btnToggleOverdue.active {
-  background: #FEE2E2;
-  color: #991B1B;
-  border-color: #F87171;
+.legend-dot.red-solid {
+  background: #DC2626;
 }
+
+.legend-dot.amber-solid {
+  background: #D97706;
+}
+
+.legend-dot.blue-solid {
+  background: #2563EB;
+}
+
+.legend-dot.green-solid {
+  background: #059669;
+}
+
 
 /* 5. Main Table & Sticky Columns */
 .receivables-table-card {
@@ -1069,4 +1169,59 @@ body.table-modal-fullscreen-open {
   color: #B45309;
   border-color: #FCD34D;
 }
+
+/* 5. Status Select Inline & VAT Select (Bo tròn chuẩn Pill cao cấp) */
+.status-select-inline {
+  padding: 0.32rem 1.65rem 0.32rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 50px;
+  border: 1px solid #CBD5E1;
+  background-color: #F8FAFC;
+  color: #1E293B;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.55rem center;
+  background-size: 12px 12px;
+  transition: all 0.15s ease;
+}
+
+.status-select-inline:hover {
+  border-color: #1F4E79;
+  background-color: #FFFFFF;
+}
+
+.status-select-inline:focus {
+  border-color: #1F4E79;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.15);
+}
+
+.inline-vat-select {
+  padding: 0.32rem 1.65rem 0.32rem 0.65rem !important;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px !important;
+  border: 1px solid #CBD5E1;
+  background-color: #F8FAFC;
+  color: #1E293B;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 12px 12px;
+  transition: all 0.15s ease;
+}
+
+.inline-vat-select:hover, .inline-vat-select:focus {
+  border-color: #1F4E79;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.15);
+}
+
 

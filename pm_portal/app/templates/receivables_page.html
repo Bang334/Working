@@ -139,41 +139,57 @@
     </div>
   </div>
 
-  <!-- Filter & Search Bar -->
-  <div class="receivables-filter-bar">
-    <div class="filter-group">
-      <label for="filterCustomer">Khách hàng / 客戶:</label>
-      <select id="filterCustomer" class="form-select form-select-sm" onchange="onFilterChange()">
-        <option value="all">Tất cả khách hàng (全部客戶)</option>
+  <!-- Search & Filter Toolbar (Đồng bộ chuẩn bo tròn cao cấp như Theo Dõi Mua Hàng) -->
+  <div class="receivables-toolbar">
+    <div class="receivables-search-group">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="filterSearch" class="receivables-search-input" placeholder="Tìm theo tên dự án, số hợp đồng, khách hàng, ghi chú..." oninput="debounceSearch()">
+    </div>
+
+    <div class="receivables-filters">
+      <select id="filterStatus" class="receivables-select" onchange="onFilterChange()" title="Lọc theo trạng thái thu nợ">
+        <option value="all">Tất cả trạng thái</option>
+        <option value="PENDING">Chờ thu tiền / 待收款</option>
+        <option value="URGENT">Sắp đến hạn (&lt;= 7 ngày) / 即將到期</option>
+        <option value="DELAYED">Quá hạn thanh toán / 已逾期</option>
+        <option value="PAID">Đã thu xong / 已收款</option>
+      </select>
+
+      <select id="filterCustomer" class="receivables-select" onchange="onFilterChange()" title="Lọc theo khách hàng">
+        <option value="all">Tất cả khách hàng</option>
+      </select>
+
+      <select id="filterContract" class="receivables-select" onchange="onFilterChange()" title="Lọc theo hợp đồng">
+        <option value="all">Tất cả hợp đồng</option>
       </select>
     </div>
+  </div>
 
-    <div class="filter-group">
-      <label for="filterStatus">Trạng thái thu / 收款狀態:</label>
-      <select id="filterStatus" class="form-select form-select-sm" onchange="onFilterChange()">
-        <option value="all">Tất cả trạng thái (全部狀態)</option>
-        <option value="PENDING">Chờ thu tiền (待收款)</option>
-        <option value="URGENT">Sắp đến hạn &lt;= 7 ngày (即將到期)</option>
-        <option value="DELAYED">Quá hạn thanh toán (已逾期)</option>
-        <option value="PAID">Đã thu xong (已收款)</option>
-      </select>
+  <!-- Quick Filter & Legend Bar (Các chip bo tròn phong cách hiện đại) -->
+  <div class="receivables-legend-bar" id="receivablesLegendBar">
+    <div class="legend-chips-group">
+      <span class="legend-chip active" id="chipAll" onclick="filterByChip('all', this)">
+        <span>Tất cả đợt (<strong id="chipCountAll">0</strong>)</span>
+      </span>
+      <span class="legend-chip chip-overdue" id="chipOverdue" onclick="filterByChip('DELAYED', this)" title="Các khoản nợ đã quá hạn hợp đồng cần xử lý gấp">
+        <span class="legend-dot red-solid"></span>
+        <span>🚨 Quá hạn (<strong id="chipCountOverdue">0</strong>)</span>
+      </span>
+      <span class="legend-chip chip-urgent" id="chipUrgent" onclick="filterByChip('URGENT', this)" title="Các khoản nợ sắp đến hạn trong vòng 7 ngày">
+        <span class="legend-dot amber-solid"></span>
+        <span>⚡ Sắp đến hạn &lt;= 7 ngày (<strong id="chipCountUrgent">0</strong>)</span>
+      </span>
+      <span class="legend-chip chip-pending" id="chipPending" onclick="filterByChip('PENDING', this)" title="Các khoản nợ đang chờ thu tiền">
+        <span class="legend-dot blue-solid"></span>
+        <span>⏳ Chờ thu (<strong id="chipCountPending">0</strong>)</span>
+      </span>
+      <span class="legend-chip chip-paid" id="chipPaid" onclick="filterByChip('PAID', this)" title="Các đợt đã thu xong 100%">
+        <span class="legend-dot green-solid"></span>
+        <span>✅ Đã thu xong (<strong id="chipCountPaid">0</strong>)</span>
+      </span>
     </div>
-
-    <div class="filter-group flex-1">
-      <label for="filterSearch">Tìm kiếm / 搜尋:</label>
-      <div class="search-input-wrapper">
-        <svg class="icon search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="filterSearch" class="form-control form-control-sm" placeholder="Tìm theo tên dự án, số hợp đồng, ghi chú..." oninput="debounceSearch()">
-      </div>
-    </div>
-
-    <div class="filter-actions">
-      <button type="button" class="btn btn-outline btn-sm" id="btnToggleOverdue" onclick="toggleOverdueOnly()">
-        <span class="dot-overdue"></span>
-        <span>Chỉ Nợ Quá Hạn</span>
-      </button>
-
-      <button type="button" class="btn btn-outline btn-sm" onclick="resetFilters()">
+    <div class="legend-actions">
+      <button type="button" class="btn btn-outline btn-xs" onclick="resetFilters()" title="Đặt lại toàn bộ bộ lọc">
         <span>Đặt Lại</span>
       </button>
     </div>
