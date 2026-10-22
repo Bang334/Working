@@ -274,12 +274,23 @@ async def export_excel_endpoint(
 
 
 @router.post("/ai-extract")
-async def ai_extract_endpoint(payload: ProcurementAIParseRequest):
-    """Extract procurement orders from unstructured supplier quotation or text via Gemini AI."""
+async def ai_extract_endpoint(
+    raw_text: Optional[str] = Form(None),
+    model_name: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+):
+    """Extract procurement orders from unstructured supplier quotation, text and/or attached file via Gemini AI."""
     try:
+        file_bytes = await file.read() if file else None
+        filename = file.filename if file else None
+        content_type = file.content_type if file else None
+
         result = parse_procurement_ai(
-            raw_text=payload.raw_text,
-            preferred_model=payload.model_name,
+            raw_text=raw_text,
+            preferred_model=model_name,
+            file_bytes=file_bytes,
+            filename=filename,
+            content_type=content_type,
         )
         return result
     except Exception as e:
@@ -287,6 +298,7 @@ async def ai_extract_endpoint(payload: ProcurementAIParseRequest):
             status_code=500,
             content={"status": "error", "message": f"Lỗi AI trích xuất: {str(e)}"},
         )
+
 
 
 @router.post("/bulk-save")

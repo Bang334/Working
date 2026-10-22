@@ -233,3 +233,179 @@ Hãy phân tích và trả về đúng định dạng JSON như đã hướng d�
     # Fallback to rule-based engine
     logger.info("Falling back to rule-based AI Receivables digest.")
     return _generate_rule_based_digest(stats, items)
+
+
+RECEIVABLES_INTAKE_SYSTEM_PROMPT = """Bạn là chuyên gia Quản lý Tài chính Dự án & Thu hồi Công nợ (Credit Control & AR Specialist) cho CÔNG TY TNHH TOÀN CẦU HONG MING (宏明環球有限公司).
+Hong Ming là doanh nghiệp cung cấp giải pháp IoT nhà máy (SMB IoT), tiết kiệm năng lượng (EMS), hệ thống RFID và máy chủ CNTT.
+
+NHIỆM VỤ:
+Phân tích văn bản hoặc tập tin đính kèm (Biên bản nghiệm thu, Hóa đơn VAT, Email/Zalo nhắc nợ, Đơn đặt hàng PO của khách, Bảng kê thanh toán đợt) và trích xuất thành danh sách các đợt/mốc công nợ phải thu (Receivables Milestones).
+
+LƯU Ý CỰC KỲ QUAN TRỌNG VỀ HỢP ĐỒNG:
+- Nhiều khoản công nợ phát sinh thực tế KHÔNG LIÊN QUAN ĐẾN HỢP ĐỒNG NÀO (ví dụ: mua lẻ thiết bị phụ tùng, chi phí sửa chữa thay thế linh kiện, dịch vụ bảo trì đột xuất, tạm ứng dịch vụ).
+- Nếu văn bản/tập tin KHÔNG đề cập đến số hợp đồng, hãy để contract_code = null. TUYỆT ĐỐI KHÔNG TỰ BỊA RA SỐ HỢP ĐỒNG.
+- Ô contract_code hoàn toàn có thể trống.
+
+QUY TẮC BÓC TÁCH CÁC TRƯỜNG:
+1. project_name: Tên dự án và tên đợt thanh toán (Ví dụ: 'Đợt 1 (30%) - Mạng IIoT Seiyo', 'Sửa chữa máy dập CX Tech', 'Cung cấp linh kiện lẻ máy in RFID Vonmax'...).
+2. customer_name: Tên đầy đủ của công ty khách hàng.
+3. contract_code: Số hợp đồng nếu có (Ví dụ: HD-20261013-001, HMV...). Nếu không có thì để null.
+4. total_contract_amount: Tổng giá trị hợp đồng nếu có, nếu không có thì để bằng 0 hoặc bằng net_amount.
+5. net_amount: Số tiền đợt thanh toán chưa VAT (VNĐ).
+6. vat_rate: Tỷ lệ thuế VAT (ví dụ: 0.0 nếu không VAT, 0.08 nếu 8%, 0.10 nếu 10%). Mặc định 0.0 nếu không nêu rõ.
+7. vat_amount: Tiền thuế VAT (VNĐ). Nếu vat_rate > 0 và không có số tiền thuế cụ thể thì tính net_amount * vat_rate.
+8. gross_amount: Tổng tiền thanh toán gồm VAT (net_amount + vat_amount).
+9. received_amount: Số tiền khách đã thanh toán trước (nếu có, không có thì 0).
+10. customer_promised_date: Ngày khách hàng cam kết / hẹn thanh toán (YYYY-MM-DD, nếu không có để null).
+11. due_date: Hạn thanh toán theo thỏa thuận hoặc hợp đồng (YYYY-MM-DD, nếu không có để null).
+12. paid_date: Ngày khách đã chuyển tiền thực tế nếu có (YYYY-MM-DD, nếu chưa trả để null).
+13. doc_status: Trạng thái hóa đơn / chứng từ (Ví dụ: 'HD-202610-01', 'Đã xuất HĐ', 'Chờ nghiệm thu', 'Chưa xuất'...).
+14. collection_status: 'PAID' (đã thu), 'PENDING' (chờ thu), 'URGENT' (sắp đến hạn <= 7 ngày), 'DELAYED' (quá hạn).
+15. notes: Ghi chú điều khoản thanh toán, tiến độ trao đổi hoặc lý do phát sinh.
+
+ĐỊNH DẠNG JSON TRẢ VỀ BẮT BUỘC:
+{
+  "summary": "Tóm tắt ngắn gọn danh sách công nợ trích xuất được",
+  "items": [
+    {
+      "project_name": "Đợt 1 (30%) - Mạng IIoT Seiyo",
+      "customer_name": "CÔNG TY TNHH SEIYO VIỆT NAM",
+      "contract_code": null,
+      "total_contract_amount": 0,
+      "net_amount": 213606000,
+      "vat_rate": 0.0,
+      "vat_amount": 0,
+      "gross_amount": 213606000,
+      "received_amount": 0,
+      "customer_promised_date": "2026-11-05",
+      "due_date": "2026-10-27",
+      "paid_date": null,
+      "doc_status": "Chưa xuất",
+      "collection_status": "PENDING",
+      "notes": "Khách hẹn chuyển khoản vào đầu tháng sau"
+    }
+  ]
+}
+"""
+
+
+def parse_receivables_ai(
+    raw_text: Optional[str] = None,
+    preferred_model: Optional[str] = None,
+    file_bytes: Optional[bytes] = None,
+    filename: Optional[str] = None,
+    content_type: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Extract receivable milestones from text and/or uploaded file via Gemini AI."""
+    from app.utils.ai_file_helper import process_uploaded_file_for_ai
+
+    extracted_file_text, inline_part = None, None
+    if file_bytes and filename:
+        extracted_file_text, inline_part = process_uploaded_file_for_ai(file_bytes, filename, content_type)
+
+    has_text = bool(raw_text and raw_text.strip())
+    has_file = bool(extracted_file_text or inline_part)
+
+    if not has_text and not has_file:
+        return {
+            "status": "error",
+            "message": "Vui lòng nhập văn bản hoặc đính kèm tập tin hóa đơn / biên bản nghiệm thu.",
+            "data": None
+        }
+
+    parts = [{"text": RECEIVABLES_INTAKE_SYSTEM_PROMPT}]
+    if has_text:
+        parts.append({"text": f"DƯỚI ĐÂY LÀ VĂN BẢN / GHI CHÚ:\n\n{raw_text.strip()}"})
+    if extracted_file_text:
+        parts.append({"text": f"DƯỚI ĐÂY LÀ NỘI DUNG TỪ TẬP TIN ({filename}):\n\n{extracted_file_text}"})
+    if inline_part:
+        parts.append(inline_part)
+
+    keys = DEFAULT_GEMINI_KEYS if DEFAULT_GEMINI_KEYS else [DEFAULT_GEMINI_KEY]
+    models = [preferred_model] if preferred_model else CANDIDATE_MODELS
+    models = [m for m in models if m]
+
+    last_error = ""
+    payload = {
+        "contents": [{"parts": parts}],
+        "generationConfig": {
+            "temperature": 0.1,
+            "responseMimeType": "application/json"
+        }
+    }
+
+    for key in keys:
+        if not key or key == "your_gemini_api_key_here":
+            continue
+        for model in models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+            try:
+                data_bytes = json.dumps(payload).encode("utf-8")
+                req = urllib.request.Request(
+                    url,
+                    data=data_bytes,
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+
+                candidates = resp_data.get("candidates", [])
+                if not candidates:
+                    continue
+
+                content_parts = candidates[0].get("content", {}).get("parts", [])
+                if not content_parts:
+                    continue
+
+                raw_json = content_parts[0].get("text", "")
+                cleaned_json = _clean_json_response(raw_json)
+                parsed_data = json.loads(cleaned_json)
+
+                items = parsed_data.get("items", [])
+                if not items and "project_name" in parsed_data:
+                    items = [parsed_data]
+
+                processed_items = []
+                for it in items:
+                    net = float(it.get("net_amount") or 0.0)
+                    vat_r = float(it.get("vat_rate") or 0.0)
+                    vat_a = float(it.get("vat_amount") or round(net * vat_r, 2))
+                    gross = float(it.get("gross_amount") or round(net + vat_a, 2))
+                    rec = float(it.get("received_amount") or 0.0)
+                    processed_items.append({
+                        "project_name": it.get("project_name") or "Đợt thanh toán",
+                        "customer_name": it.get("customer_name") or "Khách hàng",
+                        "contract_code": it.get("contract_code") or None,  # Cho phép NULL nếu không có HĐ
+                        "total_contract_amount": float(it.get("total_contract_amount") or 0.0),
+                        "net_amount": net,
+                        "vat_rate": vat_r,
+                        "vat_amount": vat_a,
+                        "gross_amount": gross,
+                        "received_amount": rec,
+                        "remaining_debt": max(0.0, gross - rec),
+                        "customer_promised_date": it.get("customer_promised_date") or None,
+                        "due_date": it.get("due_date") or None,
+                        "paid_date": it.get("paid_date") or None,
+                        "doc_status": it.get("doc_status") or "Chưa xuất",
+                        "collection_status": it.get("collection_status") or "PENDING",
+                        "notes": it.get("notes") or "",
+                    })
+
+                return {
+                    "status": "success",
+                    "model_used": model,
+                    "summary": parsed_data.get("summary") or "Đã trích xuất danh sách công nợ",
+                    "items": processed_items
+                }
+            except Exception as e:
+                last_error = str(e)
+                logger.warning(f"Gemini API parse_receivables_ai failed with model {model}: {e}")
+                continue
+
+    return {
+        "status": "error",
+        "message": f"Không thể trích xuất công nợ qua Gemini AI: {last_error}",
+        "data": None
+    }
+

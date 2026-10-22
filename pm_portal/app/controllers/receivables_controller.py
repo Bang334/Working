@@ -14,7 +14,7 @@ from app.models.receivables_models import (
     ReceivableQuickStatusUpdate,
     ReceivableUpdateRequest,
 )
-from app.services.receivables_ai_service import get_ai_receivables_digest
+from app.services.receivables_ai_service import get_ai_receivables_digest, parse_receivables_ai
 from app.services.receivables_excel_service import export_receivables_excel
 from app.services.receivables_service import (
     create_receivable,
@@ -264,3 +264,56 @@ async def delete_receivable_endpoint(item_id: int):
     if not success:
         raise HTTPException(status_code=404, detail="Không tìm thấy mốc công nợ để xóa.")
     return {"status": "success", "message": "Đã xóa mốc công nợ thành công."}
+
+
+@router.post("/ai-extract")
+async def ai_extract_receivables_endpoint(
+    raw_text: Optional[str] = Form(None),
+    model_name: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+):
+    """Extract receivable milestones from unstructured text and/or attached file via Gemini AI."""
+    try:
+        file_bytes = await file.read() if file else None
+        filename = file.filename if file else None
+        content_type = file.content_type if file else None
+
+        result = parse_receivables_ai(
+            raw_text=raw_text,
+            preferred_model=model_name,
+            file_bytes=file_bytes,
+            filename=filename,
+            content_type=content_type,
+        )
+        return result
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": f"Lỗi AI trích xuất công nợ: {str(e)}"})
+
+
+@router.post("/bulk-save")
+async def bulk_save_receivables_endpoint(payload: Dict[str, Any]):
+    """Bulk save AI extracted receivable milestones into database."""
+    try:
+        items = payload.get("items", [])
+        if not items:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "Không có danh sách mốc công nợ để lưu."})
+
+        saved_ids = []
+        for it in items:
+            # Note: contract_code is completely OPTIONAL (can be None/empty for standalone receivables)
+            c_code = it.get("contract_code")
+            if c_code and str(c_code).strip() in ["", "-", "null", "None"]:
+                it["contract_code"] = None
+            nid = create_receivable(it)
+            saved_ids.append(nid)
+
+        stats = get_receivables_stats()
+        return {
+            "status": "success",
+            "message": f"Đã lưu thành công {len(saved_ids)} đợt công nợ vào hệ thống.",
+            "saved_count": len(saved_ids),
+            "stats": stats,
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": f"Lỗi lưu danh mục công nợ: {str(e)}"})
+

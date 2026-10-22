@@ -9,8 +9,10 @@ import urllib.request
 from typing import Any, Dict, List, Optional
 
 from app.config import CANDIDATE_MODELS, DEFAULT_GEMINI_KEY, DEFAULT_GEMINI_KEYS, DEFAULT_MODEL
+from app.utils.ai_file_helper import process_uploaded_file_for_ai
 
 logger = logging.getLogger(__name__)
+
 
 PROCUREMENT_SYSTEM_PROMPT = """Bạn là chuyên gia Quản lý Mua hàng & Cung ứng thiết bị (Procurement / PO Specialist) cho CÔNG TY TNHH TOÀN CẦU HONG MING (宏明環球有限公司).
 Hong Ming là nhà tích hợp hệ thống IoT công nghiệp (SMB IoT), tiết kiệm năng lượng (EMS), hệ thống RFID và máy chủ CNTT.
@@ -80,16 +82,34 @@ def _clean_json_response(raw_text: str) -> str:
 
 
 def parse_procurement_ai(
-    raw_text: str,
-    preferred_model: Optional[str] = None
+    raw_text: Optional[str] = None,
+    preferred_model: Optional[str] = None,
+    file_bytes: Optional[bytes] = None,
+    filename: Optional[str] = None,
+    content_type: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Call Gemini API with model fallback to extract procurement details."""
-    if not raw_text or not raw_text.strip():
+    """Call Gemini API with model fallback to extract procurement details from text and/or attached file."""
+    extracted_file_text, inline_part = None, None
+    if file_bytes and filename:
+        extracted_file_text, inline_part = process_uploaded_file_for_ai(file_bytes, filename, content_type)
+
+    has_text = bool(raw_text and raw_text.strip())
+    has_file = bool(extracted_file_text or inline_part)
+
+    if not has_text and not has_file:
         return {
             "status": "error",
-            "message": "Nội dung văn bản trống, vui lòng dán báo giá hoặc thông tin đơn hàng.",
+            "message": "Vui lòng nhập văn bản hoặc đính kèm tập tin báo giá / đơn hàng.",
             "data": None
         }
+
+    parts = [{"text": PROCUREMENT_SYSTEM_PROMPT}]
+    if has_text:
+        parts.append({"text": f"DƯỚI ĐÂY LÀ VĂN BẢN / GHI CHÚ:\n\n{raw_text.strip()}"})
+    if extracted_file_text:
+        parts.append({"text": f"DƯỚI ĐÂY LÀ NỘI DUNG TỪ TẬP TIN ({filename}):\n\n{extracted_file_text}"})
+    if inline_part:
+        parts.append(inline_part)
 
     keys = DEFAULT_GEMINI_KEYS if DEFAULT_GEMINI_KEYS else [DEFAULT_GEMINI_KEY]
     models = [preferred_model] if preferred_model else CANDIDATE_MODELS
@@ -101,10 +121,7 @@ def parse_procurement_ai(
     payload = {
         "contents": [
             {
-                "parts": [
-                    {"text": PROCUREMENT_SYSTEM_PROMPT},
-                    {"text": f"DƯỚI ĐÂY LÀ VĂN BẢN CẦN TRÍCH XUẤT:\n\n{raw_text}"}
-                ]
+                "parts": parts
             }
         ],
         "generationConfig": {

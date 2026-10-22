@@ -208,6 +208,10 @@
           <svg class="icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           <span>+ Thêm Đợt Mới</span>
         </button>
+        <button type="button" class="btn btn-ai btn-xs" onclick="openAiExtractReceivableModal()" title="AI Tự Động Bóc Tách Công Nợ từ Text hoặc File đính kèm (Ảnh/PDF/Word/Excel)">
+          <svg class="icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+          <span>✨ AI Bóc Tách Công Nợ</span>
+        </button>
         <button type="button" class="btn btn-outline btn-xs" onclick="scrollTableHorizontally('left')" title="Cuộn bảng sang trái">
           <span>◀ Cuộn Trái</span>
         </button>
@@ -284,8 +288,8 @@
             <input type="text" id="editProjectName" class="form-control form-control-sm" required>
           </div>
           <div class="col-md-4">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số HĐ / PO (合約編號)</label>
-            <input type="text" id="editContractCode" class="form-control form-control-sm" style="font-family: monospace;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số HĐ / PO (合約編號 - Để trống nếu không có HĐ)</label>
+            <input type="text" id="editContractCode" class="form-control form-control-sm" placeholder="Không bắt buộc..." style="font-family: monospace;">
           </div>
 
           <div class="col-md-12">
@@ -390,8 +394,8 @@
             <input type="text" id="createProjectName" class="form-control form-control-sm" placeholder="Ví dụ: Đợt 4 (10%) - Bàn giao hoàn tất" required>
           </div>
           <div class="col-md-4">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số HĐ / PO (合約編號)</label>
-            <input type="text" id="createContractCode" class="form-control form-control-sm" placeholder="HD-..." style="font-family: monospace;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số HĐ / PO (合約編號 - Để trống nếu không có HĐ)</label>
+            <input type="text" id="createContractCode" class="form-control form-control-sm" placeholder="Không bắt buộc, có thể để trống..." style="font-family: monospace;">
           </div>
 
           <div class="col-md-12">
@@ -467,6 +471,119 @@
           <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           <span>Tạo Đợt Thanh Toán (建立)</span>
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 3: AI Bóc Tách Công Nợ Dự Án (Multimodal Text & File Extraction) -->
+<div class="modal fade" id="modalAiExtractReceivable" tabindex="-1" aria-labelledby="modalAiExtractReceivableLabel" aria-hidden="true" style="display: none; background: rgba(15, 23, 42, 0.65); z-index: 1000000;">
+  <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1050px;">
+    <div class="modal-content" style="border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);">
+      <div class="modal-header" style="background: linear-gradient(135deg, #7C3AED 0%, #6366F1 100%); color: #FFFFFF; padding: 0.9rem 1.25rem;">
+        <h5 class="modal-title" id="modalAiExtractReceivableLabel" style="font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          <svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+          <span>AI Tự Động Bóc Tách Công Nợ Dự Án · 應收帳款智慧擷取</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" onclick="closeAiExtractReceivableModal()" aria-label="Close" style="filter: brightness(0) invert(1); opacity: 0.85;"></button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem; background: #F8FAFC; max-height: 80vh; overflow-y: auto;">
+        <!-- Header Controls: Mô tả + Chọn Model -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+          <label for="aiReceivableInput" style="font-size: 0.85rem; font-weight: 700; color: #1E293B;">
+            Dán nội dung bảng kê công nợ, email đôn đốc nợ, biên bản bàn giao, hóa đơn hoặc tin nhắn:
+          </label>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.78rem; font-weight: 600; color: #64748B;">Mô hình AI:</span>
+            <select id="aiReceivableModelSelect" class="form-select form-select-sm" style="width: auto; font-size: 0.78rem; font-weight: 600; border-color: #CBD5E1;">
+              {% for model in models %}
+              <option value="{{ model }}" {% if model == default_model %}selected{% endif %}>{{ model }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Textarea nhập nội dung thô -->
+        <textarea id="aiReceivableInput" class="form-control" rows="4" style="font-size: 0.85rem;" placeholder="Ví dụ: Báo cáo công nợ dự án Vonmax tháng 10:
+1. Đợt 2 (40%) - Sau khi nghiệm thu chạy thử thiết bị IoT. Số tiền chưa VAT: 156.000.000 đ. Thuế VAT 8%: 12.480.000 đ. Tổng: 168.480.000 đ. Khách hẹn thanh toán ngày 30/10/2026.
+2. Thay thế 2 cảm biến nhiệt độ phát sinh ngoài hợp đồng cho máy dập số 3: Giá chưa thuế 18.500.000 đ, thuế 8%, chưa xuất hóa đơn, chờ thanh toán... (Khoản này độc lập, không có số HĐ)."></textarea>
+
+        <!-- Đính kèm tập tin đa phương thức (Ảnh/PDF/Word/Excel) -->
+        <div class="ai-file-attachment-box" style="margin-top: 0.85rem; padding: 0.85rem 1rem; border: 1.5px dashed #A5B4FC; border-radius: 8px; background: #EEF2FF;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <svg class="icon" viewBox="0 0 24 24" width="18" height="18" style="color: #6366F1;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              <div>
+                <span style="font-size: 0.84rem; font-weight: 700; color: #3730A3;">Đính kèm tập tin (Ảnh chụp bảng nợ/hóa đơn, Excel, Word, PDF):</span>
+                <div style="font-size: 0.75rem; color: #6366F1;">Hỗ trợ: .xlsx, .xls, .docx, .pdf, .png, .jpg, .webp (Có thể vừa gửi Text vừa gửi File)</div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('aiReceivableFileInput').click()" style="background: #6366F1; border-color: #4F46E5;">
+              <span>📎 Chọn Tập Tin...</span>
+            </button>
+            <input type="file" id="aiReceivableFileInput" accept=".xlsx,.xls,.docx,.pdf,.png,.jpg,.jpeg,.webp" style="display: none;" onchange="handleAiReceivableFileSelect(this)">
+          </div>
+
+          <!-- Thông tin file đã chọn -->
+          <div id="aiReceivableSelectedFileInfo" style="display: none; margin-top: 0.65rem; align-items: center; justify-content: space-between; background: #FFFFFF; padding: 0.5rem 0.85rem; border-radius: 6px; border: 1px solid #C7D2FE;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <svg class="icon" viewBox="0 0 24 24" width="16" height="16" style="color: #059669;"><polyline points="20 6 9 17 4 12"/></svg>
+              <span id="aiReceivableSelectedFileName" style="font-size: 0.83rem; font-weight: 600; color: #1E293B;"></span>
+            </div>
+            <button type="button" class="btn btn-outline-danger btn-xs" onclick="clearAiReceivableFile()" title="Hủy tập tin này" style="padding: 2px 8px;">✕ Hủy File</button>
+          </div>
+        </div>
+
+        <!-- Nút kích hoạt AI Bóc tách -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 0.85rem;">
+          <button type="button" class="btn btn-ai" id="btnExecuteAiReceivableExtract" onclick="executeAiReceivableExtract()" style="padding: 0.45rem 1.25rem;">
+            <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+            <span id="btnExecuteAiReceivableExtractText">Tiến Hành Phân Tích & Bóc Tách Công Nợ</span>
+          </button>
+        </div>
+
+        <!-- Khối kết quả trích xuất được từ AI -->
+        <div id="aiReceivableResults" style="display: none; margin-top: 1.25rem; border-top: 1.5px dashed #CBD5E1; padding-top: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <strong style="color: #0F172A; font-size: 0.95rem;">Danh Sách Mốc Công Nợ AI Trích Xuất:</strong>
+              <div id="aiReceivableSummaryText" style="font-size: 0.78rem; color: #64748B; margin-top: 2px;"></div>
+            </div>
+            <button type="button" class="btn btn-success btn-sm" onclick="saveAiExtractedReceivables()" id="btnSaveAiReceivables">
+              <svg class="icon" viewBox="0 0 24 24" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Lưu Tất Cả Vào Hệ Thống</span>
+            </button>
+          </div>
+
+          <div style="overflow-x: auto; border: 1px solid #E2E8F0; border-radius: 8px; max-height: 320px; background: #FFFFFF;">
+            <table class="table table-bordered table-sm mb-0" style="font-size: 0.8rem;">
+              <thead style="background: #F1F5F9; color: #334155; position: sticky; top: 0; z-index: 5;">
+                <tr>
+                  <th style="width: 40px; text-align: center;">STT</th>
+                  <th>Tên Đợt / Dự Án</th>
+                  <th>Khách Hàng</th>
+                  <th style="width: 110px; text-align: center;">Hợp Đồng</th>
+                  <th style="width: 120px; text-align: right;">Tiền Chưa VAT</th>
+                  <th style="width: 70px; text-align: center;">Thuế</th>
+                  <th style="width: 125px; text-align: right;">Tổng Gồm VAT</th>
+                  <th style="width: 100px; text-align: right;">Đã Nhận</th>
+                  <th style="width: 100px; text-align: right;">Còn Lại</th>
+                  <th style="width: 95px; text-align: center;">Hạn TT</th>
+                  <th style="width: 90px; text-align: center;">Trạng Thái</th>
+                  <th style="width: 50px; text-align: center;">Xóa</th>
+                </tr>
+              </thead>
+              <tbody id="aiReceivablePreviewTableBody">
+                <!-- AI dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 0.75rem 1.25rem; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeAiExtractReceivableModal()">Đóng</button>
       </div>
     </div>
   </div>

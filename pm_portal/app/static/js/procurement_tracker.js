@@ -738,23 +738,48 @@
     if (resultsContainer) resultsContainer.style.display = "none";
   };
 
+  // File attachment handler for AI PO extraction
+  window.handleAiPoFileSelect = function (input) {
+    const info = document.getElementById("aiPoSelectedFileInfo");
+    const nameEl = document.getElementById("aiPoSelectedFileName");
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (nameEl) nameEl.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+      if (info) info.style.display = "flex";
+    }
+  };
+
+  window.clearAiPoFile = function () {
+    const input = document.getElementById("aiPoFileInput");
+    const info = document.getElementById("aiPoSelectedFileInfo");
+    if (input) input.value = "";
+    if (info) info.style.display = "none";
+  };
+
   window.executeAiExtract = async function () {
     const textarea = document.getElementById("aiExtractInput");
     const rawText = textarea ? textarea.value.trim() : "";
-    if (!rawText) {
-      showToast("Vui lòng dán văn bản báo giá hoặc nội dung đơn hàng từ nhà cung cấp.", "warning");
+    const fileInput = document.getElementById("aiPoFileInput");
+    const hasFile = fileInput && fileInput.files && fileInput.files[0];
+
+    if (!rawText && !hasFile) {
+      showToast("Vui lòng dán văn bản hoặc đính kèm tập tin báo giá (Ảnh, Excel, Word, PDF).", "warning");
       return;
     }
 
     const modelSelect = document.getElementById("aiModelSelect");
     const modelName = modelSelect ? modelSelect.value : null;
 
+    const formData = new FormData();
+    if (rawText) formData.append("raw_text", rawText);
+    if (modelName) formData.append("model_name", modelName);
+    if (hasFile) formData.append("file", fileInput.files[0]);
+
     try {
-      showLoading(true, "Gemini AI đang bóc tách thiết bị, số lượng và điều khoản...");
+      showLoading(true, "Gemini AI đang bóc tách thiết bị, số lượng và điều khoản từ văn bản / tập tin...");
       const res = await fetch("/api/v1/procurement/ai-extract", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ raw_text: rawText, model_name: modelName }),
+        body: formData,
       });
 
       const data = await res.json();

@@ -428,7 +428,8 @@ def sync_from_existing_contracts(clear_first: bool = False) -> int:
     cursor = conn.cursor()
 
     if clear_first:
-        cursor.execute("DELETE FROM project_receivables")
+        # Chỉ xóa các mốc đồng bộ từ hợp đồng, bảo toàn 100% các công nợ độc lập không liên kết hợp đồng
+        cursor.execute("DELETE FROM project_receivables WHERE linked_milestone_id IS NOT NULL")
         conn.commit()
 
     cursor.execute("""

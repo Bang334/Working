@@ -191,7 +191,9 @@ function renderTable(items) {
     const stt = it.order_no || (idx + 1);
     const projName = it.project_name || "-";
     const custName = it.customer_name || "-";
-    const contractCode = it.contract_code || "-";
+    const contractCode = (it.contract_code && it.contract_code !== "-" && it.contract_code !== "None")
+      ? `<span class="badge-pill blue" style="font-size: 0.75rem; font-family: monospace;">${it.contract_code}</span>`
+      : `<span style="color: #94A3B8; font-style: italic; font-size: 0.8rem;">(Không HĐ)</span>`;
 
     // Due Date and Left Days Badge
     let dueBadge = "";
@@ -1031,4 +1033,238 @@ async function saveCreateReceivableModal() {
     showToast("Lỗi máy chủ khi tạo mới đợt công nợ.", "error");
   }
 }
+
+/* ========================================================
+ * AI BÓC TÁCH CÔNG NỢ ĐA PHƯƠNG THỨC (TEXT & TẬP TIN)
+ * ======================================================== */
+let aiReceivableSelectedFile = null;
+let currentExtractedReceivables = [];
+
+// Mở modal AI Bóc Tách Công Nợ
+function openAiExtractReceivableModal() {
+  const modal = document.getElementById("modalAiExtractReceivable");
+  if (!modal) return;
+  modal.style.display = "block";
+  modal.classList.add("show");
+  document.body.classList.add("modal-open");
+
+  // Reset form nếu chưa có kết quả
+  if (currentExtractedReceivables.length === 0) {
+    const input = document.getElementById("aiReceivableInput");
+    if (input) input.value = "";
+    clearAiReceivableFile();
+    const resultsDiv = document.getElementById("aiReceivableResults");
+    if (resultsDiv) resultsDiv.style.display = "none";
+  }
+}
+
+// Đóng modal AI Bóc Tách Công Nợ
+function closeAiExtractReceivableModal() {
+  const modal = document.getElementById("modalAiExtractReceivable");
+  if (!modal) return;
+  modal.style.display = "none";
+  modal.classList.remove("show");
+  document.body.classList.remove("modal-open");
+}
+
+// Xử lý khi người dùng chọn file đính kèm
+function handleAiReceivableFileSelect(input) {
+  if (input && input.files && input.files[0]) {
+    aiReceivableSelectedFile = input.files[0];
+    const nameEl = document.getElementById("aiReceivableSelectedFileName");
+    const infoEl = document.getElementById("aiReceivableSelectedFileInfo");
+    if (nameEl) {
+      const sizeKB = Math.round(aiReceivableSelectedFile.size / 1024);
+      nameEl.textContent = `${aiReceivableSelectedFile.name} (${sizeKB} KB)`;
+    }
+    if (infoEl) infoEl.style.display = "flex";
+  }
+}
+
+// Hủy file đính kèm
+function clearAiReceivableFile() {
+  aiReceivableSelectedFile = null;
+  const fileInput = document.getElementById("aiReceivableFileInput");
+  if (fileInput) fileInput.value = "";
+  const infoEl = document.getElementById("aiReceivableSelectedFileInfo");
+  if (infoEl) infoEl.style.display = "none";
+}
+
+// Thực hiện gọi API AI phân tích và bóc tách
+async function executeAiReceivableExtract() {
+  const textInput = document.getElementById("aiReceivableInput");
+  const rawText = textInput ? textInput.value.trim() : "";
+  const modelSelect = document.getElementById("aiReceivableModelSelect");
+  const modelName = modelSelect ? modelSelect.value : "";
+
+  if (!rawText && !aiReceivableSelectedFile) {
+    showToast("Vui lòng dán văn bản hoặc đính kèm tập tin (ảnh/PDF/Excel/Word).", "error");
+    return;
+  }
+
+  const btn = document.getElementById("btnExecuteAiReceivableExtract");
+  const btnText = document.getElementById("btnExecuteAiReceivableExtractText");
+  const originalText = btnText ? btnText.textContent : "Tiến Hành Phân Tích & Bóc Tách Công Nợ";
+
+  if (btn) btn.disabled = true;
+  if (btnText) btnText.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang phân tích bằng Gemini AI...`;
+
+  try {
+    const formData = new FormData();
+    formData.append("raw_text", rawText);
+    formData.append("model_name", modelName);
+    if (aiReceivableSelectedFile) {
+      formData.append("file", aiReceivableSelectedFile);
+    }
+
+    const res = await fetch("/api/v1/receivables/ai-extract", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    if (data.status === "success") {
+      const items = data.items || [];
+      if (items.length === 0) {
+        showToast("AI không tìm thấy mốc công nợ nào trong dữ liệu cung cấp.", "error");
+      } else {
+        currentExtractedReceivables = items;
+        renderAiReceivablePreview(items);
+        const resultsDiv = document.getElementById("aiReceivableResults");
+        if (resultsDiv) resultsDiv.style.display = "block";
+        showToast(`AI đã trích xuất thành công ${items.length} mốc công nợ!`, "success");
+      }
+    } else {
+      showToast(data.message || "Lỗi khi trích xuất dữ liệu bằng AI.", "error");
+    }
+  } catch (err) {
+    console.error("AI Receivable Extract Error:", err);
+    showToast("Lỗi kết nối tới máy chủ AI.", "error");
+  } finally {
+    if (btn) btn.disabled = false;
+    if (btnText) btnText.textContent = originalText;
+  }
+}
+
+// Render bảng xem trước các mốc công nợ AI trích xuất
+function renderAiReceivablePreview(items) {
+  const tbody = document.getElementById("aiReceivablePreviewTableBody");
+  const summaryEl = document.getElementById("aiReceivableSummaryText");
+  const btnSave = document.getElementById("btnSaveAiReceivables");
+
+  if (summaryEl) {
+    summaryEl.textContent = `Đã nhận diện ${items.length} mốc thanh toán. Quý khách vui lòng kiểm tra lại trước khi lưu vào hệ thống.`;
+  }
+  if (btnSave) {
+    btnSave.innerHTML = `
+      <svg class="icon" viewBox="0 0 24 24" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>Lưu Tất Cả Vào Hệ Thống (${items.length} đợt)</span>
+    `;
+    btnSave.disabled = items.length === 0;
+  }
+
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  if (items.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" class="text-center py-4 text-muted">Không còn mốc công nợ nào để lưu.</td></tr>`;
+    return;
+  }
+
+  items.forEach((it, idx) => {
+    const net = it.net_amount || 0;
+    const vatRate = it.vat_rate !== null && it.vat_rate !== undefined ? Number(it.vat_rate) : 0;
+    const vatPct = vatRate > 0 ? `${Math.round(vatRate * 100)}%` : "0%";
+    const vatAmount = it.vat_amount || Math.round(net * vatRate);
+    const gross = it.gross_amount || (net + vatAmount);
+    const received = it.received_amount || 0;
+    const remaining = it.remaining_debt || Math.max(0, gross - received);
+
+    // Xử lý hiển thị Hợp đồng: có thể trống
+    const contractHtml = (it.contract_code && it.contract_code !== "-" && it.contract_code !== "None")
+      ? `<span class="badge-pill blue" style="font-size: 0.75rem; font-family: monospace;">${it.contract_code}</span>`
+      : `<span style="color: #94A3B8; font-style: italic; font-size: 0.75rem;">(Không HĐ)</span>`;
+
+    let statusBadge = `<span class="badge-pill blue" style="font-size:0.75rem;">Chờ thu</span>`;
+    if (it.collection_status === "PAID") {
+      statusBadge = `<span class="badge-pill green" style="font-size:0.75rem;">Đã thu</span>`;
+    } else if (it.collection_status === "URGENT") {
+      statusBadge = `<span class="badge-pill amber" style="font-size:0.75rem;">Sắp đến hạn</span>`;
+    } else if (it.collection_status === "DELAYED") {
+      statusBadge = `<span class="badge-pill red" style="font-size:0.75rem;">Quá hạn</span>`;
+    }
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="text-center">${idx + 1}</td>
+      <td style="font-weight: 600; color: #1E293B;">
+        ${it.project_name || "-"}
+        ${it.notes ? `<div style="font-size: 0.72rem; color: #64748B; font-weight: normal; margin-top: 2px;">${it.notes}</div>` : ""}
+      </td>
+      <td style="font-weight: 500;">${it.customer_name || "-"}</td>
+      <td class="text-center">${contractHtml}</td>
+      <td class="text-end" style="font-weight: 600;">${formatVND(net)}</td>
+      <td class="text-center" style="color: #64748B;">${vatPct}</td>
+      <td class="text-end" style="font-weight: 700; color: #1F4E79;">${formatVND(gross)}</td>
+      <td class="text-end" style="color: #059669; font-weight: 600;">${formatVND(received)}</td>
+      <td class="text-end" style="color: #DC2626; font-weight: 700;">${formatVND(remaining)}</td>
+      <td class="text-center" style="font-size: 0.75rem; color: #475569;">${it.due_date || it.customer_promised_date || "-"}</td>
+      <td class="text-center">${statusBadge}</td>
+      <td class="text-center">
+        <button type="button" class="btn btn-outline-danger btn-xs" onclick="removeAiReceivablePreviewItem(${idx})" title="Xóa mốc này" style="padding: 1px 5px; font-size: 0.75rem;">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Xóa 1 mốc công nợ khỏi bảng preview
+function removeAiReceivablePreviewItem(index) {
+  if (index >= 0 && index < currentExtractedReceivables.length) {
+    currentExtractedReceivables.splice(index, 1);
+    renderAiReceivablePreview(currentExtractedReceivables);
+  }
+}
+
+// Lưu tất cả mốc công nợ AI trích xuất vào hệ thống
+async function saveAiExtractedReceivables() {
+  if (!currentExtractedReceivables || currentExtractedReceivables.length === 0) {
+    showToast("Không có mốc công nợ nào để lưu.", "error");
+    return;
+  }
+
+  const btnSave = document.getElementById("btnSaveAiReceivables");
+  const originalHtml = btnSave ? btnSave.innerHTML : "";
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang lưu vào cơ sở dữ liệu...`;
+  }
+
+  try {
+    const res = await fetch("/api/v1/receivables/bulk-save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: currentExtractedReceivables })
+    });
+
+    const data = await res.json();
+    if (data.status === "success") {
+      showToast(`Đã lưu thành công ${data.count || currentExtractedReceivables.length} mốc công nợ vào hệ thống!`, "success");
+      currentExtractedReceivables = [];
+      closeAiExtractReceivableModal();
+      loadReceivablesData();
+    } else {
+      showToast(data.message || "Lỗi lưu dữ liệu công nợ.", "error");
+    }
+  } catch (err) {
+    console.error("Save AI Receivables Error:", err);
+    showToast("Lỗi máy chủ khi lưu mốc công nợ.", "error");
+  } finally {
+    if (btnSave) {
+      btnSave.disabled = false;
+      btnSave.innerHTML = originalHtml;
+    }
+  }
+}
+
 
