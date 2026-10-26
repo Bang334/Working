@@ -128,5 +128,30 @@ def test_procurement_flow():
     print("==========================================")
 
 
+def test_procurement_chart():
+    from app.services.procurement_chart_service import get_procurement_chart_data
+
+    chart_data = get_procurement_chart_data()
+    assert chart_data["status"] == "success"
+    assert "kpi" in chart_data
+    assert "projects_readiness" in chart_data
+    assert "timeline_analysis" in chart_data
+    assert len(chart_data["projects_readiness"]) > 0
+
+    p0 = chart_data["projects_readiness"][0]
+    assert "project_name_vi" in p0
+    assert "readiness_pct" in p0
+    assert "segments" in p0
+    assert len(p0["segments"]) > 0
+
+    s0 = p0["segments"][0]
+    assert "item_name" in s0
+    assert "color_class" in s0
+    assert "supplier_name" in s0
+    print(f"    [OK] test_procurement_chart: {len(chart_data['projects_readiness'])} dự án, KPI: {chart_data['kpi']['overall_readiness_pct']}%")
+
+
 if __name__ == "__main__":
     test_procurement_flow()
+    test_procurement_chart()
+

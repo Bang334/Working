@@ -233,6 +233,28 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS receivables_weekly_snapshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        snapshot_date TEXT NOT NULL,
+        week_number INTEGER,
+        year INTEGER,
+        receivable_id INTEGER NOT NULL REFERENCES project_receivables(id) ON DELETE CASCADE,
+        project_name TEXT NOT NULL,
+        customer_name TEXT NOT NULL,
+        contract_code TEXT,
+        gross_amount REAL DEFAULT 0,
+        received_amount REAL DEFAULT 0,
+        remaining_debt REAL DEFAULT 0,
+        customer_promised_date TEXT,
+        due_date TEXT,
+        paid_date TEXT,
+        collection_status TEXT,
+        notes TEXT,
+        note TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+
     CREATE INDEX IF NOT EXISTS idx_contracts_code ON contracts(contract_code);
     CREATE INDEX IF NOT EXISTS idx_milestones_contract ON payment_milestones(contract_code);
     CREATE INDEX IF NOT EXISTS idx_documents_contract ON documents(contract_code);
@@ -248,6 +270,9 @@ def init_db():
     CREATE INDEX IF NOT EXISTS idx_procurement_project ON procurement_orders(project_name);
     CREATE INDEX IF NOT EXISTS idx_procurement_supplier ON procurement_orders(supplier_name);
     CREATE INDEX IF NOT EXISTS idx_procurement_delivery ON procurement_orders(delivery_status);
+    CREATE INDEX IF NOT EXISTS idx_snapshots_date ON receivables_weekly_snapshots(snapshot_date);
+    CREATE INDEX IF NOT EXISTS idx_snapshots_rec_id ON receivables_weekly_snapshots(receivable_id);
+
     """)
 
     # Backward-compatible migration for databases created before event-based

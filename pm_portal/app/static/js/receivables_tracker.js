@@ -1836,19 +1836,19 @@ function renderCoordinateChartSide(side, contracts) {
                    style="width: ${s.width_pct}%; cursor: pointer;"
                    data-seg-id="${s.id}"
                    data-contract-key="${cKey}"
-                   onclick="openSegmentBilingualModal(${s.id})"
-                   oncontextmenu="handleSegmentContextMenu(event, ${s.id}, '${side}')"
-                   onmouseenter="onSegmentHoverEnter(event, ${s.id}, '${side}')"
+                   onclick="handleSegmentClick(event, '${s.id}', '${side}')"
+                   oncontextmenu="handleSegmentContextMenu(event, '${s.id}', '${side}')"
+                   onmouseenter="onSegmentHoverEnter(event, '${s.id}', '${side}')"
                    onmousemove="onSegmentHoverMove(event)"
-                   onmouseleave="onSegmentHoverLeave(${s.id})"
-                   title="Nhấp chuột trái: Chi tiết · Chuột phải: Sửa đợt">
+                   onmouseleave="onSegmentHoverLeave('${s.id}')"
+                   title="Nhấp chuột trái: Xem chi tiết · Chuột phải: Sửa đợt">
               </div>`;
     }).join("");
 
     // CẢ 2 BIỂU ĐỒ ĐỀU CÓ coord-y-label ĐỂ TRỤC ĐỨNG 0% VÀ CÁC THANH HOÀN TOÀN THẲNG HÀNG
     const yLabelHtml = isCurr ? `
       <div class="coord-y-label"
-           onclick="openSegmentBilingualModal(${c.segments && c.segments.length > 0 ? c.segments[0].id : 0})"
+           onclick="handleProjectLabelClick(event, '${cKey}')"
            onmouseenter="onProjectNameHoverEnter(event, '${cKey}')"
            onmouseleave="onProjectNameHoverLeave()"
            style="cursor: pointer;"
@@ -1859,7 +1859,7 @@ function renderCoordinateChartSide(side, contracts) {
       </div>
     ` : `
       <div class="coord-y-label"
-           onclick="openSegmentBilingualModal(${c.segments && c.segments.length > 0 ? c.segments[0].id : 0})"
+           onclick="handleProjectLabelClick(event, '${cKey}')"
            onmouseenter="onProjectNameHoverEnter(event, '${cKey}')"
            onmouseleave="onProjectNameHoverLeave()"
            style="cursor: pointer;"
@@ -2013,8 +2013,10 @@ function onProjectNameHoverLeave() {
 }
 
 // ==============================================================================
-// MODAL CHI TIẾT SONG NGỮ KHI CLICK CHUỘT TRÁI (Executive Bilingual Segment Detail Modal)
+// FLOATING CHI TIẾT ĐỢT CÔNG NỢ & HOVER PREVIEW (Sleek White Bilingual Floating Card)
 // ==============================================================================
+
+let activeClickedSegId = null;
 
 function getStatusPillClass(status) {
   switch (status) {
@@ -2049,9 +2051,47 @@ function getStatusLabelVN(status) {
   }
 }
 
-// Click chuột trái vào khoản -> Mở Modal chi tiết song ngữ
-function openSegmentBilingualModal(segId) {
-  const info = segmentLookupMap[segId];
+// Click chuột trái vào khoản trên biểu đồ -> Ghim hiển thị Card chi tiết nền trắng
+function handleSegmentClick(event, segId, side) {
+  if (event) {
+    if (event.stopPropagation) event.stopPropagation();
+  }
+
+  const sIdStr = String(segId);
+  // Nếu nhấp lại chính khoản đang ghim -> Toggle đóng
+  if (activeClickedSegId === sIdStr) {
+    hideSegmentTooltip();
+    return;
+  }
+
+  // Đóng project hover card nếu đang mở
+  hideProjectHoverCard();
+
+  // Bỏ phát sáng active của khoản cũ
+  removeSegmentActiveHighlight();
+
+  // Đặt khoản active mới và thêm viền phát sáng xanh
+  activeClickedSegId = sIdStr;
+  document.querySelectorAll(`.coord-seg[data-seg-id="${segId}"]`).forEach(el => {
+    el.classList.add("seg-active-selected");
+  });
+
+  showSegmentDetailCard(event, segId, side);
+}
+
+// Chuột phải vào khoản trên biểu đồ -> Mở Modal Sửa Đợt Công Nợ
+function handleSegmentContextMenu(event, segId, side) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  hideSegmentTooltip();
+  openEditReceivableModal(segId);
+}
+
+// Hiển thị Card chi tiết đợt thanh toán khi CLICK (Nền trắng, viền xanh thanh lịch, tương phản cao)
+function showSegmentDetailCard(event, segId, side) {
+  const info = segmentLookupMap[segId] || segmentLookupMap[String(segId)];
   if (!info) {
     console.warn("Segment not found in lookup map:", segId);
     return;
@@ -2059,205 +2099,28 @@ function openSegmentBilingualModal(segId) {
 
   const s = info.segment;
   const c = info.contract;
-  const modal = document.getElementById("modalSegmentBilingualDetail");
-  const modalBody = document.getElementById("modalSegmentBilingualBody");
-  if (!modal || !modalBody) return;
-
-  hideSegmentTooltip();
-
-  const isPlanMode = currentCompMode === "curr_to_next";
-  const prevLabelText = isPlanMode ? "本週末狀態 (Cuối tuần này):" : "上週末狀態 (Cuối tuần trước):";
-  const currLabelText = isPlanMode ? "下週目標計劃 (Kế hoạch tuần tới):" : "本週末狀態 (Cuối tuần này):";
-
-  const prevPill = `<span class="badge-status-pill ${getStatusPillClass(s.prev_status)}">
-    <span>${s.prev_status_label_zh || getStatusLabelZH(s.prev_status)}</span>
-    <span style="opacity:0.85; font-size:0.7rem;">(${s.prev_status_label_vi || getStatusLabelVN(s.prev_status)})</span>
-  </span>`;
-
-  const currPill = `<span class="badge-status-pill ${getStatusPillClass(s.curr_status)}">
-    <span>${s.curr_status_label_zh || getStatusLabelZH(s.curr_status)}</span>
-    <span style="opacity:0.85; font-size:0.7rem;">(${s.curr_status_label_vi || getStatusLabelVN(s.curr_status)})</span>
-  </span>`;
-
-  const msVi = s.milestone_name_vi || (s.milestone_name || "").split("\n")[0];
-  const msZh = s.milestone_name_zh || (s.milestone_name || "").split("\n")[1] || "";
-  const docVi = s.doc_status_vi || (s.doc_status || "-").split("\n")[0];
-  const docZh = s.doc_status_zh || (s.doc_status || "-").split("\n")[1] || "";
-  const notesVi = s.notes_vi || (s.notes || "-").split("\n")[0];
-  const notesZh = s.notes_zh || (s.notes || "-").split("\n")[1] || "";
-
-  modalBody.innerHTML = `
-    <!-- Top Highlights Banner -->
-    <div style="background: linear-gradient(135deg, #1E293B 0%, #172554 100%); border: 1.5px solid #38BDF8; border-radius: 10px; padding: 1.1rem 1.35rem; margin-bottom: 1.25rem;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.65rem;">
-        <div>
-          <div style="font-size: 1.15rem; font-weight: 800; color: #38BDF8;">${c.project_title_vi || c.project_title}</div>
-          ${c.project_title_zh ? `<div style="font-size: 0.98rem; font-weight: 700; color: #FACC15; margin-top: 2px;">${c.project_title_zh}</div>` : ''}
-          <div style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">
-            🏢 <strong>${c.customer_name_zh || c.customer_name}</strong>
-            ${c.customer_name_vi && c.customer_name_vi !== c.customer_name_zh ? `<span style="color:#94A3B8;"> · ${c.customer_name_vi}</span>` : ''}
-          </div>
-        </div>
-        <div style="text-align: right;">
-          <div style="font-size: 0.8rem; color: #94A3B8;">合約編號 · Số HĐ</div>
-          <div style="font-size: 1.05rem; font-weight: 800; font-family: monospace; color: #F8FAFC;">${c.contract_code || 'Chưa ký HĐ'}</div>
-          <div style="display:inline-block; margin-top:4px; padding: 2px 8px; border-radius: 9999px; background: rgba(56, 189, 248, 0.2); color: #38BDF8; font-weight: 700; font-size: 0.78rem;">
-            第 ${s.seg_index}/${s.seg_total} 期 · Tỷ trọng: ${s.width_pct}% HĐ
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 2 Column Details Grid -->
-    <div class="modal-seg-grid">
-      <!-- Left Column: Milestone & Financials -->
-      <div class="modal-seg-card">
-        <div class="modal-seg-card-title">
-          <span>💰 款項金額與進度 · Chi Tiết Khoản Thu</span>
-          <span style="color: #FACC15; font-size: 0.76rem;">合約占比: ${s.width_pct}%</span>
-        </div>
-
-        <div class="modal-field-item">
-          <div class="modal-field-label"><span>款項名稱</span><span>Nội dung đợt</span></div>
-          <div class="modal-field-val">${msVi}</div>
-          ${msZh && msZh !== msVi ? `<div class="modal-field-val chinese">${msZh}</div>` : ''}
-        </div>
-
-        <div class="modal-field-item">
-          <div class="modal-field-label"><span>本期應收金額</span><span>Số tiền đợt này</span></div>
-          <div class="modal-field-val highlight">${s.gross_formatted}</div>
-        </div>
-
-        <div class="modal-field-item">
-          <div class="modal-field-label"><span>合約總金額</span><span>Tổng giá trị hợp đồng</span></div>
-          <div class="modal-field-val" style="color: #94A3B8;">${c.total_gross_formatted}</div>
-        </div>
-
-        <div class="modal-field-item">
-          <div class="modal-field-label"><span>發票單據狀態</span><span>Tình trạng chứng từ/HĐ</span></div>
-          <div class="modal-field-val">${docVi !== '-' ? docVi : 'Chờ hoàn tất (待辦理)'}</div>
-          ${docZh && docZh !== docVi && docZh !== '-' ? `<div class="modal-field-val chinese">${docZh}</div>` : ''}
-        </div>
-      </div>
-
-      <!-- Right Column: Timeline & Status Comparison -->
-      <div class="modal-seg-card">
-        <div class="modal-seg-card-title">
-          <span>📅 時程與週度狀態 · Tiến Độ & Trạng Thái</span>
-          <span style="color: #38BDF8; font-size: 0.76rem;">週度對比分析</span>
-        </div>
-
-        <div class="modal-field-item">
-          <div class="modal-field-label"><span>應收款到期日</span><span>Ngày đến hạn</span></div>
-          <div class="modal-field-val" style="color:${s.curr_status === 'OVERDUE' ? '#F87171' : (s.curr_status === 'URGENT' ? '#FBBF24' : '#F8FAFC')}; font-weight:700;">
-            ${(s.due_date && s.due_date !== '-') ? formatDateVN(s.due_date) : 'Theo tiến độ (chờ lắp đặt)'}
-          </div>
-        </div>
-
-        ${s.customer_promised_date && s.customer_promised_date !== '-' ? `
-          <div class="modal-field-item">
-            <div class="modal-field-label"><span>客戶約定付款日</span><span>Ngày khách hẹn thanh toán</span></div>
-            <div class="modal-field-val" style="color: #FBBF24; font-weight: 700;">${formatDateVN(s.customer_promised_date)}</div>
-          </div>
-        ` : ''}
-
-        ${s.paid_date && s.paid_date !== '-' ? `
-          <div class="modal-field-item">
-            <div class="modal-field-label"><span>實際全額收款日</span><span>Ngày thực thu tiền</span></div>
-            <div class="modal-field-val" style="color: #34D399; font-weight: 700;">${formatDateVN(s.paid_date)}</div>
-          </div>
-        ` : ''}
-
-        <!-- Status Box -->
-        <div class="tt-status-box" style="margin-top: 0.85rem;">
-          <div class="tt-status-line">
-            <span class="tt-status-line-label">${prevLabelText}</span>
-            <span>${prevPill}</span>
-          </div>
-          <div class="tt-status-line">
-            <span class="tt-status-line-label active-curr">${currLabelText}</span>
-            <span>${currPill}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom Full Width PM Follow-up Notes & Fast Edit Action -->
-    <div class="modal-seg-card" style="margin-top: 1rem;">
-      <div class="modal-seg-card-title" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>📌 專案經理催款紀錄與決策備註 · Ghi Chú Đôn Đốc Của PM</span>
-        <button type="button" class="btn btn-primary btn-xs" onclick="closeSegmentBilingualModal(); openEditReceivableModal(${s.id});" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">
-          ✏️ Sửa đợt này (編輯此期款)
-        </button>
-      </div>
-      <div style="font-size: 0.85rem; line-height: 1.5; color: #E2E8F0; margin-top: 0.4rem;">
-        ${notesVi !== '-' && notesVi !== '' ? `<div>${notesVi}</div>` : '<div style="color:#64748B;">Chưa có ghi chú bổ sung.</div>'}
-        ${notesZh && notesZh !== notesVi && notesZh !== '-' ? `<div style="color: #94A3B8; margin-top: 0.35rem; font-size: 0.82rem;">${notesZh}</div>` : ''}
-      </div>
-    </div>
-  `;
-
-  modal.setAttribute("data-active-seg-id", segId);
-  modal.style.display = "flex";
-  modal.classList.add("show");
-}
-
-function closeSegmentBilingualModal() {
-  const modal = document.getElementById("modalSegmentBilingualDetail");
-  if (!modal) return;
-  modal.style.display = "none";
-  modal.classList.remove("show");
-}
-
-function copySegmentBilingualSummary() {
-  const modal = document.getElementById("modalSegmentBilingualDetail");
-  if (!modal) return;
-  const segId = modal.getAttribute("data-active-seg-id");
-  const info = segmentLookupMap[segId];
-  if (!info) return;
-
-  const s = info.segment;
-  const c = info.contract;
-  const msVi = s.milestone_name_vi || (s.milestone_name || "").split("\n")[0];
-  const msZh = s.milestone_name_zh || (s.milestone_name || "").split("\n")[1] || "";
-  const docVi = s.doc_status_vi || (s.doc_status || "-").split("\n")[0];
-  const notesVi = s.notes_vi || (s.notes || "-").split("\n")[0];
-
-  const summary = `【宏明環球 應收帳款催收回報 · BÁO CÁO CÔNG NỢ PM】
-🏢 客戶 (Khách hàng): ${c.customer_name_zh || c.customer_name}
-📑 專案 (Dự án): ${c.project_title_zh || c.project_title}
-📜 合約編號 (Số HĐ): ${c.contract_code || '-'}
-📌 期款 (Đợt): ${msVi} (${s.width_pct}%)
-💰 本期金額 (Số tiền): ${s.gross_formatted}
-📅 到期日 (Hạn TT): ${s.due_date}
-⚡ 狀態 (Trạng thái): ${s.curr_status_label_zh || s.curr_status} (${s.curr_status_label_vi || s.curr_status})
-🧾 發票單據 (Chứng từ): ${docVi}
-💬 催收備註 (Ghi chú): ${notesVi}`;
-
-  navigator.clipboard.writeText(summary).then(() => {
-    showToast("Đã sao chép tóm tắt công nợ song ngữ vào bộ nhớ tạm!", "success");
-  }).catch(e => {
-    console.error("Clipboard error:", e);
-    showToast("Không thể tự động sao chép. Vui lòng thử lại.", "error");
-  });
-}
-
-// Hover Tooltip functions on Segment
-function onSegmentHoverEnter(event, segId, side) {
-  document.querySelectorAll(`.coord-seg[data-seg-id="${segId}"]`).forEach(el => {
-    el.classList.add("seg-hover-synced");
-  });
-
-  const info = segmentLookupMap[segId];
-  if (!info) return;
-
-  const s = info.segment;
-  const c = info.contract;
   const tooltip = document.getElementById("chartSegmentTooltip");
   if (!tooltip) return;
 
-  const prevPill = `<span class="badge-status-pill ${getStatusPillClass(s.prev_status)}">${getStatusLabelVN(s.prev_status)}</span>`;
-  const currPill = `<span class="badge-status-pill ${getStatusPillClass(s.curr_status)}">${getStatusLabelVN(s.curr_status)}</span>`;
+  const isPlanMode = currentCompMode === "curr_to_next";
+  const prevLabelText = isPlanMode ? "Tuần này (本週):" : "Tuần trước (上週):";
+  const currLabelText = isPlanMode ? "Tuần tới (下週):" : "Tuần này (本週):";
+
+  const prevPill = `<span class="badge-status-pill ${getStatusPillClass(s.prev_status)}">
+    <span>${getStatusLabelVN(s.prev_status)}</span>
+    <span style="font-size: 0.68rem; opacity: 0.85;"> · ${s.prev_status_label_zh || getStatusLabelZH(s.prev_status)}</span>
+  </span>`;
+
+  const currPill = `<span class="badge-status-pill ${getStatusPillClass(s.curr_status)}">
+    <span>${getStatusLabelVN(s.curr_status)}</span>
+    <span style="font-size: 0.68rem; opacity: 0.85;"> · ${s.curr_status_label_zh || getStatusLabelZH(s.curr_status)}</span>
+  </span>`;
+
+  const cleanMilestone = (s.milestone_name_vi || s.milestone_name || "").split("\n")[0];
+  const dueDisplay = (s.due_date && s.due_date !== '-') ? formatDateVN(s.due_date) : 'Theo tiến độ (chờ lắp đặt)';
+  const paidDisplay = (s.paid_date && s.paid_date !== '-') ? formatDateVN(s.paid_date) : null;
+  const promisedDisplay = (s.customer_promised_date && s.customer_promised_date !== '-') ? formatDateVN(s.customer_promised_date) : null;
+  const notesContent = (s.notes && s.notes !== '-') ? s.notes : null;
 
   let changeBanner = "";
   if (s.change_type === "NEWLY_PAID") {
@@ -2268,73 +2131,173 @@ function onSegmentHoverEnter(event, segId, side) {
     changeBanner = `<div class="tt-change-banner urgent">${s.change_badge_text || '⚡ Sắp đến hạn trong vòng 7 ngày'}</div>`;
   }
 
-  const cleanMilestone = (s.milestone_name || "").split("\n")[0];
-
   tooltip.innerHTML = `
-    <div class="tt-header">
-      <div class="tt-proj-title">${c.project_title}</div>
-      <div class="tt-cust-name">${c.customer_name}</div>
-    </div>
-
-    <div class="tt-seg-badge-row">
-      <span>Khoản ${s.seg_index}/${s.seg_total} · HĐ: ${c.contract_code || '-'}</span>
-      <span class="tt-pct-highlight">Tỷ trọng: ${s.width_pct}% HĐ</span>
-    </div>
-
-    <div class="tt-grid">
-      <span class="tt-label">Nội dung khoản:</span>
-      <span class="tt-val">${cleanMilestone}</span>
-
-      <span class="tt-label">Số tiền khoản này:</span>
-      <span class="tt-val" style="color: #38BDF8;">${s.gross_formatted} <span style="color:#94A3B8; font-weight:400;">/ ${c.total_gross_formatted}</span></span>
-
-      <span class="tt-label">Ngày đến hạn:</span>
-      <span class="tt-val">${s.due_date !== '-' ? formatDateVN(s.due_date) : 'Chưa ấn định'}</span>
-
-      ${s.paid_date && s.paid_date !== '-' ? `<span class="tt-label">Ngày thực thu:</span><span class="tt-val" style="color:#34D399;">${formatDateVN(s.paid_date)}</span>` : ''}
-      ${s.customer_promised_date && s.customer_promised_date !== '-' ? `<span class="tt-label">Ngày khách hẹn:</span><span class="tt-val" style="color:#FBBF24;">${formatDateVN(s.customer_promised_date)}</span>` : ''}
-    </div>
-
-    <div class="tt-status-compare">
-      <div class="tt-status-line">
-        <span style="color:#94A3B8;">Cuối tuần trước:</span>
-        <span>${prevPill}</span>
+    <div class="tt-seg-head">
+      <div style="display: flex; align-items: center; gap: 0.45rem; min-width: 0;">
+        <span class="tt-seg-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📌 ${cleanMilestone}</span>
+        <span class="tt-seg-pct">${s.width_pct}% HĐ (合約)</span>
       </div>
-      <div class="tt-status-line">
-        <span style="color:#E2E8F0; font-weight:700;">Cuối tuần này:</span>
-        <span>${currPill}</span>
-      </div>
-      ${changeBanner}
+      <button type="button" class="btn-close-card" onclick="hideSegmentTooltip(event)" title="Đóng / 關閉">✕</button>
     </div>
 
-    <div class="tt-notes">
-      <div><strong>Chứng từ:</strong> ${(s.doc_status || '-').split("\n")[0]}</div>
-      ${s.notes && s.notes !== '-' ? `<div style="margin-top:2px;"><strong>Ghi chú:</strong> ${(s.notes || '').split("\n")[0]}</div>` : ''}
+    <div style="font-size: 0.76rem; color: #64748B; margin-bottom: 0.4rem;">
+      🏢 <strong>${c.project_title_vi || c.project_title}</strong> (${c.customer_name_vi || c.customer_name || 'Khách hàng'})
+      ${(c.contract_code && c.contract_code !== '-') ? `<span style="font-family: monospace; color: #475569;"> · HĐ: ${c.contract_code}</span>` : ''}
     </div>
-    
-    <div style="margin-top: 0.35rem; padding-top: 0.35rem; border-top: 1px dashed #334155; font-size: 0.68rem; color: #94A3B8; text-align: center;">
-      👆 Nhấp chuột trái: Xem chi tiết · Chuột phải: Sửa đợt
+
+    <div class="tt-row" style="margin-bottom: 0.35rem;">
+      <span class="tt-k">Số tiền khoản / 款項金額:</span>
+      <span class="tt-v" style="color: #0284C7; font-size: 0.94rem; font-weight: 800;">${s.gross_formatted || formatCurrencyVN(s.gross_amount)}</span>
+    </div>
+
+    <div class="tt-row" style="margin-top: 0.25rem;">
+      <span class="tt-k">${prevLabelText}</span>
+      <span class="tt-v">${prevPill}</span>
+    </div>
+
+    <div class="tt-row">
+      <span class="tt-k">${currLabelText}</span>
+      <span class="tt-v">${currPill}</span>
+    </div>
+
+    ${changeBanner}
+
+    <div style="border-top: 1px dashed #CBD5E1; margin-top: 0.45rem; padding-top: 0.4rem;">
+      ${paidDisplay ? `<div class="tt-row"><span class="tt-k">✅ Đã thu / 收款日:</span><span class="tt-v" style="color: #16A34A; font-weight: 700;">${paidDisplay}</span></div>` : ''}
+      <div class="tt-row"><span class="tt-k">📅 Hạn TT / 到期日:</span><span class="tt-v" style="color: ${s.curr_status === 'OVERDUE' ? '#DC2626' : (s.curr_status === 'URGENT' ? '#D97706' : '#1E293B')}; font-weight: 700;">${dueDisplay}</span></div>
+      ${promisedDisplay ? `
+        <div class="tt-row" style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 4px 7px; margin: 4px 0;">
+          <span class="tt-k" style="color: #92400E; font-weight: 700;">🤝 Khách hẹn / 客戶預計:</span>
+          <span class="tt-v" style="color: #B45309; font-weight: 800;">${promisedDisplay}</span>
+        </div>
+      ` : ''}
+      ${s.doc_status && s.doc_status !== '-' ? `<div class="tt-row"><span class="tt-k">🧾 Chứng từ / 單據:</span><span class="tt-v" style="color: #334155; font-weight: 600;">${(s.doc_status || '').split("\n")[0]}</span></div>` : ''}
+    </div>
+
+    ${notesContent ? `
+      <div style="margin-top: 0.5rem; background: #F0F9FF; border: 1px solid #BAE6FD; border-left: 3.5px solid #0284C7; border-radius: 0 6px 6px 0; padding: 0.45rem 0.65rem;">
+        <div style="font-size: 0.72rem; font-weight: 700; color: #0369A1; margin-bottom: 2px;">📝 GHI CHÚ THEO DÕI NỢ / 追帳備註:</div>
+        <div style="font-size: 0.78rem; color: #1E293B; line-height: 1.45; font-weight: 500;">${notesContent}</div>
+      </div>
+    ` : ''}
+
+    <div style="margin-top: 0.65rem; padding-top: 0.45rem; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end;">
+      <button type="button" class="btn btn-outline-primary btn-sm" onclick="hideSegmentTooltip(event); openEditReceivableModal('${s.id}')" style="font-size: 0.74rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 6px;">
+        ✏️ Chỉnh sửa đợt này (Chuột phải)
+      </button>
     </div>
   `;
 
+  tooltip.style.pointerEvents = "auto";
   tooltip.style.display = "block";
   positionSegmentTooltip(event);
 }
 
+// Khi rê chuột vào từng khoản (Hover)
+function onSegmentHoverEnter(event, segId, side) {
+  // Highlight đồng bộ cả 2 bên biểu đồ
+  document.querySelectorAll(`.coord-seg[data-seg-id="${segId}"]`).forEach(el => {
+    el.classList.add("seg-hover-synced");
+  });
+
+  const info = segmentLookupMap[segId] || segmentLookupMap[String(segId)];
+  if (info) {
+    onRowHoverEnter(info.contract.contract_key);
+  }
+
+  // Nếu chưa ghim khoản nào bằng click trái -> Hiện preview tooltip nhanh
+  if (!activeClickedSegId) {
+    const tooltip = document.getElementById("chartSegmentTooltip");
+    if (!tooltip || !info) return;
+
+    const s = info.segment;
+    const c = info.contract;
+
+    const isPlanMode = currentCompMode === "curr_to_next";
+    const prevLabelText = isPlanMode ? "Tuần này:" : "Tuần trước:";
+    const currLabelText = isPlanMode ? "Tuần tới:" : "Tuần này:";
+
+    const prevPill = `<span class="badge-status-pill ${getStatusPillClass(s.prev_status)}">${getStatusLabelVN(s.prev_status)}</span>`;
+    const currPill = `<span class="badge-status-pill ${getStatusPillClass(s.curr_status)}">${getStatusLabelVN(s.curr_status)}</span>`;
+
+    const cleanMilestone = (s.milestone_name_vi || s.milestone_name || "").split("\n")[0];
+    const dueDisplay = (s.due_date && s.due_date !== '-') ? formatDateVN(s.due_date) : 'Theo tiến độ';
+    const paidDisplay = (s.paid_date && s.paid_date !== '-') ? formatDateVN(s.paid_date) : null;
+
+    tooltip.innerHTML = `
+      <div style="font-weight: 800; font-size: 0.84rem; color: #0F172A; margin-bottom: 2px;">
+        📌 ${cleanMilestone} <span class="tt-seg-pct" style="float: right;">${s.width_pct}% HĐ</span>
+      </div>
+      <div style="font-size: 0.74rem; color: #64748B; margin-bottom: 0.35rem;">
+        ${c.project_title_vi || c.project_title}
+      </div>
+      <div class="tt-row">
+        <span class="tt-k">Số tiền:</span>
+        <span class="tt-v" style="color: #0284C7; font-weight: 800;">${s.gross_formatted || formatCurrencyVN(s.gross_amount)}</span>
+      </div>
+      <div class="tt-row">
+        <span class="tt-k">${prevLabelText}</span>
+        <span class="tt-v">${prevPill}</span>
+      </div>
+      <div class="tt-row">
+        <span class="tt-k">${currLabelText}</span>
+        <span class="tt-v">${currPill}</span>
+      </div>
+      <div class="tt-row" style="margin-top: 0.2rem; border-top: 1px dashed #CBD5E1; padding-top: 0.25rem;">
+        <span class="tt-k">${paidDisplay ? '✅ Thực thu:' : '📅 Hạn TT:'}</span>
+        <span class="tt-v">${paidDisplay || dueDisplay}</span>
+      </div>
+      <div style="margin-top: 0.35rem; font-size: 0.68rem; color: #94A3B8; text-align: center; border-top: 1px dotted #E2E8F0; padding-top: 0.25rem;">
+        👆 Nhấp chuột trái: Ghim chi tiết · Chuột phải: Sửa đợt
+      </div>
+    `;
+
+    // Khi hover, pointer-events: none để không bắt chuột và click xuyên thẳng vào khoản
+    tooltip.style.pointerEvents = "none";
+    tooltip.style.display = "block";
+    positionSegmentTooltip(event);
+  }
+}
+
 function onSegmentHoverMove(event) {
-  positionSegmentTooltip(event);
+  if (!activeClickedSegId) {
+    positionSegmentTooltip(event);
+  }
 }
 
 function onSegmentHoverLeave(segId) {
   document.querySelectorAll(`.coord-seg[data-seg-id="${segId}"]`).forEach(el => {
     el.classList.remove("seg-hover-synced");
   });
-  hideSegmentTooltip();
+
+  const info = segmentLookupMap[segId] || segmentLookupMap[String(segId)];
+  if (info) {
+    onRowHoverLeave(info.contract.contract_key);
+  }
+
+  // Nếu không bị ghim bởi click, ẩn tooltip
+  if (!activeClickedSegId) {
+    hideSegmentTooltip();
+  }
 }
 
-function hideSegmentTooltip() {
+function hideSegmentTooltip(event) {
+  if (event && event.stopPropagation) {
+    event.stopPropagation();
+  }
   const tooltip = document.getElementById("chartSegmentTooltip");
-  if (tooltip) tooltip.style.display = "none";
+  if (tooltip) {
+    tooltip.style.display = "none";
+    tooltip.style.pointerEvents = "none";
+  }
+  activeClickedSegId = null;
+  removeSegmentActiveHighlight();
+}
+
+function removeSegmentActiveHighlight() {
+  document.querySelectorAll(".coord-seg.seg-active-selected").forEach(el => {
+    el.classList.remove("seg-active-selected");
+  });
 }
 
 function positionSegmentTooltip(event) {
@@ -2343,29 +2306,30 @@ function positionSegmentTooltip(event) {
 
   const pad = 16;
   const rect = tooltip.getBoundingClientRect();
-  let left = event.clientX + pad;
-  let top = event.clientY + pad;
+  let clientX = event ? event.clientX : window.innerWidth / 2;
+  let clientY = event ? event.clientY : window.innerHeight / 2;
 
-  if (left + rect.width > window.innerWidth - 10) {
-    left = event.clientX - rect.width - pad;
+  let left = clientX + pad;
+  let top = clientY + pad;
+
+  if (left + rect.width > window.innerWidth - 12) {
+    left = clientX - rect.width - pad;
   }
-  if (top + rect.height > window.innerHeight - 10) {
-    top = window.innerHeight - rect.height - 10;
+  if (top + rect.height > window.innerHeight - 12) {
+    top = window.innerHeight - rect.height - 12;
   }
 
-  tooltip.style.left = `${Math.max(10, left)}px`;
-  tooltip.style.top = `${Math.max(10, top)}px`;
+  tooltip.style.left = `${Math.max(12, left)}px`;
+  tooltip.style.top = `${Math.max(12, top)}px`;
 }
 
-function onSegmentHoverEnter(event, segId, side) {
-  const info = segmentLookupMap[segId];
-  if (info) {
-    onRowHoverEnter(info.contract.contract_key);
-  }
+// Giữ lại hàm mở Modal song ngữ lớn nếu cần dùng
+function openSegmentBilingualModal(segId) {
+  handleSegmentClick(null, segId, 'curr');
 }
 
-function onSegmentHoverLeave() {
-  onRowHoverLeave();
+function closeSegmentBilingualModal() {
+  hideSegmentTooltip();
 }
 
 function onRowHoverEnter(cKey) {
@@ -2629,6 +2593,23 @@ document.addEventListener("keydown", function (e) {
     const compModal = document.getElementById("modalWeeklyComparisonFullscreen");
     if (compModal && (compModal.style.display === "flex" || compModal.classList.contains("active"))) {
       closeWeeklyComparisonFullscreen();
+    }
+  }
+});
+
+// Đóng popup card/tooltip khi nhấp chuột ra ngoài
+document.addEventListener("click", function (e) {
+  const tooltip = document.getElementById("chartSegmentTooltip");
+  if (tooltip && tooltip.style.display === "block") {
+    if (!tooltip.contains(e.target) && !e.target.closest(".coord-seg")) {
+      hideSegmentTooltip();
+    }
+  }
+
+  const projCard = document.getElementById("projectDetailHoverCard");
+  if (projCard && projCard.style.display === "block") {
+    if (!projCard.contains(e.target) && !e.target.closest(".coord-y-label")) {
+      hideProjectHoverCard();
     }
   }
 });

@@ -15,6 +15,7 @@ from app.models.procurement_models import (
     QuickFieldUpdateRequest,
 )
 from app.services.procurement_ai_service import parse_procurement_ai
+from app.services.procurement_chart_service import get_procurement_chart_data
 from app.services.procurement_excel_service import export_procurement_excel, parse_procurement_excel
 from app.services.procurement_service import (
     bulk_import_procurement_orders,
@@ -27,6 +28,8 @@ from app.services.procurement_service import (
     update_procurement_order,
     update_procurement_order_notes,
     update_procurement_order_status,
+    batch_update_procurement_delivery_status,
+    toggle_procurement_delivery_status,
 )
 
 class QuickNotesUpdateRequest(BaseModel):
@@ -35,7 +38,73 @@ class QuickNotesUpdateRequest(BaseModel):
 class QuickStatusUpdateRequest(BaseModel):
     delivery_status: str
 
+class BatchDeliveryStatusRequest(BaseModel):
+    order_ids: List[int]
+    delivery_status: str
+    actual_delivery_date: Optional[str] = None
+
 router = APIRouter(prefix="/api/v1/procurement", tags=["Procurement & PO Tracker"])
+
+
+@router.post("/orders/batch-delivery-status")
+async def batch_delivery_status_endpoint(payload: BatchDeliveryStatusRequest):
+    """Batch update delivery status for all orders in a project/batch (Tất cả đơn đi chung lô)."""
+    try:
+        count = batch_update_procurement_delivery_status(
+            payload.order_ids,
+            payload.delivery_status,
+            payload.actual_delivery_date,
+        )
+        return {
+            "status": "success",
+            "message": f"Đã cập nhật trạng thái cho cả lô ({count} món).",
+            "updated_count": count,
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"Lỗi cập nhật lô: {str(e)}"},
+        )
+
+
+@router.patch("/orders/{order_id}/toggle-delivery")
+async def toggle_order_delivery_endpoint(order_id: int):
+    """1-Click toggle delivery status between DELIVERED (Đã đến) and PENDING (Chưa đến)."""
+    try:
+        updated = toggle_procurement_delivery_status(order_id)
+        return {
+            "status": "success",
+            "message": f"Đã đổi trạng thái sang: {updated['delivery_status_label']}",
+            "order": updated,
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"Lỗi chuyển trạng thái: {str(e)}"},
+        )
+
+
+@router.get("/chart-data")
+async def get_chart_data_endpoint(
+    status: Optional[str] = Query(None, description="Lọc trạng thái: all, delivered, in_transit, delayed, pending"),
+    supplier: Optional[str] = Query(None, description="Lọc nhà cung cấp"),
+    project: Optional[str] = Query(None, description="Lọc dự án"),
+    search: Optional[str] = Query(None, description="Từ khóa tìm kiếm"),
+):
+    """Retrieve structured chart data for project hardware readiness & timeline."""
+    try:
+        data = get_procurement_chart_data(
+            status=status,
+            supplier=supplier,
+            project=project,
+            search=search,
+        )
+        return data
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"Lỗi tạo dữ liệu biểu đồ: {str(e)}"},
+        )
 
 
 @router.get("/orders")

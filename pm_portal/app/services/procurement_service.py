@@ -278,6 +278,57 @@ def update_procurement_order_status(order_id: int, status: str) -> bool:
     return affected > 0
 
 
+def batch_update_procurement_delivery_status(order_ids: List[int], status: str, actual_date: Optional[str] = None) -> int:
+    """Batch update delivery status for all orders in a project/batch (Tất cả đơn đi chung lô)."""
+    if not order_ids:
+        return 0
+    label = get_status_label(status)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    placeholders = ",".join("?" for _ in order_ids)
+
+    if status == "DELIVERED":
+        today_str = actual_date or datetime.now().strftime("%Y-%m-%d")
+        cursor.execute(f"""
+            UPDATE procurement_orders SET
+                delivery_status = ?,
+                delivery_status_label = ?,
+                actual_delivery_date = CASE 
+                    WHEN actual_delivery_date IS NULL OR actual_delivery_date = '' OR actual_delivery_date = '-' THEN ?
+                    ELSE actual_delivery_date
+                END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id IN ({placeholders})
+        """, [status, label, today_str] + order_ids)
+    else:
+        cursor.execute(f"""
+            UPDATE procurement_orders SET
+                delivery_status = ?,
+                delivery_status_label = ?,
+                actual_delivery_date = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id IN ({placeholders})
+        """, [status, label] + order_ids)
+
+    affected = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return affected
+
+
+def toggle_procurement_delivery_status(order_id: int) -> Dict[str, Any]:
+    """Toggle a single order between DELIVERED (Đã đến) and PENDING (Chưa đến)."""
+    existing = get_procurement_order(order_id)
+    if not existing:
+        raise ValueError("Không tìm thấy đơn hàng")
+
+    curr_st = (existing.get("delivery_status") or "PENDING").upper()
+    new_st = "PENDING" if curr_st == "DELIVERED" else "DELIVERED"
+
+    update_procurement_order_status(order_id, new_st)
+    return get_procurement_order(order_id)
+
+
 
 def delete_procurement_order(order_id: int) -> bool:
     """Delete a single procurement order."""

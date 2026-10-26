@@ -19,7 +19,7 @@
 
   async function initProcurementTracker() {
     initEventListeners();
-    await loadProcurementData();
+    await Promise.all([loadProcurementData(), loadProcurementChartData()]);
   }
 
   function initEventListeners() {
@@ -38,6 +38,7 @@
       statusSelect.addEventListener("change", (e) => {
         currentFilter.status = e.target.value;
         loadProcurementData();
+        loadProcurementChartData();
       });
     }
 
@@ -47,6 +48,7 @@
       supplierSelect.addEventListener("change", (e) => {
         currentFilter.supplier = e.target.value;
         loadProcurementData();
+        loadProcurementChartData();
       });
     }
 
@@ -56,6 +58,7 @@
       projectSelect.addEventListener("change", (e) => {
         currentFilter.project = e.target.value;
         loadProcurementData();
+        loadProcurementChartData();
       });
     }
 
@@ -1313,9 +1316,504 @@
     wrapper.scrollBy({ left: distance, behavior: "smooth" });
   };
 
-  // Global Escape listener to exit fullscreen
+  // =========================================================================
+  // PROCUREMENT HARDWARE READINESS & TIMELINE CHART ENGINE (INTERACTIVE)
+  // =========================================================================
+  let cachedChartData = null;
+  let currentChartView = "readiness";
+
+  window.loadProcurementChartData = async function () {
+    try {
+      const params = new URLSearchParams();
+      if (currentFilter.status && currentFilter.status !== "all") params.append("status", currentFilter.status);
+      if (currentFilter.supplier && currentFilter.supplier !== "all") params.append("supplier", currentFilter.supplier);
+      if (currentFilter.project && currentFilter.project !== "all") params.append("project", currentFilter.project);
+      if (currentFilter.search) params.append("search", currentFilter.search);
+
+      const res = await fetch(`/api/v1/procurement/chart-data?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const data = await res.json();
+
+      if (data.status === "success") {
+        cachedChartData = data;
+        renderProcurementChart(data);
+      }
+    } catch (err) {
+      console.error("Lỗi tải dữ liệu biểu đồ mua hàng:", err);
+    }
+  };
+
+  function renderProcurementChart(data) {
+    if (!data) return;
+    const kpi = data.kpi || {};
+    const overallEl = document.getElementById("chartOverallReadiness");
+    if (overallEl) {
+      overallEl.textContent = kpi.summary_text || `${kpi.delivered_count || 0}/${kpi.total_orders || 0} thiết bị đã về kho`;
+    }
+
+    const timelineBadge = document.getElementById("tabTimelineBadge");
+    const timeline = data.timeline_analysis || {};
+    const totalTimelineAttention = (timeline.delayed_count || 0) + (timeline.next_week_plan_count || 0);
+    if (timelineBadge) {
+      timelineBadge.textContent = totalTimelineAttention;
+      timelineBadge.style.display = totalTimelineAttention > 0 ? "inline-block" : "none";
+    }
+
+    renderProjectReadinessBars(data.projects_readiness || []);
+    renderTimelineColumns(timeline);
+  }
+
+  // Render Tab 1: Project Hardware Batch Board (Theo Dõi Hàng Theo Lô Dự Án)
+  function renderProjectReadinessBars(projects) {
+    const container = document.getElementById("projectsReadinessList");
+    if (!container) return;
+
+    if (!projects || projects.length === 0) {
+      container.innerHTML = `
+        <div style="padding: 2.5rem; text-align: center; color: #64748B;">
+          <div>Không có dự án mua hàng phù hợp với bộ lọc hiện tại.</div>
+        </div>
+      `;
+      return;
+    }
+
+    const html = projects.map(p => {
+      const orderIdsJson = JSON.stringify(p.order_ids || []).replace(/"/g, '&quot;');
+      const isArrived = p.all_arrived;
+
+      // Danh sách các món hàng trong lô (chỉ là danh sách thông tin, KHÔNG có trạng thái riêng từng món)
+      const itemsListHtml = (p.segments || []).map(s => {
+        const itemFull = escapeHtml(s.item_name_full || s.item_name);
+        const supplier = escapeHtml(s.supplier_name || "-");
+        const eta = s.eta_date && s.eta_date !== "-" ? s.eta_date : "";
+        const etaText = eta ? ` · ETA: ${eta}` : "";
+        return `
+          <div class="batch-item-tag" title="${itemFull} | NCC: ${supplier}${etaText}">
+            <span class="batch-item-bullet">📦</span>
+            <span class="batch-item-title">${escapeHtml(s.item_name)}</span>
+            <span class="batch-item-qty">(${s.quantity} ${escapeHtml(s.unit)})</span>
+            <span class="batch-item-ncc">· ${supplier}</span>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div class="project-batch-card ${isArrived ? 'batch-card-arrived' : 'batch-card-pending'}" data-project-key="${escapeHtml(p.project_key)}">
+          <div class="batch-proj-col">
+            <div class="batch-proj-title" title="${escapeHtml(p.project_name_vi)}">${escapeHtml(p.project_name_vi)}</div>
+            ${p.project_name_zh && p.project_name_zh !== p.project_name_vi ? `<div class="batch-proj-zh" title="${escapeHtml(p.project_name_zh)}">${escapeHtml(p.project_name_zh)}</div>` : ''}
+            <div class="batch-proj-meta">
+              <span class="batch-count-pill">${p.total_items} hạng mục trong lô</span>
+            </div>
+          </div>
+
+          <div class="batch-items-col">
+            <div class="batch-items-tags-wrap">
+              ${itemsListHtml}
+            </div>
+          </div>
+
+          <div class="batch-action-col">
+            ${isArrived ? `
+              <button type="button" class="btn-batch-toggle btn-batch-status-arrived"
+                      onclick="toggleBatchDelivery(${orderIdsJson}, 'PENDING', '${escapeHtml(p.project_name_vi)}')"
+                      title="Lô hàng này đã đến. Nhấp chuột để chuyển thành Chưa Đến">
+                <span class="batch-toggle-icon">🟢</span>
+                <span class="batch-toggle-body">
+                  <strong class="batch-toggle-state">ĐÃ ĐẾN (已到貨)</strong>
+                  <small class="batch-toggle-hint">⇄ Nhấp để đổi Chưa Đến</small>
+                </span>
+              </button>
+            ` : `
+              <button type="button" class="btn-batch-toggle btn-batch-status-pending"
+                      onclick="toggleBatchDelivery(${orderIdsJson}, 'DELIVERED', '${escapeHtml(p.project_name_vi)}')"
+                      title="Lô hàng này chưa đến. Nhấp chuột để xác nhận Cả Lô Đã Đến">
+                <span class="batch-toggle-icon">⚪</span>
+                <span class="batch-toggle-body">
+                  <strong class="batch-toggle-state">CHƯA ĐẾN (未到貨)</strong>
+                  <small class="batch-toggle-hint">⇄ Nhấp để nhận Cả Lô</small>
+                </span>
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    container.innerHTML = html;
+  }
+
+  // 1-Click Toggle Delivery Status for Individual Item
+  window.toggleItemDelivery = async function (orderId, event) {
+    if (event) {
+      if (event.target.classList.contains("seg-edit-btn") || event.target.closest(".seg-edit-btn")) {
+        return;
+      }
+      event.stopPropagation();
+    }
+
+    try {
+      const res = await fetch(`/api/v1/procurement/orders/${orderId}/toggle-delivery`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (data.status === "success") {
+        showToast(data.message, "success");
+        await Promise.all([
+          loadProcurementChartData(),
+          loadProcurementData()
+        ]);
+      } else {
+        showToast(data.message || "Lỗi cập nhật", "error");
+      }
+    } catch (err) {
+      console.error("Lỗi toggleItemDelivery:", err);
+      showToast("Không thể cập nhật trạng thái: " + err.message, "error");
+    }
+  };
+
+  // Batch Delivery Status Update for the Entire Project Batch (Đi Theo Lô)
+  window.toggleBatchDelivery = async function (orderIds, newStatus, projectName) {
+    if (!orderIds || !orderIds.length) {
+      showToast("Không có thiết bị nào trong lô dự án này.", "error");
+      return;
+    }
+
+    const actionText = newStatus === "DELIVERED" ? "CẢ LÔ ĐÃ ĐẾN (整批已到)" : "CHƯA ĐẾN (未到貨)";
+    try {
+      const payload = {
+        order_ids: orderIds,
+        delivery_status: newStatus,
+        actual_delivery_date: newStatus === "DELIVERED" ? new Date().toISOString().split("T")[0] : null
+      };
+
+      const res = await fetch("/api/v1/procurement/orders/batch-delivery-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (data.status === "success") {
+        showToast(`✓ Đã cập nhật ${actionText} cho lô ${projectName} (${data.updated_count} thiết bị)!`, "success");
+        await Promise.all([
+          loadProcurementChartData(),
+          loadProcurementData()
+        ]);
+      } else {
+        showToast(data.message || "Lỗi cập nhật lô", "error");
+      }
+    } catch (err) {
+      console.error("Lỗi toggleBatchDelivery:", err);
+      showToast("Không thể cập nhật cả lô: " + err.message, "error");
+    }
+  };
+
+  // Render Tab 2: Weekly Timeline Columns (3 Phần theo chuẩn Sếp)
+  function renderTimelineColumns(timeline) {
+    const delCountEl = document.getElementById("timelineDeliveredCount");
+    const delayCountEl = document.getElementById("timelineDelayedCount");
+    const nextCountEl = document.getElementById("timelineNextWeekCount");
+
+    const deliveredList = document.getElementById("timelineDeliveredList");
+    const delayedList = document.getElementById("timelineDelayedList");
+    const nextList = document.getElementById("timelineNextWeekList");
+
+    const deliveredItems = timeline.delivered_this_week || [];
+    const delayedItems = timeline.delayed_items || [];
+    const nextItems = timeline.next_week_plan_items || [];
+
+    if (delCountEl) delCountEl.textContent = `${deliveredItems.length} đơn`;
+    if (delayCountEl) delayCountEl.textContent = `${delayedItems.length} đơn`;
+    if (nextCountEl) nextCountEl.textContent = `${nextItems.length} đơn`;
+
+    // 1. Delivered items
+    if (deliveredList) {
+      if (deliveredItems.length === 0) {
+        deliveredList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #94A3B8; font-size: 0.78rem;">Chưa có đơn giao trong tuần này.</div>`;
+      } else {
+        deliveredList.innerHTML = deliveredItems.map(item => `
+          <div class="timeline-item-card" onclick="openChartQuickEditModal(${item.id}, event)" title="Nhấp để xem/sửa">
+            <div class="timeline-item-title">${escapeHtml(item.item_name)}</div>
+            <div class="timeline-item-meta">
+              <span>🏢 ${escapeHtml(item.project_name)}</span>
+              <strong style="color: #059669;">Đã giao: ${item.actual_delivery_date || 'Gần đây'}</strong>
+            </div>
+            <div style="font-size: 0.7rem; color: #64748B;">NCC: <strong>${escapeHtml(item.supplier_name)}</strong> · SL: ${item.quantity} ${item.unit || 'Bộ'}</div>
+          </div>
+        `).join("");
+      }
+    }
+
+    // 2. Delayed items
+    if (delayedList) {
+      if (delayedItems.length === 0) {
+        delayedList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #059669; font-size: 0.78rem; font-weight: 700;">🎉 Tuyệt vời! Không có đơn nào bị trễ hạn.</div>`;
+      } else {
+        delayedList.innerHTML = delayedItems.map(item => `
+          <div class="timeline-item-card" onclick="openChartQuickEditModal(${item.id}, event)" title="Nhấp để giải trình lý do">
+            <div class="timeline-item-title" style="color: #DC2626;">🚨 ${escapeHtml(item.item_name)}</div>
+            <div class="timeline-item-meta">
+              <span>🏢 ${escapeHtml(item.project_name)}</span>
+              <span style="color: #DC2626; font-weight: 700;">Hạn ETA: ${item.eta_date || 'Chưa rõ'}</span>
+            </div>
+            <div class="timeline-item-reason">
+              ${item.shipping_notes && item.shipping_notes !== '-' ? escapeHtml(item.shipping_notes) : '<em>Chưa ghi chú lý do trễ - Nhấp vào để cập nhật giải trình với Sếp!</em>'}
+            </div>
+          </div>
+        `).join("");
+      }
+    }
+
+    // 3. Next week items
+    if (nextList) {
+      if (nextItems.length === 0) {
+        nextList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #94A3B8; font-size: 0.78rem;">Không có đơn nào dự kiến rơi vào tuần tới.</div>`;
+      } else {
+        nextList.innerHTML = nextItems.map(item => `
+          <div class="timeline-item-card" onclick="openChartQuickEditModal(${item.id}, event)" title="Nhấp để xem/sửa">
+            <div class="timeline-item-title">🎯 ${escapeHtml(item.item_name)}</div>
+            <div class="timeline-item-meta">
+              <span>🏢 ${escapeHtml(item.project_name)}</span>
+              <strong style="color: #7C3AED;">Hẹn ETA: ${item.eta_date || '-'}</strong>
+            </div>
+            <div style="font-size: 0.7rem; color: #64748B;">NCC: <strong>${escapeHtml(item.supplier_name)}</strong> · ${item.supplier_payment_status || 'Chưa thanh toán'}</div>
+          </div>
+        `).join("");
+      }
+    }
+  }
+
+  // Switch between Tab 1 (Readiness) and Tab 2 (Timeline)
+  window.switchProcurementChartView = function (mode) {
+    currentChartView = mode;
+    const btnReadiness = document.getElementById("tabBtnProjectReadiness");
+    const btnTimeline = document.getElementById("tabBtnTimeline");
+    const panelReadiness = document.getElementById("panelProjectReadiness");
+    const panelTimeline = document.getElementById("panelTimeline");
+    const legendRow = document.getElementById("chartLegendRow");
+
+    if (mode === "readiness") {
+      if (btnReadiness) btnReadiness.classList.add("active");
+      if (btnTimeline) btnTimeline.classList.remove("active");
+      if (panelReadiness) panelReadiness.style.display = "block";
+      if (panelTimeline) panelTimeline.style.display = "none";
+      if (legendRow) legendRow.style.display = "flex";
+    } else {
+      if (btnReadiness) btnReadiness.classList.remove("active");
+      if (btnTimeline) btnTimeline.classList.add("active");
+      if (panelReadiness) panelReadiness.style.display = "none";
+      if (panelTimeline) panelTimeline.style.display = "block";
+      if (legendRow) legendRow.style.display = "none";
+    }
+  };
+
+  // Fullscreen Presentation Mode for Meetings with Boss
+  window.toggleProcurementChartFullscreen = function () {
+    const card = document.getElementById("procurementChartCard");
+    const textEl = document.getElementById("btnChartFullscreenText");
+    const btnEl = document.getElementById("btnChartFullscreen");
+    if (!card) return;
+
+    const isFull = card.classList.toggle("is-fullscreen");
+    document.body.classList.toggle("chart-fullscreen-open", isFull);
+
+    if (isFull) {
+      if (textEl) textEl.textContent = "Thu Nhỏ (Esc)";
+      if (btnEl) btnEl.className = "btn btn-danger btn-xs";
+      showToast("Đã mở biểu đồ toàn màn hình để báo cáo. Nhấn phím Esc để thu nhỏ.", "success");
+    } else {
+      if (textEl) textEl.textContent = "Toàn Màn Hình";
+      if (btnEl) btnEl.className = "btn btn-outline btn-xs";
+    }
+  };
+
+  // Collapse / Expand Chart Section
+  window.toggleChartSectionCollapse = function () {
+    const card = document.getElementById("procurementChartCard");
+    const icon = document.getElementById("btnChartCollapseIcon");
+    const panelReadiness = document.getElementById("panelProjectReadiness");
+    const panelTimeline = document.getElementById("panelTimeline");
+    const legendRow = document.getElementById("chartLegendRow");
+
+    const isCollapsed = card.classList.toggle("is-collapsed");
+    if (isCollapsed) {
+      if (panelReadiness) panelReadiness.style.display = "none";
+      if (panelTimeline) panelTimeline.style.display = "none";
+      if (legendRow) legendRow.style.display = "none";
+      if (icon) icon.textContent = "▼";
+    } else {
+      window.switchProcurementChartView(currentChartView);
+      if (icon) icon.textContent = "▲";
+    }
+  };
+
+  // =========================================================================
+  // INLINE QUICK EDIT POPOVER LOGIC (CLICK TRỰC TIẾP TRÊN SƠ ĐỒ ĐỂ SỬA)
+  // =========================================================================
+  let currentEditingOrder = null;
+
+  window.openChartQuickEditModal = function (orderId, event) {
+    if (event && event.stopPropagation) {
+      event.stopPropagation();
+    }
+
+    // Find order data
+    let ord = cachedOrders.find(o => o.id === orderId);
+    if (!ord && cachedChartData) {
+      for (const p of cachedChartData.projects_readiness || []) {
+        const found = (p.segments || []).find(s => s.id === orderId);
+        if (found) {
+          ord = found;
+          break;
+        }
+      }
+    }
+
+    if (!ord) {
+      showToast("Không tìm thấy thông tin đơn hàng này.", "error");
+      return;
+    }
+
+    currentEditingOrder = ord;
+
+    // Populate Modal fields
+    const modal = document.getElementById("chartQuickEditModal");
+    const badgeEl = document.getElementById("chartEditProjectBadge");
+    const titleEl = document.getElementById("chartEditItemName");
+    const subEl = document.getElementById("chartEditSubInfo");
+
+    const idInput = document.getElementById("chartEditOrderId");
+    const statusSelect = document.getElementById("chartEditDeliveryStatus");
+    const payInput = document.getElementById("chartEditSupplierPayment");
+    const etaInput = document.getElementById("chartEditEtaDate");
+    const actualInput = document.getElementById("chartEditActualDate");
+    const qtyInput = document.getElementById("chartEditQuantity");
+    const unitInput = document.getElementById("chartEditUnit");
+    const supplierInput = document.getElementById("chartEditSupplierName");
+    const notesTextarea = document.getElementById("chartEditShippingNotes");
+
+    if (badgeEl) badgeEl.textContent = ord.project_name || ord.customer_company || "DỰ ÁN";
+    if (titleEl) titleEl.textContent = ord.item_name_full || ord.item_name || "Thiết Bị";
+    if (subEl) subEl.textContent = `Nhà cung cấp: ${ord.supplier_name || '-'} · SL: ${ord.quantity || 1} ${ord.unit || 'Bộ'}`;
+
+    if (idInput) idInput.value = ord.id;
+    if (statusSelect) statusSelect.value = ord.delivery_status || "PENDING";
+    if (payInput) payInput.value = ord.supplier_payment_status && ord.supplier_payment_status !== '-' ? ord.supplier_payment_status : "";
+    if (etaInput) etaInput.value = ord.eta_date && ord.eta_date !== '-' ? ord.eta_date : "";
+    if (actualInput) actualInput.value = ord.actual_delivery_date && ord.actual_delivery_date !== '-' ? ord.actual_delivery_date : "";
+    if (qtyInput) qtyInput.value = ord.quantity || 1;
+    if (unitInput) unitInput.value = ord.unit || "Bộ";
+    if (supplierInput) supplierInput.value = ord.supplier_name && ord.supplier_name !== '-' ? ord.supplier_name : "";
+    if (notesTextarea) notesTextarea.value = ord.shipping_notes && ord.shipping_notes !== '-' ? ord.shipping_notes : "";
+
+    if (modal) {
+      modal.style.display = "flex";
+      setTimeout(() => {
+        if (notesTextarea) notesTextarea.focus();
+      }, 100);
+    }
+  };
+
+  window.onChartEditStatusChange = function (newStatus) {
+    const actualInput = document.getElementById("chartEditActualDate");
+    if (newStatus === "DELIVERED" && actualInput && !actualInput.value) {
+      actualInput.value = new Date().toISOString().split("T")[0];
+    }
+  };
+
+  window.closeChartQuickEditModal = function (event) {
+    if (event && event.target && event.target.id !== "chartQuickEditModal" && !event.target.classList.contains("btn-close-chart-edit")) {
+      return;
+    }
+    const modal = document.getElementById("chartQuickEditModal");
+    if (modal) modal.style.display = "none";
+    currentEditingOrder = null;
+  };
+
+  window.saveChartQuickEdit = async function () {
+    const orderId = document.getElementById("chartEditOrderId").value;
+    if (!orderId) return;
+
+    const btnSave = document.getElementById("btnSaveChartQuickEdit");
+    const originalText = btnSave ? btnSave.innerHTML : "";
+    if (btnSave) {
+      btnSave.disabled = true;
+      btnSave.innerHTML = `<span>Đang lưu...</span>`;
+    }
+
+    try {
+      const payload = {
+        delivery_status: document.getElementById("chartEditDeliveryStatus").value,
+        supplier_payment_status: document.getElementById("chartEditSupplierPayment").value.trim(),
+        eta_date: document.getElementById("chartEditEtaDate").value || null,
+        actual_delivery_date: document.getElementById("chartEditActualDate").value || null,
+        quantity: parseFloat(document.getElementById("chartEditQuantity").value) || 1.0,
+        unit: document.getElementById("chartEditUnit").value.trim() || "Bộ",
+        supplier_name: document.getElementById("chartEditSupplierName").value.trim(),
+        shipping_notes: document.getElementById("chartEditShippingNotes").value.trim(),
+      };
+
+      const res = await fetch(`/api/v1/procurement/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const resData = await res.json();
+
+      if (resData.status === "success") {
+        showToast("Đã lưu cập nhật thiết bị thành công!", "success");
+        closeChartQuickEditModal();
+
+        // Reload data and redraw chart dynamically
+        await Promise.all([
+          loadProcurementData(),
+          loadProcurementChartData()
+        ]);
+      } else {
+        throw new Error(resData.message || "Lỗi lưu dữ liệu");
+      }
+    } catch (err) {
+      console.error("Lỗi saveChartQuickEdit:", err);
+      showToast("Không thể lưu: " + err.message, "error");
+    } finally {
+      if (btnSave) {
+        btnSave.disabled = false;
+        btnSave.innerHTML = originalText;
+      }
+    }
+  };
+
+  window.openFullModalFromChartEdit = function () {
+    if (!currentEditingOrder) return;
+    const orderId = currentEditingOrder.id;
+    closeChartQuickEditModal();
+    if (window.openEditOrderModal) {
+      window.openEditOrderModal(orderId);
+    }
+  };
+
+  // Global Escape listener to exit chart fullscreen or close quick edit modal
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
+      const editModal = document.getElementById("chartQuickEditModal");
+      if (editModal && editModal.style.display === "flex") {
+        closeChartQuickEditModal();
+        return;
+      }
+
+      const chartCard = document.getElementById("procurementChartCard");
+      if (chartCard && chartCard.classList.contains("is-fullscreen")) {
+        window.toggleProcurementChartFullscreen();
+        return;
+      }
+
       const card = document.getElementById("procurementTableCard");
       if (card && card.classList.contains("fullscreen")) {
         window.toggleProcurementFullscreen();
@@ -1323,3 +1821,4 @@
     }
   });
 })();
+

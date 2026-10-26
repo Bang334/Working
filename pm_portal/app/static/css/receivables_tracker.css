@@ -1870,9 +1870,10 @@ body.table-modal-fullscreen-open {
 .coord-seg {
   height: 100%;
   position: relative;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
   box-sizing: border-box;
+  pointer-events: auto !important;
 }
 
 /* Vạch chia ngăn cách giữa các khoản trong cùng 1 hợp đồng */
@@ -1912,6 +1913,7 @@ body.table-modal-fullscreen-open {
   border-radius: 50%;
   background: #FEF08A;
   border: 1px solid #0F172A;
+  pointer-events: none !important;
 }
 
 /* Điểm nhấn đặc biệt cho KẾ HOẠCH TUẦN TỚI (Target) */
@@ -1933,6 +1935,7 @@ body.table-modal-fullscreen-open {
   right: 2px;
   font-size: 10px;
   line-height: 1;
+  pointer-events: none !important;
 }
 
 /* Hiệu ứng khi Hover vào từng khoản (đồng bộ cả 2 bên Trái - Phải) */
@@ -2544,17 +2547,17 @@ body.table-modal-fullscreen-open {
 .chart-segment-tooltip {
   position: fixed;
   z-index: 10000030;
-  background: #FFFFFF;
-  color: #1E293B;
-  border: 1px solid #E2E8F0;
-  border-top: 3.5px solid #0284C7;
-  border-radius: 12px;
-  padding: 0.8rem 1.05rem;
-  font-size: 0.78rem;
-  box-shadow: 0 20px 30px -8px rgba(15, 23, 42, 0.18), 0 8px 12px -4px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.9);
+  background: #FFFFFF !important;
+  color: #1E293B !important;
+  border: 1px solid #CBD5E1 !important;
+  border-top: 3.5px solid #0284C7 !important;
+  border-radius: 12px !important;
+  padding: 0.85rem 1.1rem !important;
+  font-size: 0.78rem !important;
+  box-shadow: 0 20px 30px -8px rgba(15, 23, 42, 0.22), 0 8px 12px -4px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(226, 232, 240, 0.9) !important;
   pointer-events: auto;
-  max-width: 410px;
-  min-width: 310px;
+  max-width: 420px;
+  min-width: 320px;
   line-height: 1.45;
 }
 

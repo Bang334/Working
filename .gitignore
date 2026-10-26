@@ -19,3 +19,5 @@ pm_portal/template_full_details.txt
 *.db
 *.bak
 *_backup.*
+scratch/
+

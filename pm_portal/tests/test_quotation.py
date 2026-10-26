@@ -194,8 +194,21 @@ class TestQuotationModule(unittest.TestCase):
         self.assertGreaterEqual(len(backups), 1)
 
     @classmethod
+    def setUpClass(cls):
+        """Clean any leftover test files before testing begins."""
+        cls._cleanup()
+
+    @classmethod
     def tearDownClass(cls):
         """Clean up all temporary files and test database records created during testing."""
+        cls._cleanup()
+
+    def tearDown(self):
+        """Clean up test artifacts after each test method."""
+        self._cleanup()
+
+    @classmethod
+    def _cleanup(cls):
         from app.database import get_db_connection
         bao_gia_dir = WORKING_DIR / "Ho So Du An" / "Bao Gia"
         history_dir = bao_gia_dir / "Lich_Su"
