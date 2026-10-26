@@ -1,7 +1,7 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/receivables_tracker.css?v=1.0">
+<link rel="stylesheet" href="/static/css/receivables_tracker.css?v=5.0">
 {% endblock %}
 
 {% block content %}
@@ -24,10 +24,20 @@
     </div>
 
     <div class="receivables-hero-actions">
+      <button type="button" class="btn btn-primary btn-sm" onclick="openWeeklyComparisonFullscreen()" title="Mở biểu đồ toàn màn hình so sánh thu hồi công nợ cuối tuần trước và cuối tuần này" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); border-color: #0284C7; font-weight: 700; box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="9" width="7" height="12" rx="1"/></svg>
+        <span>📊 Biểu Đồ So Sánh Tuần</span>
+      </button>
       <button type="button" class="btn btn-primary btn-sm" onclick="syncFromContracts()" title="Đồng bộ chính xác các mốc thanh toán từ dữ liệu Hợp đồng trong Database">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
         <span>Đồng Bộ Từ Database</span>
       </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="triggerCustomFileUploadMain()" title="Tải file Excel/JSON từ bộ phận khác để phân tích biểu đồ độc lập (không sửa dữ liệu gốc)" style="font-weight: 700; color: #0284C7; border-color: #38BDF8; background: #F0F9FF;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>📂 Tạo Biểu Đồ Từ File Riêng</span>
+      </button>
+      <input type="file" id="inputCustomChartFileMain" accept=".xlsx,.xls,.json" style="display: none;" onchange="handleCustomFileUpload(event)">
 
       <button type="button" class="btn btn-ai btn-sm" onclick="toggleAiDigest()" id="btnToggleAi" title="Bật/Tắt Bản tin AI phân tích rủi ro & khuyến nghị thu hồi">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
@@ -36,12 +46,20 @@
 
       <button type="button" class="btn btn-outline btn-sm" onclick="exportReceivablesExcel()" title="Tải bảng theo dõi công nợ định dạng Excel chuẩn live formula">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <span>Xuất Báo Cáo Excel (AR)</span>
+        <span>Xuất Excel</span>
       </button>
 
-      <button type="button" class="btn btn-outline btn-sm" onclick="loadReceivablesData()" title="Làm mới dữ liệu">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <button type="button" class="btn btn-outline btn-sm" onclick="exportReceivablesWord()" title="Xuất Báo Cáo Điều Hành Word (.docx) phục vụ Tổng Giám Đốc theo 3 bài học quản trị">
+        <svg class="icon" viewBox="0 0 24 24" style="color: #2563EB;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Xuất Word (Sếp)</span>
       </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="exportReceivablesPpt()" title="Xuất Slide Trình Chiếu PowerPoint (.pptx) báo cáo Ban Giám Đốc theo 3 bài học quản trị">
+        <svg class="icon" viewBox="0 0 24 24" style="color: #D97706;" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><polygon points="10 8 16 11 10 14 10 8"/></svg>
+        <span>Xuất PPT (Sếp)</span>
+      </button>
+
+
     </div>
   </div>
 
@@ -204,6 +222,15 @@
         <span class="badge-item-count" id="tableItemCount">0 đợt</span>
       </div>
       <div class="table-card-actions">
+        <button type="button" class="btn btn-outline btn-xs" onclick="openWeeklyComparisonFullscreen()" title="So sánh biểu đồ cuối tuần trước và cuối tuần này (每週應收帳款對比圖表)" style="color: #0369A1; border-color: #BAE6FD; font-weight: 700; background: #F0F9FF;">
+          <svg class="icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="9" width="7" height="12" rx="1"/></svg>
+          <span>📊 Biểu Đồ Tuần</span>
+        </button>
+        <button type="button" class="btn btn-outline btn-xs" onclick="triggerCustomFileUploadMain()" title="Tải file Excel (.xlsx/.xls) hoặc JSON riêng từ bộ phận khác để phân tích biểu đồ mà không ghi đè dữ liệu chính" style="color: #0284C7; border-color: #38BDF8; font-weight: 700; background: #F0F9FF;">
+          <svg class="icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>📂 Tạo Biểu Đồ Từ File Riêng</span>
+        </button>
+        <input type="file" id="inputCustomChartFileMain" accept=".xlsx,.xls,.json" style="display: none;" onchange="handleCustomFileUpload(event)">
         <button type="button" class="btn btn-primary btn-xs" onclick="openCreateReceivableModal()" title="Thêm một đợt thanh toán / mốc công nợ mới">
           <svg class="icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           <span>+ Thêm Đợt Mới</span>
@@ -229,11 +256,8 @@
         <thead>
           <tr>
             <th class="col-stt text-center sticky-col col-1">
-              <div class="th-header-cell">
-                <span class="th-title" style="justify-content: center;">STT<br><span class="zh">序號</span></span>
-                <button type="button" class="btn-th-reset" onclick="resetHeaderFiltersAr()" title="Xóa tất cả đầu lọc về mặc định">
-                  🔄 Reset
-                </button>
+              <div class="th-header-cell" style="justify-content: center; align-items: center;" title="Đã tự động sắp xếp theo độ ưu tiên giải quyết: Quá hạn 🚨 > Sắp đến hạn ⚡ > Chờ thu ⏳ > Đã thu xong ✓">
+                <span class="th-title" style="justify-content: center; text-align: center;">Ưu Tiên<br><span class="zh">STT / 優先級</span></span>
               </div>
             </th>
             <th class="col-project sticky-col col-2">
@@ -380,105 +404,200 @@
 
 </div>
 
-<!-- Modal 1: Chỉnh Sửa Chi Tiết Mốc Công Nợ (Edit Receivable Modal) -->
-<div class="modal fade" id="modalEditReceivable" tabindex="-1" aria-labelledby="modalEditReceivableLabel" aria-hidden="true" style="display: none; background: rgba(15, 23, 42, 0.65); z-index: 1000000;">
-  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 780px;">
-    <div class="modal-content" style="border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);">
-      <div class="modal-header" style="background: linear-gradient(135deg, #1F4E79 0%, #153E65 100%); color: #FFFFFF; padding: 0.9rem 1.25rem;">
-        <h5 class="modal-title" id="modalEditReceivableLabel" style="font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+<!-- Modal 1: Chỉnh Sửa Chi Tiết Mốc Công Nợ (Edit Receivable Modal - Executive Dark Compact Layout) -->
+<div class="modal fade" id="modalEditReceivable" tabindex="-1" aria-labelledby="modalEditReceivableLabel" aria-hidden="true" style="display: none; background: rgba(15, 23, 42, 0.75); z-index: 10000050;" onclick="if(event.target === this) closeEditReceivableModal()">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 760px; width: 92vw;">
+    <div class="modal-content edit-rec-modal-content">
+      <div class="modal-header edit-rec-modal-header">
+        <h5 class="modal-title edit-rec-modal-title" id="modalEditReceivableLabel">
           <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           <span>Cập Nhật Chi Tiết Đợt Công Nợ · 編輯應收款明細</span>
         </h5>
-        <button type="button" class="btn-close btn-close-white" onclick="closeEditReceivableModal()" aria-label="Close" style="filter: brightness(0) invert(1); opacity: 0.85;"></button>
+        <button type="button" class="btn-close-edit-modal" onclick="closeEditReceivableModal()" aria-label="Close" title="Đóng / 關閉 (Esc)">✕</button>
       </div>
-      <div class="modal-body" style="padding: 1.25rem; background: #F8FAFC; max-height: 75vh; overflow-y: auto;">
+
+      <div class="modal-body edit-rec-modal-body">
         <input type="hidden" id="editRecId">
 
-        <div class="row g-3">
-          <div class="col-md-8">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Tên Đợt / Dự Án (專案名稱 & 期數) <span class="text-danger">*</span></label>
-            <input type="text" id="editProjectName" class="form-control form-control-sm" required>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số HĐ / PO (合約編號 - Để trống nếu không có HĐ)</label>
-            <input type="text" id="editContractCode" class="form-control form-control-sm" placeholder="Không bắt buộc..." style="font-family: monospace;">
-          </div>
-
-          <div class="col-md-12">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Tên Khách Hàng / Công Ty (客戶名稱) <span class="text-danger">*</span></label>
-            <input type="text" id="editCustomerName" class="form-control form-control-sm" required>
+        <div class="edit-rec-form-container">
+          <!-- HÀNG 1: Tên Đợt / Dự Án (65%) & Số HĐ / PO (35%) -->
+          <div class="edit-rec-row">
+            <div class="edit-rec-col" style="flex: 0 0 65%;">
+              <label class="edit-rec-label">Tên Đợt / Dự Án (專案名稱 & 期數) <span class="text-danger">*</span></label>
+              <input type="text" id="editProjectName" class="edit-rec-input" required placeholder="Ví dụ: Đợt 1 (30%) - Tủ điện xanh...">
+            </div>
+            <div class="edit-rec-col" style="flex: 1 1 auto;">
+              <label class="edit-rec-label">Số HĐ / PO (合約編號)</label>
+              <input type="text" id="editContractCode" class="edit-rec-input font-mono" placeholder="Không bắt buộc...">
+            </div>
           </div>
 
-          <div class="col-md-4">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Số Tiền Đợt TT Chưa VAT (未稅金額)</label>
-            <input type="number" id="editNetAmount" class="form-control form-control-sm" oninput="recalcEditModalAmounts()" step="1000">
-            <small class="text-muted" id="previewNetAmount">0 ₫</small>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Thuế Suất VAT (稅率)</label>
-            <select id="editVatRate" class="form-select form-select-sm" onchange="recalcEditModalAmounts()">
-              <option value="0">0% (Không áp dụng VAT / 免稅)</option>
-              <option value="0.08">8% (Thuế GTGT ưu đãi / 8% 增值稅)</option>
-              <option value="0.10">10% (Thuế GTGT tiêu chuẩn / 10% 增值稅)</option>
-            </select>
-            <small class="text-muted" id="previewVatAmount">VAT: 0 ₫</small>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" style="font-weight: 700; font-size: 0.82rem; color: #1F4E79;">Tổng Tiền Gồm VAT (含稅總額)</label>
-            <input type="text" id="previewGrossAmount" class="form-control form-control-sm" readonly style="font-weight: 700; color: #1F4E79; background: #EEF2F6;">
+          <!-- HÀNG 2: Tên Khách Hàng -->
+          <div class="edit-rec-row">
+            <div class="edit-rec-col edit-rec-col-12">
+              <label class="edit-rec-label">Tên Khách Hàng / Công Ty (客戶名稱) <span class="text-danger">*</span></label>
+              <input type="text" id="editCustomerName" class="edit-rec-input" required placeholder="Tên khách hàng FDI...">
+            </div>
           </div>
 
-          <div class="col-md-6">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #059669;">Số Tiền Đã Nhận (已收金額)</label>
-            <input type="number" id="editReceivedAmount" class="form-control form-control-sm" oninput="recalcEditModalAmounts()" step="1000">
-            <small class="text-muted" id="previewReceivedAmount">0 ₫</small>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" style="font-weight: 700; font-size: 0.82rem; color: #DC2626;">Số Tiền Còn Lại (剩餘尾款)</label>
-            <input type="text" id="previewRemainingDebt" class="form-control form-control-sm" readonly style="font-weight: 700; color: #DC2626; background: #FEF2F2;">
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ngày KH Hẹn TT (預計付款日)</label>
-            <input type="date" id="editCustomerPromisedDate" class="form-control form-control-sm">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ngày Đến Hạn (到期日)</label>
-            <input type="date" id="editDueDate" class="form-control form-control-sm">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ngày Thực Tế Đã TT (實際付款日)</label>
-            <input type="date" id="editPaidDate" class="form-control form-control-sm" onchange="onEditPaidDateChange(this.value)">
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Trạng Thái Chứng Từ (單據狀態)</label>
-            <input type="text" id="editDocStatus" class="form-control form-control-sm" placeholder="Ví dụ: HD-TEST-001, Đã xuất HĐ, Chưa xuất...">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Trạng Thái Thu Nợ (收款狀態)</label>
-            <select id="editCollectionStatus" class="form-select form-select-sm">
-              <option value="PENDING">Chờ thu (待收款)</option>
-              <option value="URGENT">Sắp đến hạn &lt;= 7 ngày (即將到期)</option>
-              <option value="DELAYED">Quá hạn thanh toán (已逾期)</option>
-              <option value="PAID">Đã thu xong (已收款)</option>
-            </select>
+          <!-- HÀNG 3: Tiền chưa VAT (35%) | Thuế Suất VAT (28%) | Tổng tiền gồm VAT (auto) -->
+          <div class="edit-rec-row">
+            <div class="edit-rec-col" style="flex: 0 0 35%;">
+              <label class="edit-rec-label">Tiền Chưa VAT (未稅金額)</label>
+              <input type="number" id="editNetAmount" class="edit-rec-input font-mono" oninput="recalcEditModalAmounts()" step="1000">
+              <span class="edit-rec-subhint" id="previewNetAmount">0 ₫</span>
+            </div>
+            <div class="edit-rec-col" style="flex: 0 0 28%;">
+              <label class="edit-rec-label">Thuế Suất VAT (稅率)</label>
+              <select id="editVatRate" class="edit-rec-input" onchange="recalcEditModalAmounts()">
+                <option value="0">0% (Không VAT / 免稅)</option>
+                <option value="0.08">8% (GTGT ưu đãi / 8%)</option>
+                <option value="0.10">10% (GTGT chuẩn / 10%)</option>
+              </select>
+              <span class="edit-rec-subhint" id="previewVatAmount">VAT: 0 ₫</span>
+            </div>
+            <div class="edit-rec-col" style="flex: 1 1 auto;">
+              <label class="edit-rec-label" style="color: #38BDF8;">Tổng Tiền Gồm VAT (含稅總額)</label>
+              <input type="text" id="previewGrossAmount" class="edit-rec-input font-mono highlight-gross" readonly>
+            </div>
           </div>
 
-          <div class="col-md-12">
-            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Ghi Chú Tiến Độ / Kế Hoạch Đòi Nợ (催收行動備註)</label>
-            <textarea id="editNotes" class="form-control" rows="2" placeholder="Ghi chú đợt thanh toán, trao đổi với kế toán khách hàng..."></textarea>
+          <!-- HÀNG 4: Thanh Toán Trọn Gói 100% Khoản Này -->
+          <div class="edit-rec-row" style="background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 8px; padding: 0.55rem 0.75rem; align-items: center; justify-content: space-between;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 0.78rem; font-weight: 800; color: #F8FAFC;">Thanh Toán Đợt Này (本期付款):</span>
+              <span style="font-size: 0.71rem; color: #94A3B8;">Thanh toán trọn gói 100% khoản này</span>
+            </div>
+            <div style="display: flex; gap: 0.45rem;">
+              <button type="button" class="btn-pay-toggle btn-pay-full" id="btnPayFull" onclick="setEditModalFullPayment(true)" title="Xác nhận thanh toán đủ 100% toàn bộ khoản này">
+                ✓ ĐÃ THU ĐỦ 100% (全額已收)
+              </button>
+              <button type="button" class="btn-pay-toggle btn-pay-zero" id="btnPayZero" onclick="setEditModalFullPayment(false)" title="Chưa thu tiền (còn nợ 100% khoản này)">
+                ✕ CHƯA THU (未收款)
+              </button>
+            </div>
+          </div>
+
+          <div class="edit-rec-row">
+            <div class="edit-rec-col edit-rec-col-6">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label class="edit-rec-label" style="color: #34D399;">Số Tiền Đã Nhận (已收金額)</label>
+                <span class="edit-rec-subhint" id="badgePaymentPercent" style="color: #38BDF8; font-weight: 700;">0%</span>
+              </div>
+              <input type="number" id="editReceivedAmount" class="edit-rec-input font-mono highlight-rec" oninput="recalcEditModalAmounts()" step="1000">
+              <span class="edit-rec-subhint" id="previewReceivedAmount" style="color: #34D399; font-weight: 600;">0 ₫</span>
+            </div>
+            <div class="edit-rec-col edit-rec-col-6">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label class="edit-rec-label" style="color: #F87171;">Số Tiền Còn Lại (剩餘尾款)</label>
+                <span class="edit-rec-subhint" id="badgeDebtPercent" style="color: #F87171; font-weight: 700;">100%</span>
+              </div>
+              <input type="text" id="previewRemainingDebt" class="edit-rec-input font-mono highlight-debt" readonly>
+            </div>
+          </div>
+
+          <!-- KHỐI KÍCH HOẠT TÍNH HẠN: LẮP ĐẶT XONG / NGHIỆM THU / XUẤT HĐ -->
+          <div class="edit-rec-trigger-box">
+            <div class="trigger-box-head">
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span class="trigger-badge">⚡ KÍCH HOẠT BẮT ĐẦU TÍNH HẠN</span>
+                <span style="font-size: 0.71rem; color: #94A3B8;">(Vừa lắp đặt xong / nghiệm thu &rarr; Tính T/T)</span>
+              </div>
+              <span id="triggerStatusBadge" class="trigger-status-badge">Theo tiến độ</span>
+            </div>
+
+            <div class="edit-rec-row" style="margin-bottom: 0.35rem; align-items: flex-end;">
+              <!-- 1. Ngày bắt đầu tính -->
+              <div class="edit-rec-col" style="flex: 0 0 35%;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <label class="edit-rec-label" style="color: #38BDF8;">📅 Ngày Bắt Đầu Tính (起算日)</label>
+                  <button type="button" class="btn-micro" onclick="setStartDateToday()" title="Chọn ngày hôm nay">Hôm nay</button>
+                </div>
+                <input type="date" id="editStartDate" class="edit-rec-input font-mono" onchange="autoCalculateDueDateFromStart()">
+              </div>
+
+              <!-- 2. Số ngày thời hạn T/T -->
+              <div class="edit-rec-col" style="flex: 0 0 28%;">
+                <label class="edit-rec-label" style="color: #FDE047;">⏳ Thời Hạn T/T (Số ngày)</label>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <input type="number" id="editPaymentTermDays" class="edit-rec-input font-mono" placeholder="60" min="1" step="1" oninput="autoCalculateDueDateFromStart()" style="text-align: center;">
+                  <span style="font-size: 0.75rem; color: #94A3B8; font-weight: 600;">ngày</span>
+                </div>
+              </div>
+
+              <!-- 3. Nút Bắt Đầu Tính Hạn -->
+              <div class="edit-rec-col" style="flex: 1 1 auto;">
+                <button type="button" class="btn-start-calc-due" onclick="triggerStartDueDateCalculation()" title="Bắt đầu tính hạn: Lấy Ngày Bắt Đầu + Số Ngày T/T => Tự động điền Ngày Đến Hạn">
+                  🚀 BẮT ĐẦU TÍNH HẠN &rarr;
+                </button>
+              </div>
+            </div>
+
+            <div class="trigger-box-footer">
+              <div class="quick-days-pills">
+                <span style="font-size: 0.69rem; color: #64748B;">Mẫu T/T:</span>
+                <button type="button" class="btn-pill-day" onclick="setPaymentTermDays(30)">30 ngày</button>
+                <button type="button" class="btn-pill-day" onclick="setPaymentTermDays(45)">45 ngày</button>
+                <button type="button" class="btn-pill-day active" id="pillDay60" onclick="setPaymentTermDays(60)">60 ngày</button>
+                <button type="button" class="btn-pill-day" onclick="setPaymentTermDays(90)">90 ngày</button>
+              </div>
+              <div id="calcDueResultHint" class="calc-due-hint">
+                Chờ lắp đặt xong để tính hạn...
+              </div>
+            </div>
+          </div>
+
+          <!-- HÀNG 5: 3 TRƯỜNG NGÀY NẰM CHUNG 1 DÒNG DUY NHẤT GỌN GÀNG -->
+          <div class="edit-rec-row edit-rec-dates-row">
+            <div class="edit-rec-col edit-rec-col-4-even">
+              <label class="edit-rec-label" style="color: #FDE047;">📅 KH Hẹn TT (預計付款日)</label>
+              <input type="date" id="editCustomerPromisedDate" class="edit-rec-input">
+            </div>
+            <div class="edit-rec-col edit-rec-col-4-even">
+              <label class="edit-rec-label" style="color: #FB923C;">⏰ Ngày Đến Hạn (到期日)</label>
+              <input type="date" id="editDueDate" class="edit-rec-input">
+            </div>
+            <div class="edit-rec-col edit-rec-col-4-even">
+              <label class="edit-rec-label" style="color: #4ADE80;">✅ Thực Tế Đã TT (實際收款)</label>
+              <input type="date" id="editPaidDate" class="edit-rec-input" onchange="onEditPaidDateChange(this.value)">
+            </div>
+          </div>
+
+          <!-- HÀNG 6: Trạng Thái Chứng Từ (50%) | Trạng Thái Thu Nợ (50%) -->
+          <div class="edit-rec-row">
+            <div class="edit-rec-col edit-rec-col-6">
+              <label class="edit-rec-label">Trạng Thái Chứng Từ (單據狀態)</label>
+              <input type="text" id="editDocStatus" class="edit-rec-input" placeholder="Ví dụ: Đã xuất HĐ, BB Nghiệm thu...">
+            </div>
+            <div class="edit-rec-col edit-rec-col-6">
+              <label class="edit-rec-label">Trạng Thái Thu Nợ (收款狀態)</label>
+              <select id="editCollectionStatus" class="edit-rec-input" onchange="onEditCollectionStatusChange(this.value)">
+                <option value="PENDING">Chờ thu (待收款)</option>
+                <option value="URGENT">Sắp đến hạn &lt;= 7 ngày (即將到期)</option>
+                <option value="DELAYED">Quá hạn thanh toán (已逾期)</option>
+                <option value="PAID">Đã thu xong (已收款)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- HÀNG 7: Ghi Chú Tiến Độ / Kế Hoạch Đòi Nợ -->
+          <div class="edit-rec-row" style="margin-bottom: 0;">
+            <div class="edit-rec-col edit-rec-col-12">
+              <label class="edit-rec-label">Ghi Chú Tiến Độ / Kế Hoạch Đòi Nợ (催收行動備註)</label>
+              <textarea id="editNotes" class="edit-rec-input" rows="2" placeholder="Ghi chú đợt thanh toán, trao đổi với kế toán khách hàng..."></textarea>
+            </div>
           </div>
         </div>
       </div>
-      <div class="modal-footer" style="padding: 0.75rem 1.25rem; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between;">
-        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDeleteCurrentReceivable()">
+
+      <div class="modal-footer edit-rec-modal-footer">
+        <button type="button" class="btn-delete-rec" onclick="confirmDeleteCurrentReceivable()">
           <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           <span>Xóa Đợt Này</span>
         </button>
-        <div style="display: flex; gap: 0.5rem;">
-          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeEditReceivableModal()">Hủy Bỏ</button>
-          <button type="button" class="btn btn-primary btn-sm" onclick="saveReceivableModal()">
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button type="button" class="btn-cancel-rec" onclick="closeEditReceivableModal()">Hủy Bỏ (Esc)</button>
+          <button type="button" class="btn-save-rec" onclick="saveReceivableModal()">
             <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             <span>Lưu Thay Đổi (保存)</span>
           </button>
@@ -489,7 +608,7 @@
 </div>
 
 <!-- Modal 2: Thêm Mới Đợt Công Nợ (Create Receivable Modal) -->
-<div class="modal fade" id="modalCreateReceivable" tabindex="-1" aria-labelledby="modalCreateReceivableLabel" aria-hidden="true" style="display: none; background: rgba(15, 23, 42, 0.65); z-index: 1000000;">
+<div class="modal fade" id="modalCreateReceivable" tabindex="-1" aria-labelledby="modalCreateReceivableLabel" aria-hidden="true" style="display: none; background: rgba(15, 23, 42, 0.75); z-index: 10000050;" onclick="if(event.target === this) closeCreateReceivableModal()">
   <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 780px;">
     <div class="modal-content" style="border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);">
       <div class="modal-header" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #FFFFFF; padding: 0.9rem 1.25rem;">
@@ -701,11 +820,350 @@
   </div>
 </div>
 
+
+<!-- Modal 4: Biểu Đồ So Sánh Thu Hồi Công Nợ Tuần (Full Màn Hình 100vw x 100vh) -->
+<div class="weekly-comparison-fullscreen-modal" id="modalWeeklyComparisonFullscreen" style="display: none;">
+  <!-- Slim Top Bar (Chủ yếu nhường 94% diện tích cho 2 biểu đồ) -->
+  <div class="weekly-comp-header">
+    <div class="weekly-comp-header-top">
+      <div class="weekly-comp-header-left">
+        <div class="weekly-comp-brand-badge">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="18" rx="1"/>
+            <rect x="14" y="9" width="7" height="12" rx="1"/>
+          </svg>
+          <span id="compHeaderBrandTitle">SO SÁNH THU HỒI CÔNG NỢ TUẦN <span style="font-size: 0.8rem; font-weight: 500; color: #94A3B8;">· 每週應收帳款回收對比</span></span>
+        </div>
+
+        <!-- Mode Switcher: Tuần Trước vs Tuần Này  HOẶC  Tuần Này vs Kế Hoạch Tuần Tới -->
+        <div class="comp-mode-switch-group">
+          <button type="button" class="btn btn-mode-toggle active" id="btnModePastToCurr" onclick="switchWeeklyCompMode('past_to_curr')" title="So sánh thu hồi cuối tuần trước và cuối tuần này">
+            ◀ Tuần Trước vs Tuần Này <span style="font-size:0.75rem; opacity:0.85;">(上週 vs 本週)</span>
+          </button>
+          <button type="button" class="btn btn-mode-toggle" id="btnModeCurrToNext" onclick="switchWeeklyCompMode('curr_to_next')" title="Xem thống kê và kế hoạch các khoản sẽ thu trong tuần tới so với tuần này">
+            🔮 Kế Hoạch Tuần Tới <span style="font-size:0.75rem; opacity:0.85;">(下週計劃)</span> ▶
+          </button>
+        </div>
+
+        <!-- Inline Compact Color Legend (Song ngữ Việt - Đài Loan - Nhấp để lọc nhanh) -->
+        <div class="weekly-comp-inline-legend">
+          <span class="comp-legend-item" id="legendPaid" onclick="filterByLegend('paid')" title="Nhấp để lọc: Các khoản đã thu tiền (已收)">
+            <span class="comp-legend-box bg-paid"></span> Đã thu (已收)
+          </span>
+          <span class="comp-legend-item" id="legendOverdue" onclick="filterByLegend('overdue')" title="Nhấp để lọc: Các khoản đến hạn / quá hạn (逾期)">
+            <span class="comp-legend-box bg-overdue"></span> Đến hạn / Quá hạn (逾期)
+          </span>
+          <span class="comp-legend-item" id="legendUrgent" onclick="filterByLegend('urgent')" title="Nhấp để lọc: Các khoản sắp đến hạn <= 7 ngày (即將到期)">
+            <span class="comp-legend-box bg-urgent"></span> Sắp đến hạn (即將到期)
+          </span>
+          <span class="comp-legend-item" id="legendPending" onclick="filterByLegend('pending')" title="Nhấp để lọc: Các khoản chưa đến hạn thanh toán (未到期)">
+            <span class="comp-legend-box bg-pending"></span> Chưa đến hạn (未到期)
+          </span>
+          <span class="comp-legend-item" id="legendChanged" onclick="filterByLegend('changed')" title="Nhấp để lọc: Các dự án có biến động trong tuần (本週變動)">
+            <span class="comp-legend-box bg-changed-ring"></span> Biến động (變動)
+          </span>
+        </div>
+      </div>
+
+      <!-- Action Buttons đưa lên góc trên bên phải cùng hàng -->
+      <div class="comp-actions-group">
+        <button type="button" class="btn btn-outline btn-xs" onclick="saveWeeklySnapshotPrompt()" title="Lưu chốt số liệu hiện tại">
+          <span>📸 Chốt Tuần</span>
+        </button>
+        <button type="button" class="btn btn-danger btn-xs btn-comp-close" onclick="closeWeeklyComparisonFullscreen()" title="Đóng toàn màn hình (Phím tắt: Esc)">
+          <span>✕ Đóng (Esc)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Hàng 2: Bộ lọc phân chia rõ ràng, hợp lý theo đúng quy trình quản lý dự án -->
+    <div class="weekly-comp-header-controls">
+      <!-- 1. Mốc thời gian -->
+      <div class="comp-control-group">
+        <label for="compDatePrev" id="lblDatePrev">Tuần trước (上週):</label>
+        <input type="date" id="compDatePrev" class="form-control form-control-xs" onchange="onWeeklyCompDateChange()">
+      </div>
+
+      <div class="comp-control-group">
+        <label for="compDateCurr" id="lblDateCurr">Tuần này (本週):</label>
+        <input type="date" id="compDateCurr" class="form-control form-control-xs" onchange="onWeeklyCompDateChange()">
+      </div>
+
+      <!-- 2. Khách hàng -->
+      <div class="comp-control-group comp-filter-group-cust">
+        <label for="compFilterCustomer">🏢 Khách hàng (客戶):</label>
+        <select id="compFilterCustomer" class="form-select form-select-xs" onchange="filterComparisonItems()" title="Lọc theo khách hàng">
+          <option value="all">Tất cả khách hàng (全部客戶)</option>
+        </select>
+      </div>
+
+      <!-- 3. Tiến độ Dự án (Chưa xong vs Đã thu đủ) -->
+      <div class="comp-control-group comp-filter-group-proj">
+        <label for="compFilterProjProgress">📊 Dự án (結清):</label>
+        <select id="compFilterProjProgress" class="form-select form-select-xs" onchange="onFilterControlChange()" title="Lọc theo tình trạng kết thanh của toàn bộ dự án">
+          <option value="all" selected>Tất cả dự án (全部)</option>
+          <option value="unpaid">⏳ Chưa thanh toán xong / Còn nợ (未結清)</option>
+          <option value="paid">✅ Đã thu đủ 100% (已全額結清)</option>
+        </select>
+      </div>
+
+      <!-- 4. Trạng thái Đợt & Tính Hạn (Đặc biệt: Chưa có ngày tính cho khoản tiếp theo) -->
+      <div class="comp-control-group comp-filter-group-status">
+        <label for="compFilterStatus">⏱️ Đợt &amp; Tính hạn (款項):</label>
+        <select id="compFilterStatus" class="form-select form-select-xs" onchange="onFilterControlChange()" title="Lọc theo trạng thái tính hạn và thời hạn thu nợ">
+          <option value="all" selected>Tất cả đợt (全部款項)</option>
+          <option value="unstarted">⚠️ Chưa tính hạn đợt tiếp (Chờ lắp đặt/nghiệm thu)</option>
+          <option value="calculating">🚀 Đang tính hạn T/T (Đã lắp đặt / Đếm ngược)</option>
+          <option value="overdue">🚨 Đến hạn / Quá hạn (逾期款項)</option>
+          <option value="urgent">⚡ Sắp đến hạn &le; 7 ngày (即將到期)</option>
+          <option value="pending">⏳ Chưa đến hạn (未到期)</option>
+          <option value="paid">✅ Đợt đã thu xong (已收期款)</option>
+        </select>
+      </div>
+
+      <!-- 5. Tiêu điểm biến động -->
+      <div class="comp-control-group comp-filter-group-focus">
+        <label for="compFilterFocus">🎯 Tiêu điểm (焦點):</label>
+        <select id="compFilterFocus" class="form-select form-select-xs" onchange="onFilterControlChange()" title="Lọc theo biến động tuần hoặc phân kỳ">
+          <option value="all">Tất cả (全部)</option>
+          <option value="active_only" selected>⚡ Cần chú ý (Biến động + Hạn)</option>
+          <option value="changed">📈 Có biến động tuần này (本週有變動)</option>
+          <option value="multi">📑 Dự án nhiều đợt (多期 &ge; 2)</option>
+          <option value="unchanged">💤 Không biến động (無變動)</option>
+        </select>
+      </div>
+
+      <!-- 6. Số lượng hiển thị & Nút Đặt lại -->
+      <div class="comp-filter-summary-group">
+        <span class="comp-filter-chip" id="cntActiveProjectsChip" title="Số lượng dự án đang hiển thị sau khi lọc">
+          <span id="cntActiveProjects">0/0 dự án</span>
+        </span>
+        <button type="button" class="btn-filter-reset" onclick="resetWeeklyComparisonFilters()" title="Đặt lại tất cả bộ lọc về mặc định (重置所有篩選)">
+          ↺ Đặt lại
+        </button>
+      </div>
+
+      <!-- 7. Bộ chọn nguồn dữ liệu đưa sát lề phải -->
+      <div class="comp-source-switch-group" style="margin-left: auto;">
+        <button type="button" class="btn-source-toggle active" id="btnSourceDb" onclick="switchDataSource('db')" title="Dữ liệu gốc từ hệ thống cơ sở dữ liệu (系統原始數據)">
+          <span>📊 Gốc</span>
+        </button>
+        <button type="button" class="btn-source-toggle" id="btnSourceSample" onclick="switchDataSource('sample')" title="Dữ liệu mẫu chuẩn hóa minh họa tiến độ các giai đoạn (標準示範數據)">
+          <span>🧪 Mẫu</span>
+        </button>
+        <button type="button" class="btn-source-upload" id="btnSourceUpload" onclick="triggerCustomFileUpload()" title="Tải lên file Excel (.xlsx/.xls) hoặc JSON riêng từ bộ phận khác để phân tích độc lập (上傳獨立檔案)">
+          <span>📂 File Riêng</span>
+        </button>
+        <input type="file" id="inputCustomChartFile" accept=".xlsx,.xls,.json" style="display: none;" onchange="handleCustomFileUpload(event)">
+      </div>
+    </div>
+
+    <!-- Hàng 3: Các nút lọc tắt nhanh (Quick Filter Pills) -->
+    <div class="weekly-comp-quick-pills-bar">
+      <span class="quick-pills-label">Lọc nhanh:</span>
+      <button type="button" class="btn-filter-pill active" id="pillFilter_active_only" onclick="applyQuickFilter('active_only')">
+        ⚡ Cần chú ý (關注)
+      </button>
+      <button type="button" class="btn-filter-pill pill-warning" id="pillFilter_unstarted_next" onclick="applyQuickFilter('unstarted_next')" title="Lọc các dự án chưa thanh toán xong nhưng cũng chưa có ngày tính cho khoản tiếp theo (chờ lắp đặt/nghiệm thu)">
+        ⚠️ Chưa tính hạn đợt tiếp (Chờ lắp đặt)
+      </button>
+      <button type="button" class="btn-filter-pill pill-danger" id="pillFilter_overdue" onclick="applyQuickFilter('overdue')">
+        🚨 Đến hạn / Quá hạn (逾期)
+      </button>
+      <button type="button" class="btn-filter-pill pill-success" id="pillFilter_changed" onclick="applyQuickFilter('changed')">
+        📈 Có biến động tuần này (本週變動)
+      </button>
+      <button type="button" class="btn-filter-pill" id="pillFilter_unpaid" onclick="applyQuickFilter('unpaid')">
+        ⏳ Chưa thanh toán xong (未結清)
+      </button>
+      <button type="button" class="btn-filter-pill" id="pillFilter_paid_all" onclick="applyQuickFilter('paid_all')">
+        ✅ Đã thu đủ 100% (已結清)
+      </button>
+      <button type="button" class="btn-filter-pill" id="pillFilter_all" onclick="applyQuickFilter('all')">
+        🌐 Xem tất cả (全部)
+      </button>
+    </div>
+  </div>
+
+  <!-- Custom Standalone File Banner (Active when data_source is 'upload') -->
+  <div class="weekly-comp-custom-file-banner" id="weeklyCompCustomFileBanner" style="display: none;">
+    <div class="custom-file-banner-content">
+      <span class="custom-file-icon">📂</span>
+      <span><strong>CHẾ ĐỘ XEM FILE ĐỘC LẬP · 獨立檔案分析模式：</strong> Đang phân tích biểu đồ từ file <strong id="customFileLoadedName" style="color: #38BDF8;">...</strong> (<span id="customFileLoadedItems">0</span> mốc thanh toán). <em>Dữ liệu này chỉ dùng hiển thị biểu đồ, hoàn toàn không làm thay đổi hay ghi đè cơ sở dữ liệu chính của bạn! (不修改主資料庫)</em></span>
+    </div>
+    <div class="custom-file-banner-actions">
+      <button type="button" class="btn btn-outline btn-xs btn-custom-file-reupload" onclick="triggerCustomFileUpload()" title="Tải file khác lên (上傳其他檔案)">
+        ⬆ Tải File Khác
+      </button>
+      <button type="button" class="btn btn-warning btn-xs" onclick="switchDataSource('db')" title="Quay lại dữ liệu gốc của hệ thống (返回原始數據)">
+        ✕ Thoát về Dữ Liệu Gốc
+      </button>
+    </div>
+  </div>
+
+  <!-- Sample Data Mode Banner (Active when data_source is 'sample') -->
+  <div class="weekly-comp-sample-banner" id="weeklyCompSampleBanner" style="display: none;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <span class="sample-banner-icon">🧪</span>
+      <span><strong>CHẾ ĐỘ DỮ LIỆU MẪU CHUẨN HÓA · 示範數據模式：</strong> Đang hiển thị bộ dữ liệu mẫu demo đã được chuẩn hóa liên kết các giai đoạn và hạn thanh toán.</span>
+    </div>
+    <button type="button" class="btn btn-outline btn-xs" onclick="switchDataSource('db')" title="Quay lại dữ liệu gốc (返回原始數據)">
+      Quay lại Dữ Liệu Gốc (回原始數據)
+    </button>
+  </div>
+
+  <!-- Plan Announcement Banner for Next Week (Active when in curr_to_next mode) -->
+  <div class="weekly-comp-plan-banner" id="weeklyCompPlanBanner" style="display: none;">
+    <div class="plan-banner-icon">🎯</div>
+    <div class="plan-banner-content">
+      <strong>KẾ HOẠCH THU HỒI TUẦN TỚI:</strong> Dự kiến có <strong id="planBannerCount" style="color: #FACC15;">3 đợt thanh toán</strong> chạm hạn / hẹn trả với tổng số tiền cần đôn đốc: <strong id="planBannerAmount" style="color: #38BDF8;">424.953.000 ₫</strong>. Hãy ưu tiên liên hệ các khách hàng được đánh dấu mục tiêu bên biểu đồ bên phải!
+    </div>
+    <button type="button" class="btn btn-outline btn-xs btn-plan-switchback" onclick="switchWeeklyCompMode('past_to_curr')" title="Quay lại xem so sánh tuần trước vs tuần này">
+      Quay lại Tuần Trước
+    </button>
+  </div>
+
+  <!-- Main Side-by-Side 2 Coordinate Charts Container (94% height) -->
+  <div class="weekly-comp-split-view">
+    <!-- BIỂU ĐỒ BÊN TRÁI -->
+    <div class="weekly-comp-col left-col" id="colPrevWeek">
+      <div class="comp-col-header">
+        <div class="comp-col-header-top">
+          <div class="comp-col-title-badge">
+            <span class="badge-week-tag prev" id="prevBadgeWeekTag">BIỂU ĐỒ 1 · CUỐI TUẦN TRƯỚC <span class="badge-zh-sub">· 上週末</span></span>
+            <h3 id="prevColTitle" style="display: none;"></h3>
+          </div>
+        </div>
+        <div class="comp-col-stats">
+          <span class="stat-item">Đã thu (已收): <strong id="prevColReceived" style="color: #059669;">0 ₫</strong></span>
+          <span class="stat-item">Chưa thu (未收): <strong id="prevColDebt" style="color: #DC2626;">0 ₫</strong></span>
+          <span class="stat-badge" id="prevColRate">0%</span>
+        </div>
+      </div>
+
+      <!-- Coordinate System Chart Wrapper (Trục đứng = Tên dự án, Trục ngang = %) -->
+      <div class="coord-chart-wrapper">
+        <div class="coord-axis-top-label">
+          <div class="y-axis-header-title">
+            <span>Tên dự án / HĐ · 專案名稱</span>
+            <span class="axis-arrow-up" title="Trục đứng: Tên dự án / Hợp đồng">▲</span>
+          </div>
+          <div class="plot-header-hint" id="leftPlotHeaderHint">Mỗi thanh ngang = 100% HĐ · Chuột trái: Chi tiết | Chuột phải: Sửa đợt</div>
+        </div>
+
+        <div class="coord-bars-scroll-area" id="leftBarsScrollArea">
+          <div class="coord-bars-list" id="prevBarsContainer">
+            <!-- Dynamic Left Stacked % Bars -->
+          </div>
+        </div>
+
+        <!-- X-Axis (0% -> 100% -> %) -->
+        <div class="coord-x-axis-row">
+          <div class="coord-origin-spacer"></div>
+          <div class="coord-x-axis-line">
+            <span class="x-tick" style="left: 0%;">0%</span>
+            <span class="x-tick" style="left: 20%;">20%</span>
+            <span class="x-tick" style="left: 40%;">40%</span>
+            <span class="x-tick" style="left: 60%;">60%</span>
+            <span class="x-tick" style="left: 80%;">80%</span>
+            <span class="x-tick" style="left: 100%;">100%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIỂU ĐỒ BÊN PHẢI -->
+    <div class="weekly-comp-col right-col" id="colCurrWeek">
+      <div class="comp-col-header">
+        <div class="comp-col-header-top">
+          <div class="comp-col-title-badge">
+            <span class="badge-week-tag curr" id="currBadgeWeekTag">BIỂU ĐỒ 2 · CUỐI TUẦN NÀY <span class="badge-zh-sub">· 本週末</span></span>
+            <h3 id="currColTitle" style="display: none;"></h3>
+          </div>
+          <span class="header-delta-pill" id="headerDeltaSummary">+0 ₫</span>
+        </div>
+        <div class="comp-col-stats">
+          <span class="stat-item">Đã thu (已收): <strong id="currColReceived" style="color: #059669;">0 ₫</strong></span>
+          <span class="stat-item">Chưa thu (未收): <strong id="currColDebt" style="color: #DC2626;">0 ₫</strong></span>
+          <span class="stat-badge highlight" id="currColRate">0%</span>
+        </div>
+      </div>
+
+      <!-- Coordinate System Chart Wrapper (Trục đứng = Tên dự án, Trục ngang = %) -->
+      <div class="coord-chart-wrapper">
+        <div class="coord-axis-top-label">
+          <div class="y-axis-header-title">
+            <span>Tiến độ Tuần Này · 本週進度</span>
+            <span class="axis-arrow-up" title="Trục đứng: Tiến độ hợp đồng tuần này">▲</span>
+          </div>
+          <div class="plot-header-hint" id="rightPlotHeaderHint">Đổi sang Xanh = Đã thu, Đỏ = Quá hạn · Chuột phải: Sửa đợt nhanh</div>
+        </div>
+
+        <div class="coord-bars-scroll-area" id="rightBarsScrollArea">
+          <div class="coord-bars-list" id="currBarsContainer">
+            <!-- Dynamic Right Stacked % Bars -->
+          </div>
+        </div>
+
+        <!-- X-Axis (0% -> 100% -> %) -->
+        <div class="coord-x-axis-row">
+          <div class="coord-origin-spacer"></div>
+          <div class="coord-x-axis-line">
+            <span class="x-tick" style="left: 0%;">0%</span>
+            <span class="x-tick" style="left: 20%;">20%</span>
+            <span class="x-tick" style="left: 40%;">40%</span>
+            <span class="x-tick" style="left: 60%;">60%</span>
+            <span class="x-tick" style="left: 80%;">80%</span>
+            <span class="x-tick" style="left: 100%;">100%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Hover Tooltip for Bar Segments -->
+  <div id="chartSegmentTooltip" class="chart-segment-tooltip" style="display: none;"></div>
+  <div id="projectHoverCard" class="project-hover-card" style="display: none;"></div>
+</div>
+
+
+<!-- Modal 5: Chi Tiết Đợt Công Nợ Song Ngữ Việt - Đài Loan (Executive Bilingual Segment Detail Modal) -->
+<div class="modal fade" id="modalSegmentBilingualDetail" tabindex="-1" aria-labelledby="modalSegmentBilingualDetailLabel" aria-hidden="true" style="display: none; background: rgba(15, 23, 42, 0.75); z-index: 10000005;">
+  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 820px;">
+    <div class="modal-content" style="border-radius: 14px; border: 1.5px solid #38BDF8; background: #0F172A; color: #F8FAFC; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border-bottom: 1px solid #334155; padding: 1rem 1.4rem; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <h5 class="modal-title" id="modalSegmentBilingualDetailLabel" style="font-size: 1.08rem; font-weight: 800; color: #38BDF8; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <span>📊 CHI TIẾT ĐỢT CÔNG NỢ & TIẾN ĐỘ THU HỒI</span>
+          </h5>
+          <div style="font-size: 0.82rem; color: #FACC15; font-weight: 600;">
+            應收帳款期款詳情、資金回收進度與催款對策
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" onclick="closeSegmentBilingualModal()" aria-label="Close" style="filter: brightness(0) invert(1); opacity: 0.85;"></button>
+      </div>
+
+      <div class="modal-body" id="modalSegmentBilingualBody" style="padding: 1.35rem; max-height: 80vh; overflow-y: auto;">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <div class="modal-footer" style="background: #1E293B; border-top: 1px solid #334155; padding: 0.75rem 1.4rem; display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="copySegmentBilingualSummary()" style="border-color: #38BDF8; color: #38BDF8; background: rgba(56, 189, 248, 0.1);">
+          <span>📋 Sao chép tóm tắt gửi Sếp (複製進度摘要)</span>
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeSegmentBilingualModal()" style="background: #334155; border: none;">
+          <span>✕ 關閉 · Đóng (Esc)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Notification -->
 <div id="toastNotification" class="toast-notification"></div>
 
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/receivables_tracker.js?v=2.0"></script>
+<script src="/static/js/receivables_tracker.js?v=5.0"></script>
 {% endblock %}

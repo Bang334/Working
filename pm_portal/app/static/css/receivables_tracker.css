@@ -1318,3 +1318,2072 @@ body.table-modal-fullscreen-open {
 
 
 
+
+
+/* ==========================================================================
+   WEEKLY COMPARISON FULLSCREEN DASHBOARD (Tuần Trước vs Tuần Này)
+   ========================================================================== */
+
+.weekly-comparison-fullscreen-modal {
+  display: none;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  z-index: 9999999 !important;
+  background-color: #0B132B !important;
+  color: #F8FAFC !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  box-sizing: border-box;
+}
+
+.weekly-comparison-fullscreen-modal.active {
+  display: flex !important;
+}
+
+/* 1. Slim Top Header Bar (~50px) */
+.weekly-comp-header {
+  flex: 0 0 auto;
+  background: #091124;
+  border-bottom: 1px solid #1E293B;
+  padding: 0.45rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.weekly-comp-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.weekly-comp-brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #38BDF8;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Mode Switcher Group (Tuần Trước vs Tuần Này  /  Kế Hoạch Tuần Tới) */
+.comp-mode-switch-group {
+  display: inline-flex;
+  align-items: center;
+  background: #16223B;
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid #2D3F61;
+}
+
+.btn-mode-toggle {
+  background: transparent;
+  color: #94A3B8;
+  border: none;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.22rem 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-mode-toggle:hover {
+  color: #F8FAFC;
+}
+
+.btn-mode-toggle.active {
+  background: #0284C7;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Toggle Filter Button (Ẩn Chưa Đến Hạn) */
+.btn-toggle-filter {
+  background: #16223B;
+  color: #94A3B8;
+  border: 1px solid #2D3F61;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.22rem 0.55rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-toggle-filter:hover {
+  border-color: #38BDF8;
+  color: #F8FAFC;
+}
+
+.btn-toggle-filter.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10B981;
+  color: #34D399;
+}
+
+.btn-toggle-filter.active strong {
+  color: #6EE7B7;
+}
+
+.weekly-comp-inline-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.74rem;
+  color: #E2E8F0;
+  background: #131F3A;
+  padding: 0.22rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #263554;
+}
+
+.comp-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.comp-legend-box {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.bg-paid { background-color: #10B981 !important; border: 1px solid #059669; }
+.bg-overdue { background-color: #EF4444 !important; border: 1px solid #B91C1C; }
+.bg-urgent { background-color: #F59E0B !important; border: 1px solid #D97706; }
+.bg-pending { background-color: #FFFFFF !important; border: 1.5px solid #475569; }
+.bg-changed-ring {
+  background: linear-gradient(135deg, #10B981 50%, #EF4444 50%);
+  border: 2px solid #FACC15;
+  box-shadow: 0 0 5px rgba(250, 204, 21, 0.8);
+}
+
+.weekly-comp-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.comp-control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #16223B;
+  padding: 0.18rem 0.45rem;
+  border-radius: 5px;
+  border: 1px solid #2D3F61;
+}
+
+.comp-control-group label {
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: #94A3B8;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.comp-control-group input[type="date"],
+.comp-control-group select {
+  background: #0B132B;
+  color: #F8FAFC;
+  border: 1px solid #3B4F76;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  outline: none;
+}
+
+.comp-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-comp-close {
+  background: #DC2626 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  border: none !important;
+  padding: 0.28rem 0.65rem !important;
+}
+
+.btn-comp-close:hover {
+  background: #B91C1C !important;
+}
+
+/* Plan Announcement Banner for Next Week */
+.weekly-comp-plan-banner {
+  flex: 0 0 auto;
+  background: linear-gradient(90deg, #1E1B4B 0%, #1E293B 100%);
+  border-bottom: 2px solid #818CF8;
+  padding: 0.45rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #F8FAFC;
+  font-size: 0.82rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  animation: fadeInBanner 0.2s ease;
+}
+
+@keyframes fadeInBanner {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.plan-banner-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.plan-banner-content {
+  flex: 1;
+  line-height: 1.35;
+}
+
+.btn-plan-switchback {
+  border-color: #818CF8 !important;
+  color: #C7D2FE !important;
+  font-weight: 600 !important;
+  font-size: 0.72rem !important;
+  padding: 0.15rem 0.5rem !important;
+  white-space: nowrap;
+}
+
+.btn-plan-switchback:hover {
+  background: #4338CA !important;
+  color: #FFFFFF !important;
+}
+
+/* 2. Main Split Screen Comparison (94% height, 50% Left - 50% Right) */
+.weekly-comp-split-view {
+  flex: 1 1 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  overflow: hidden;
+  background: #0B132B;
+}
+
+.weekly-comp-col {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-radius: 10px;
+  border: 1.5px solid #CBD5E1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.weekly-comp-col.right-col {
+  border: 2px solid #0284C7;
+}
+
+.comp-col-header {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.85rem;
+  background: #F1F5F9;
+  border-bottom: 1.5px solid #CBD5E1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 68px;
+  box-sizing: border-box;
+}
+
+.comp-col-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 0.5rem;
+  min-height: 28px;
+}
+
+.comp-col-title-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge-week-tag {
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.22rem 0.65rem;
+  border-radius: 6px;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-week-tag.prev {
+  background: #334155;
+  color: #FFFFFF;
+}
+
+.badge-week-tag.curr {
+  background: #0284C7;
+  color: #FFFFFF;
+}
+
+.badge-week-tag.next-plan {
+  background: #4338CA;
+  color: #FFFFFF;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+}
+
+.badge-zh-sub {
+  font-size: 0.73rem;
+  font-weight: 600;
+  opacity: 0.9;
+  letter-spacing: 0.02em;
+}
+
+.comp-col-header h3 {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+.header-delta-pill {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #6EE7B7;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+
+.header-delta-pill.plan-mode {
+  background: #EEF2FF;
+  color: #4338CA;
+  border: 1px solid #A5B4FC;
+}
+
+.comp-col-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.78rem;
+}
+
+.comp-col-stats .stat-item {
+  color: #334155;
+  font-weight: 600;
+}
+
+.comp-col-stats .stat-badge {
+  background: #E2E8F0;
+  color: #0F172A;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.comp-col-stats .stat-badge.highlight {
+  background: #059669;
+  color: #FFFFFF;
+}
+
+/* 3. Coordinate System Chart (Trục đứng = Tên dự án, Trục ngang = %) */
+.coord-chart-wrapper {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #FFFFFF;
+  padding: 0.4rem 1.25rem 0.55rem 0.65rem;
+}
+
+.coord-axis-top-label {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px dashed #CBD5E1;
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
+}
+
+.y-axis-header-title {
+  width: 225px;
+  flex: 0 0 225px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.35rem;
+  padding-right: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.axis-arrow-up {
+  font-size: 0.95rem;
+  color: #0F172A;
+  line-height: 1;
+  margin-right: -6px;
+}
+
+.plot-header-hint {
+  flex: 1;
+  padding-left: 0.75rem;
+  font-size: 0.73rem;
+  color: #64748B;
+  font-style: italic;
+}
+
+/* Scrollable Plot Area with Y-Axis Line and Grid Lines */
+.coord-bars-scroll-area {
+  flex: 1 1 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #94A3B8 #F1F5F9;
+  position: relative;
+}
+
+.coord-bars-scroll-area::-webkit-scrollbar {
+  width: 7px;
+}
+
+.coord-bars-scroll-area::-webkit-scrollbar-thumb {
+  background: #94A3B8;
+  border-radius: 4px;
+}
+
+.coord-bars-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Each Project/Contract Row on the Coordinate System */
+.coord-bar-row {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  transition: background-color 0.12s ease;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.coord-bar-row:hover,
+.coord-bar-row.row-hover-synced {
+  background-color: #F0F9FF;
+}
+
+/* Left of Vertical Axis: Project Name & Contract Code */
+.coord-y-label {
+  width: 225px;
+  flex: 0 0 225px;
+  padding: 0.3rem 0.65rem 0.3rem 0.25rem;
+  text-align: right;
+  border-right: 2.5px solid #0F172A; /* Trục đứng (Y-Axis) */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.coord-proj-title {
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coord-contract-sub {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #475569;
+  font-family: monospace;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Right of Vertical Axis: Plot Canvas with 20%, 40%, 60%, 80%, 100% Grid Lines */
+.coord-plot-cell {
+  flex: 1 1 0;
+  padding: 0.35rem 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-image: linear-gradient(to right, rgba(148, 163, 184, 0.25) 1px, transparent 1px);
+  background-size: 20% 100%;
+}
+
+/* The 100% Horizontal Bar for the Contract (divided into segments by %) */
+.coord-stacked-bar {
+  width: 100%;
+  height: 26px;
+  display: flex;
+  border: 2px solid #0F172A;
+  border-radius: 0 3px 3px 0;
+  border-left: none; /* Gắn liền vào trục đứng */
+  background: #FFFFFF;
+  overflow: visible;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+/* Individual Milestone Segment inside the Contract Bar (CHỈ HIỆN MÀU, KHÔNG HIỆN CHỮ) */
+.coord-seg {
+  height: 100%;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+  box-sizing: border-box;
+}
+
+/* Vạch chia ngăn cách giữa các khoản trong cùng 1 hợp đồng */
+.coord-seg:not(:last-child) {
+  border-right: 2px solid #0F172A;
+}
+
+/* 4 Màu Trạng Thái Chuẩn Xác Theo Bản Vẽ */
+.coord-seg.seg-paid {
+  background-color: #10B981; /* Xanh lá: Đã thu */
+}
+
+.coord-seg.seg-overdue {
+  background-color: #EF4444; /* Đỏ: Đến hạn / Quá hạn chưa thu */
+}
+
+.coord-seg.seg-urgent {
+  background-color: #F59E0B; /* Vàng cam: Sắp đến hạn <= 7 ngày */
+}
+
+.coord-seg.seg-pending {
+  background-color: #FFFFFF; /* Trắng: Chưa đến hạn / Chờ thu */
+}
+
+/* Điểm nhấn cho khoản có biến động trong tuần */
+.coord-seg.seg-changed-this-week {
+  box-shadow: inset 0 0 0 2.5px #FACC15;
+}
+
+.coord-seg.seg-changed-this-week::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FEF08A;
+  border: 1px solid #0F172A;
+}
+
+/* Điểm nhấn đặc biệt cho KẾ HOẠCH TUẦN TỚI (Target) */
+.coord-seg.seg-plan-target {
+  box-shadow: inset 0 0 0 2.5px #818CF8, 0 0 6px rgba(129, 140, 248, 0.6);
+  animation: pulseTarget 2s infinite ease-in-out;
+}
+
+@keyframes pulseTarget {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+  100% { filter: brightness(1); }
+}
+
+.coord-seg.seg-plan-target::after {
+  content: "🎯";
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* Hiệu ứng khi Hover vào từng khoản (đồng bộ cả 2 bên Trái - Phải) */
+.coord-seg:hover,
+.coord-seg.seg-hover-synced {
+  z-index: 20;
+  filter: brightness(1.08);
+  transform: scaleY(1.18);
+  box-shadow: 0 0 0 2.5px #0284C7, 0 4px 10px rgba(2, 132, 199, 0.45) !important;
+}
+
+/* Bottom X-Axis Row (0% -> 100% -> ► %) */
+.coord-x-axis-row {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0;
+  margin-right: 7px; /* bù độ rộng thanh cuộn */
+}
+
+.coord-origin-spacer {
+  width: 225px;
+  flex: 0 0 225px;
+  height: 26px;
+  border-right: 2.5px solid transparent;
+}
+
+.coord-x-axis-line {
+  flex: 1 1 0;
+  height: 26px;
+  border-top: 2.5px solid #0F172A; /* Trục ngang (X-Axis) */
+  position: relative;
+}
+
+.coord-x-axis-line .x-tick {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.coord-x-axis-line .x-tick::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 5px;
+  background: #0F172A;
+}
+
+.x-axis-arrow-label {
+  position: absolute;
+  right: -28px;
+  top: -9px;
+  font-size: 0.85rem;
+  color: #0F172A;
+  white-space: nowrap;
+}
+
+/* 4. Floating Rich Hover Tooltip (Executive Bilingual Wide Card ~530px) */
+.chart-segment-tooltip {
+  position: fixed;
+  z-index: 10000000;
+  pointer-events: none;
+  background: rgba(15, 23, 42, 0.98);
+  color: #F8FAFC;
+  border: 2px solid #38BDF8;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  width: 530px;
+  max-width: 94vw;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.2);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  backdrop-filter: blur(12px);
+  transition: opacity 0.1s ease;
+}
+
+.tt-header {
+  border-bottom: 1px solid #334155;
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.55rem;
+}
+
+.tt-proj-title-vi {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: #38BDF8;
+  line-height: 1.3;
+}
+
+.tt-proj-title-zh {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #FACC15;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.tt-cust-box {
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #CBD5E1;
+}
+
+.tt-cust-name-bilingual {
+  font-weight: 600;
+  color: #E2E8F0;
+}
+
+.tt-seg-subrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1E293B;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  margin-bottom: 0.55rem;
+  font-weight: 700;
+  border-left: 3px solid #38BDF8;
+}
+
+.tt-seg-period {
+  color: #F8FAFC;
+  font-size: 0.78rem;
+}
+
+.tt-pct-highlight {
+  color: #FACC15;
+  font-size: 0.84rem;
+}
+
+.tt-milestone-box {
+  background: #182234;
+  border: 1px solid #2D3E5D;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.tt-field-label-bilingual {
+  color: #94A3B8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.tt-milestone-text-vi {
+  color: #F8FAFC;
+  font-weight: 700;
+  font-size: 0.84rem;
+  margin-top: 2px;
+}
+
+.tt-milestone-text-zh {
+  color: #38BDF8;
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-top: 1px;
+}
+
+.tt-info-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 0.85rem;
+  margin-bottom: 0.55rem;
+  font-size: 0.78rem;
+}
+
+.tt-grid-label {
+  color: #94A3B8;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.tt-grid-label .zh {
+  font-size: 0.7rem;
+  color: #64748B;
+}
+
+.tt-grid-val {
+  color: #F8FAFC;
+  font-weight: 600;
+  text-align: right;
+  align-self: center;
+}
+
+.tt-status-box {
+  background: #131F3A;
+  border: 1px solid #2D3F61;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tt-status-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tt-status-line-label {
+  font-size: 0.76rem;
+  color: #94A3B8;
+}
+
+.tt-status-line-label.active-curr {
+  color: #F8FAFC;
+  font-weight: 700;
+}
+
+.tt-change-banner {
+  margin-top: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 800;
+  text-align: center;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.tt-change-banner.newly-paid {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+  border: 1px solid #10B981;
+}
+
+.tt-change-banner.newly-overdue {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  border: 1px solid #EF4444;
+}
+
+.tt-change-banner.urgent {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FBBF24;
+  border: 1px solid #F59E0B;
+}
+
+.tt-change-banner.plan-target {
+  background: rgba(99, 102, 241, 0.25);
+  color: #A5B4FC;
+  border: 1px solid #818CF8;
+}
+
+.tt-notes-box {
+  font-size: 0.75rem;
+  color: #CBD5E1;
+  border-top: 1px dashed #334155;
+  padding-top: 0.45rem;
+  margin-top: 0.45rem;
+  line-height: 1.45;
+}
+
+.tt-click-hint {
+  margin-top: 0.45rem;
+  padding: 0.3rem 0.5rem;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px dashed rgba(56, 189, 248, 0.35);
+  border-radius: 6px;
+  text-align: center;
+  color: #7DD3FC;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.badge-status-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-status-pill.paid { background: #10B981; color: #FFFFFF; }
+.badge-status-pill.overdue { background: #EF4444; color: #FFFFFF; }
+.badge-status-pill.urgent { background: #F59E0B; color: #FFFFFF; }
+.badge-status-pill.pending { background: #334155; color: #CBD5E1; border: 1px solid #475569; }
+
+/* 5. Modal 5: Bilingual Segment Detail Modal Styles */
+.modal-seg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .modal-seg-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modal-seg-card {
+  background: #1E293B;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.modal-seg-card-title {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #38BDF8;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-field-item {
+  margin-bottom: 0.65rem;
+}
+
+.modal-field-label {
+  font-size: 0.73rem;
+  color: #94A3B8;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal-field-val {
+  font-size: 0.84rem;
+  color: #F8FAFC;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.modal-field-val.highlight {
+  color: #38BDF8;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.modal-field-val.chinese {
+  color: #FACC15;
+}
+
+/* 6. Data Source Switcher & Standalone Custom File Banners */
+.comp-source-switch-group {
+  display: flex;
+  align-items: center;
+  background: #1E293B;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.btn-source-toggle {
+  background: transparent;
+  color: #94A3B8;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-source-toggle:hover {
+  color: #F8FAFC;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-source-toggle.active {
+  background: #0284C7;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.btn-source-upload {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 6px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-source-upload:hover {
+  background: #10B981;
+  color: #FFFFFF;
+}
+
+.btn-source-upload.active {
+  background: #10B981;
+  color: #FFFFFF;
+  border-color: #059669;
+}
+
+.weekly-comp-custom-file-banner {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border-bottom: 2px solid #38BDF8;
+  padding: 0.55rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #F8FAFC;
+  animation: fadeIn 0.25s ease;
+}
+
+.custom-file-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.custom-file-icon {
+  font-size: 1.15rem;
+}
+
+.custom-file-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.weekly-comp-sample-banner {
+  background: rgba(245, 158, 11, 0.18);
+  border-bottom: 1.5px solid #F59E0B;
+  padding: 0.45rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.78rem;
+  color: #FDE68A;
+  animation: fadeIn 0.25s ease;
+}
+
+.sample-banner-icon {
+  font-size: 1rem;
+}
+
+
+/* COMPACT COORDINATE CHART & REMOVE BOTTOM WHITE SPACE */
+.coord-chart-wrapper {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #FFFFFF;
+  padding: 0.4rem 1.25rem 0.55rem 0.65rem;
+  justify-content: flex-start !important;
+}
+
+.coord-bars-scroll-area {
+  flex: 0 1 auto !important;
+  max-height: calc(100vh - 280px) !important;
+  min-height: auto !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #94A3B8 #F1F5F9;
+  position: relative;
+}
+
+.coord-bars-list {
+  display: flex;
+  flex-direction: column;
+  min-height: auto !important;
+}
+
+.coord-bar-row {
+  display: flex;
+  align-items: center;
+  min-height: 48px !important;
+  height: 48px !important;
+  box-sizing: border-box !important;
+  transition: background-color 0.12s ease;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+/* Biểu đồ 2: Trục đứng bên trái gắn liền vào mép, thanh % trải dài tối đa */
+.right-col .coord-plot-cell {
+  border-left: 2.5px solid #0F172A !important;
+}
+
+.right-col .right-chart-x-axis {
+  margin-left: 0 !important;
+}
+
+.right-col .right-chart-x-axis .coord-x-axis-line {
+  border-left: none;
+}
+
+/* PROJECT HOVER CARD (Khi rê/click vào tên dự án - Light Theme Sáng Sủa & Dễ Nhìn) */
+.project-hover-card {
+  position: fixed;
+  z-index: 10000025;
+  background: #FFFFFF;
+  color: #1E293B;
+  border: 1px solid #E2E8F0;
+  border-top: 3.5px solid #0284C7;
+  border-radius: 12px;
+  padding: 0.85rem 1.1rem;
+  font-size: 0.8rem;
+  box-shadow: 0 20px 30px -8px rgba(15, 23, 42, 0.18), 0 8px 12px -4px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.9);
+  pointer-events: auto;
+  max-width: 380px;
+  min-width: 300px;
+  line-height: 1.45;
+}
+
+.phc-header {
+  border-bottom: 1px solid #E2E8F0;
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.55rem;
+}
+
+.phc-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.3;
+}
+
+.phc-title-zh {
+  font-size: 0.76rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.phc-cust {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #334155;
+  margin-top: 4px;
+}
+
+.phc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 0.65rem;
+  font-size: 0.76rem;
+  margin-bottom: 0.5rem;
+}
+
+.phc-progress-track {
+  width: 100%;
+  height: 8px;
+  background: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  margin: 0.3rem 0 0.55rem 0;
+}
+
+.phc-progress-fill {
+  background: #10B981;
+  height: 100%;
+}
+
+.phc-milestones-list {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.73rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.phc-ms-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #1E293B;
+}
+
+.phc-hint {
+  font-size: 0.7rem;
+  color: #64748B;
+  text-align: right;
+  font-style: italic;
+  margin-top: 0.45rem;
+}
+
+/* COMPACT SEGMENT DETAIL CARD (Khi click vào từng ô màu - Light Theme Sáng Sủa & Dễ Nhìn) */
+.chart-segment-tooltip {
+  position: fixed;
+  z-index: 10000030;
+  background: #FFFFFF;
+  color: #1E293B;
+  border: 1px solid #E2E8F0;
+  border-top: 3.5px solid #0284C7;
+  border-radius: 12px;
+  padding: 0.8rem 1.05rem;
+  font-size: 0.78rem;
+  box-shadow: 0 20px 30px -8px rgba(15, 23, 42, 0.18), 0 8px 12px -4px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.9);
+  pointer-events: auto;
+  max-width: 410px;
+  min-width: 310px;
+  line-height: 1.45;
+}
+
+.btn-close-card {
+  background: transparent;
+  border: none;
+  color: #64748B;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close-card:hover {
+  color: #DC2626;
+  background: #FEE2E2;
+}
+
+.coord-seg.seg-active-selected {
+  z-index: 25 !important;
+  filter: brightness(1.15) !important;
+  transform: scaleY(1.22) !important;
+  box-shadow: 0 0 0 2.5px #0284C7, 0 0 14px rgba(2, 132, 199, 0.55) !important;
+}
+
+.tt-seg-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #E2E8F0;
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.5rem;
+}
+
+.tt-seg-title {
+  font-weight: 800;
+  color: #0F172A;
+  font-size: 0.86rem;
+  letter-spacing: -0.01em;
+}
+
+.tt-seg-pct {
+  background: #E0F2FE;
+  color: #0284C7;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.73rem;
+  border: 1px solid #BAE6FD;
+}
+
+.tt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.28rem;
+  font-size: 0.77rem;
+}
+
+.tt-k {
+  color: #475569;
+  font-weight: 600;
+}
+
+.tt-v {
+  font-weight: 700;
+  color: #0F172A;
+  text-align: right;
+}
+
+/* Light theme overrides for status pills in tooltip */
+.chart-segment-tooltip .badge-status-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.chart-segment-tooltip .badge-status-pill.pending {
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+
+.chart-segment-tooltip .badge-status-pill.paid {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #86EFAC;
+}
+
+.chart-segment-tooltip .badge-status-pill.overdue {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #FCA5A5;
+}
+
+.chart-segment-tooltip .badge-status-pill.urgent {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+}
+
+/* Light theme overrides for change banners */
+.chart-segment-tooltip .tt-change-banner {
+  margin-top: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 700;
+  text-align: center;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.chart-segment-tooltip .tt-change-banner.newly-paid {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1px solid #86EFAC;
+}
+
+.chart-segment-tooltip .tt-change-banner.newly-overdue {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+}
+
+.chart-segment-tooltip .tt-change-banner.urgent {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+}
+
+.chart-segment-tooltip .tt-change-banner.plan-target {
+  background: #EEF2FF;
+  color: #3730A3;
+  border: 1px solid #C7D2FE;
+}
+
+
+/* TOP HEADER ROW: Brand, Switcher & Legend on left; Actions on right */
+.weekly-comp-header {
+  flex: 0 0 auto;
+  background: #091124;
+  border-bottom: 1px solid #1E293B;
+  padding: 0.45rem 1rem 0.45rem 1rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.45rem !important;
+}
+
+.weekly-comp-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 0.75rem;
+}
+
+.weekly-comp-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.comp-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+/* Nút sửa nhanh từ Detail Card */
+.btn-edit-from-card {
+  background: #0284C7;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+}
+.btn-edit-from-card:hover {
+  background: #0369A1;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   MODAL CHỈNH SỬA CÔNG NỢ - BỐ CỤC GỌN GÀNG, SÁNG RÕ, 3 Ô NGÀY CHUNG 1 DÒNG
+   ========================================================================== */
+.edit-rec-modal-content {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  border-radius: 12px !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  overflow: hidden !important;
+}
+
+.edit-rec-modal-header {
+  background: linear-gradient(135deg, #1F4E79 0%, #153E65 100%) !important;
+  color: #FFFFFF !important;
+  border-bottom: 1px solid #1E293B !important;
+  padding: 0.85rem 1.25rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.edit-rec-modal-title {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: #FFFFFF !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.btn-close-edit-modal {
+  background: transparent !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  font-size: 1.25rem !important;
+  line-height: 1 !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  opacity: 0.85 !important;
+  transition: all 0.15s ease !important;
+}
+.btn-close-edit-modal:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.edit-rec-modal-body {
+  background: #F8FAFC !important;
+  padding: 1.15rem 1.35rem !important;
+  max-height: 82vh !important;
+  overflow-y: auto !important;
+  color: #0F172A !important;
+}
+
+.edit-rec-form-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.65rem !important;
+}
+
+.edit-rec-row {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+  align-items: flex-start !important;
+  box-sizing: border-box !important;
+}
+
+.edit-rec-col {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.edit-rec-col-12 {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+}
+
+.edit-rec-col-6 {
+  flex: 1 1 calc(50% - 0.375rem) !important;
+  width: calc(50% - 0.375rem) !important;
+}
+
+.edit-rec-col-4-even {
+  flex: 1 1 calc(33.333% - 0.5rem) !important;
+  width: calc(33.333% - 0.5rem) !important;
+}
+
+.edit-rec-label {
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.edit-rec-input {
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #0F172A !important;
+  font-size: 0.84rem !important;
+  padding: 0.42rem 0.65rem !important;
+  border-radius: 6px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  transition: all 0.15s ease !important;
+  font-family: inherit !important;
+}
+
+.edit-rec-input:focus {
+  border-color: #0284C7 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2) !important;
+  background: #FFFFFF !important;
+}
+
+.edit-rec-input[readonly] {
+  background: #EEF2F6 !important;
+  border-color: #CBD5E1 !important;
+  cursor: default !important;
+}
+
+.edit-rec-input.font-mono {
+  font-family: monospace, Consolas, sans-serif !important;
+}
+
+.edit-rec-input.highlight-gross {
+  color: #1F4E79 !important;
+  font-weight: 800 !important;
+  font-size: 0.9rem !important;
+}
+
+.edit-rec-input.highlight-rec {
+  color: #059669 !important;
+  font-weight: 700 !important;
+}
+
+.edit-rec-input.highlight-debt {
+  color: #DC2626 !important;
+  font-weight: 800 !important;
+  font-size: 0.9rem !important;
+  background: #FEF2F2 !important;
+  border-color: #FECACA !important;
+}
+
+.edit-rec-subhint {
+  font-size: 0.72rem !important;
+  color: #64748B !important;
+  margin-top: 1px !important;
+}
+
+/* Khung 3 Ô Ngày tháng nằm chung hàng gọn gàng */
+.edit-rec-dates-row {
+  background: #F1F5F9 !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 8px !important;
+  padding: 0.55rem 0.75rem !important;
+}
+
+.edit-rec-modal-footer {
+  background: #FFFFFF !important;
+  border-top: 1px solid #E2E8F0 !important;
+  padding: 0.75rem 1.25rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.btn-delete-rec {
+  background: transparent !important;
+  color: #DC2626 !important;
+  border: 1px solid #FCA5A5 !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 0.42rem 0.85rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  transition: all 0.15s ease !important;
+}
+.btn-delete-rec:hover {
+  background: #FEF2F2 !important;
+  border-color: #DC2626 !important;
+}
+
+.btn-cancel-rec {
+  background: #FFFFFF !important;
+  color: #475569 !important;
+  border: 1px solid #CBD5E1 !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 0.42rem 0.85rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.btn-cancel-rec:hover {
+  background: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+.btn-save-rec {
+  background: #0284C7 !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  padding: 0.42rem 1.15rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25) !important;
+}
+.btn-save-rec:hover {
+  background: #0369A1 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35) !important;
+}
+
+
+/* ==========================================================================
+   FIXED FULLSCREEN BACKDROP CHO MODAL EDIT (Mờ tối 100% toàn màn hình)
+   ========================================================================== */
+#modalEditReceivable {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  padding: 1.25rem !important;
+  z-index: 10000050 !important;
+  background-color: rgba(5, 10, 24, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  display: none;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+#modalEditReceivable.show,
+#modalEditReceivable[style*="display: block"],
+#modalEditReceivable[style*="display: flex"] {
+  display: flex !important;
+}
+
+#modalEditReceivable .modal-dialog {
+  margin: auto !important;
+  width: 100% !important;
+  max-width: 760px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#modalEditReceivable .modal-content {
+  width: 100% !important;
+}
+
+/* Nút chọn thanh toán trọn gói 100% / Chưa thu */
+.btn-pay-toggle {
+  border: none;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.35rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-pay-full {
+  background: #1E293B;
+  color: #94A3B8;
+  border: 1px solid #334155;
+}
+.btn-pay-full:hover,
+.btn-pay-full.active {
+  background: #10B981 !important;
+  color: #FFFFFF !important;
+  border-color: #059669 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+.btn-pay-zero {
+  background: #1E293B;
+  color: #94A3B8;
+  border: 1px solid #334155;
+}
+.btn-pay-zero:hover,
+.btn-pay-zero.active {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+  border-color: #DC2626 !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4) !important;
+}
+
+
+/* ==========================================================================
+   KHỐI KÍCH HOẠT TÍNH HẠN THANH TOÁN (LẮP ĐẶT XONG / NGHIỆM THU)
+   ========================================================================== */
+.edit-rec-trigger-box {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%) !important;
+  border: 1.5px solid #0284C7 !important;
+  border-radius: 10px !important;
+  padding: 0.65rem 0.85rem !important;
+  margin-bottom: 0.65rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.trigger-box-head {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 0.45rem !important;
+}
+
+.trigger-badge {
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+  color: #38BDF8 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.trigger-status-badge {
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  background: #334155 !important;
+  color: #CBD5E1 !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+}
+.trigger-status-badge.active {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #34D399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.5) !important;
+}
+
+.btn-micro {
+  background: #334155 !important;
+  color: #38BDF8 !important;
+  border: 1px solid #475569 !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+.btn-micro:hover {
+  background: #0284C7 !important;
+  color: #FFFFFF !important;
+}
+
+.btn-start-calc-due {
+  background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  padding: 0.45rem 0.85rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35) !important;
+  height: 35px !important;
+}
+.btn-start-calc-due:hover {
+  background: linear-gradient(135deg, #0369A1 0%, #075985 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.45) !important;
+}
+
+.trigger-box-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-top: 0.35rem !important;
+  padding-top: 0.35rem !important;
+  border-top: 1px dashed #334155 !important;
+}
+
+.quick-days-pills {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+.btn-pill-day {
+  background: #1E293B !important;
+  color: #94A3B8 !important;
+  border: 1px solid #334155 !important;
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+.btn-pill-day:hover,
+.btn-pill-day.active {
+  background: #0284C7 !important;
+  color: #FFFFFF !important;
+  border-color: #0284C7 !important;
+}
+
+.calc-due-hint {
+  font-size: 0.72rem !important;
+  color: #94A3B8 !important;
+}
+
+
+/* ==========================================================================
+   BỘ LỌC PHÂN CẤP RÕ RÀNG & QUICK FILTER PILLS (SO SÁNH TUẦN)
+   ========================================================================== */
+.weekly-comp-header-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  flex-wrap: wrap !important;
+  padding: 0.35rem 0.6rem !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  border-radius: 6px !important;
+  border: 1px solid #1E293B !important;
+}
+
+.comp-control-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  background: #16223B !important;
+  padding: 0.22rem 0.5rem !important;
+  border-radius: 5px !important;
+  border: 1px solid #2D3F61 !important;
+}
+
+.comp-control-group label {
+  font-size: 0.73rem !important;
+  font-weight: 700 !important;
+  color: #94A3B8 !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+}
+
+.comp-filter-group-cust label { color: #38BDF8 !important; }
+.comp-filter-group-proj label { color: #818CF8 !important; }
+.comp-filter-group-status label { color: #F59E0B !important; }
+.comp-filter-group-focus label { color: #FDE047 !important; }
+
+.comp-control-group input[type="date"],
+.comp-control-group select {
+  background: #0B132B !important;
+  color: #F8FAFC !important;
+  border: 1px solid #3B4F76 !important;
+  border-radius: 4px !important;
+  font-size: 0.75rem !important;
+  padding: 0.18rem 0.4rem !important;
+  outline: none !important;
+}
+
+.comp-control-group select:focus {
+  border-color: #38BDF8 !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25) !important;
+}
+
+.comp-filter-summary-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+.comp-filter-chip {
+  background: #1E293B !important;
+  border: 1px solid #334155 !important;
+  color: #94A3B8 !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 0.22rem 0.55rem !important;
+  border-radius: 5px !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+.comp-filter-chip.filtered {
+  color: #38BDF8 !important;
+  border-color: #0284C7 !important;
+  background: rgba(2, 132, 199, 0.18) !important;
+}
+
+.btn-filter-reset {
+  background: #1E293B !important;
+  border: 1px solid #475569 !important;
+  color: #CBD5E1 !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  padding: 0.22rem 0.55rem !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  white-space: nowrap !important;
+}
+.btn-filter-reset:hover {
+  background: #334155 !important;
+  color: #FFFFFF !important;
+  border-color: #38BDF8 !important;
+}
+
+/* Dải nút lọc nhanh (Quick Filter Pills) */
+.weekly-comp-quick-pills-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  flex-wrap: wrap !important;
+  padding: 0.3rem 0.6rem !important;
+  background: #0B132B !important;
+  border-top: 1px solid #1E293B !important;
+  border-bottom: 1px solid #1E293B !important;
+}
+
+.quick-pills-label {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  color: #64748B !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+  margin-right: 0.2rem !important;
+}
+
+.btn-filter-pill {
+  background: #16223B !important;
+  color: #94A3B8 !important;
+  border: 1px solid #2D3F61 !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  padding: 0.2rem 0.55rem !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  white-space: nowrap !important;
+}
+.btn-filter-pill:hover {
+  background: #1E293B !important;
+  color: #F8FAFC !important;
+  border-color: #475569 !important;
+}
+.btn-filter-pill.active {
+  background: #0284C7 !important;
+  color: #FFFFFF !important;
+  border-color: #38BDF8 !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4) !important;
+}
+.btn-filter-pill.pill-warning {
+  border-color: #B45309 !important;
+  color: #FDE047 !important;
+}
+.btn-filter-pill.pill-warning.active {
+  background: #D97706 !important;
+  color: #FFFFFF !important;
+  border-color: #F59E0B !important;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4) !important;
+}
+.btn-filter-pill.pill-danger {
+  border-color: #991B1B !important;
+  color: #FCA5A5 !important;
+}
+.btn-filter-pill.pill-danger.active {
+  background: #DC2626 !important;
+  color: #FFFFFF !important;
+  border-color: #EF4444 !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4) !important;
+}
+.btn-filter-pill.pill-success {
+  border-color: #065F46 !important;
+  color: #6EE7B7 !important;
+}
+.btn-filter-pill.pill-success.active {
+  background: #059669 !important;
+  color: #FFFFFF !important;
+  border-color: #10B981 !important;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4) !important;
+}
+
+/* Interactive Color Legend */
+.comp-legend-item {
+  cursor: pointer !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+}
+.comp-legend-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+.comp-legend-item.active {
+  background: rgba(56, 189, 248, 0.22) !important;
+  border: 1px solid #38BDF8 !important;
+  color: #38BDF8 !important;
+  font-weight: 700 !important;
+}

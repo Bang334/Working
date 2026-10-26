@@ -19,6 +19,8 @@ class ReceivableItem(BaseModel):
     gross_amount: float = Field(0.0, description="Các khoản phải thu bao gồm thuế (VNĐ)")
     received_amount: float = Field(0.0, description="Số tiền đã nhận được (VNĐ)")
     remaining_debt: float = Field(0.0, description="Số tiền còn nợ (VNĐ)")
+    start_date: Optional[str] = Field(None, description="Ngày bắt đầu tính hạn (nghiệm thu/lắp đặt/xuất HĐ)")
+    payment_term_days: Optional[int] = Field(None, description="Số ngày thời hạn thanh toán T/T")
     customer_promised_date: Optional[str] = Field(None, description="Khách hàng phản hồi ngày thanh toán")
     due_date: Optional[str] = Field(None, description="Hạn thanh toán (YYYY-MM-DD)")
     paid_date: Optional[str] = Field(None, description="Ngày đã thu tiền (YYYY-MM-DD)")
@@ -39,6 +41,10 @@ class ReceivableCreateRequest(BaseModel):
     net_amount: float = 0.0
     vat_rate: float = 0.0
     received_amount: float = 0.0
+    start_date: Optional[str] = None
+    payment_term_days: Optional[int] = None
+    start_date: Optional[str] = None
+    payment_term_days: Optional[int] = None
     customer_promised_date: Optional[str] = None
     due_date: Optional[str] = None
     paid_date: Optional[str] = None
@@ -57,6 +63,10 @@ class ReceivableUpdateRequest(BaseModel):
     vat_rate: Optional[float] = None
     gross_amount: Optional[float] = None
     received_amount: Optional[float] = None
+    start_date: Optional[str] = None
+    payment_term_days: Optional[int] = None
+    start_date: Optional[str] = None
+    payment_term_days: Optional[int] = None
     customer_promised_date: Optional[str] = None
     due_date: Optional[str] = None
     paid_date: Optional[str] = None

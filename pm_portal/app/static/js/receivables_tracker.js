@@ -1,3 +1,111 @@
+// ==============================================================================
+// TÍNH TOÁN HẠN THANH TOÁN (KÍCH HOẠT KHI VỪA LẮP ĐẶT XONG / NGHIỆM THU)
+// ==============================================================================
+function addDaysToDate(dateStr, days) {
+  if (!dateStr) return "";
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return "";
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  const date = new Date(y, m, d);
+  date.setDate(date.getDate() + parseInt(days, 10));
+  
+  const resY = date.getFullYear();
+  const resM = String(date.getMonth() + 1).padStart(2, "0");
+  const resD = String(date.getDate()).padStart(2, "0");
+  return `${resY}-${resM}-${resD}`;
+}
+
+function setStartDateToday() {
+  const startInput = document.getElementById("editStartDate");
+  if (startInput) {
+    startInput.value = new Date().toISOString().split("T")[0];
+    autoCalculateDueDateFromStart();
+  }
+}
+
+function setPaymentTermDays(days) {
+  const daysInput = document.getElementById("editPaymentTermDays");
+  if (daysInput) {
+    daysInput.value = days;
+    document.querySelectorAll(".btn-pill-day").forEach(btn => {
+      btn.classList.toggle("active", btn.textContent.includes(`${days} ngày`));
+    });
+    autoCalculateDueDateFromStart();
+  }
+}
+
+function extractPaymentTermDaysFromNotes(notes, projectName) {
+  const combined = `${notes || ""} ${projectName || ""}`.toLowerCase();
+  const m1 = combined.match(/t\/t\s*(\d+)/i);
+  if (m1) return parseInt(m1[1], 10);
+  const m2 = combined.match(/(\d+)\s*ng[àa]y/i);
+  if (m2) return parseInt(m2[1], 10);
+  return 60; // Mặc định 60 ngày
+}
+
+function autoCalculateDueDateFromStart() {
+  const startInput = document.getElementById("editStartDate");
+  const daysInput = document.getElementById("editPaymentTermDays");
+  const dueInput = document.getElementById("editDueDate");
+  const hint = document.getElementById("calcDueResultHint");
+
+  if (startInput && startInput.value && daysInput && daysInput.value) {
+    const days = parseInt(daysInput.value, 10);
+    if (!isNaN(days) && days > 0) {
+      const calcDue = addDaysToDate(startInput.value, days);
+      if (dueInput) dueInput.value = calcDue;
+      if (hint) {
+        hint.innerHTML = `<span style="color: #34D399; font-weight: 700;">✓ Tính hạn:</span> ${formatDateVN(startInput.value)} + <strong>${days} ngày</strong> &rarr; Đến hạn: <strong style="color: #38BDF8;">${formatDateVN(calcDue)}</strong>`;
+      }
+    }
+  }
+}
+
+function triggerStartDueDateCalculation() {
+  const startInput = document.getElementById("editStartDate");
+  const daysInput = document.getElementById("editPaymentTermDays");
+  const dueInput = document.getElementById("editDueDate");
+  const hint = document.getElementById("calcDueResultHint");
+  const badge = document.getElementById("triggerStatusBadge");
+
+  if (!startInput.value) {
+    startInput.value = new Date().toISOString().split("T")[0];
+  }
+
+  let days = parseInt(daysInput.value, 10);
+  if (!days || isNaN(days) || days <= 0) {
+    days = 60;
+    daysInput.value = 60;
+  }
+
+  const calculatedDueDate = addDaysToDate(startInput.value, days);
+  if (calculatedDueDate) {
+    dueInput.value = calculatedDueDate;
+    if (hint) {
+      hint.innerHTML = `<strong style="color: #34D399;">✓ Bắt đầu tính:</strong> ${formatDateVN(startInput.value)} + <strong>${days} ngày</strong> &rarr; Đến hạn: <strong style="color: #38BDF8;">${formatDateVN(calculatedDueDate)}</strong>`;
+    }
+    if (badge) {
+      badge.textContent = `Đang tính hạn (${days} ngày)`;
+      badge.className = "trigger-status-badge active";
+    }
+
+    // Tự động bổ sung thông tin vào ghi chú tiến độ
+    const notesArea = document.getElementById("editNotes");
+    if (notesArea) {
+      const startFmt = formatDateVN(startInput.value);
+      const dueFmt = formatDateVN(calculatedDueDate);
+      const logLine = `[Lắp đặt/Nghiệm thu: ${startFmt} - Tính hạn TT ${days} ngày -> Đến hạn: ${dueFmt}]`;
+      if (!notesArea.value.includes(startFmt)) {
+        notesArea.value = notesArea.value ? `${notesArea.value.trim()}\n${logLine}` : logLine;
+      }
+    }
+
+    showToast(`Đã bắt đầu tính hạn: Đến hạn ngày ${formatDateVN(calculatedDueDate)} (${days} ngày T/T)!`, "success");
+  }
+}
+
 /**
  * RECEIVABLES TRACKER JAVASCRIPT (Sheet 3 · AR Debt Portfolio)
  * Hong Ming Global PM Portal
@@ -895,6 +1003,10 @@ async function fetchAiDigest() {
 
 // Open Edit Receivable Modal
 async function openEditReceivableModal(itemId) {
+  // Ẩn các tooltip/hover card đang mở
+  hideSegmentTooltip();
+  hideProjectHoverCard();
+
   let item = allReceivables.find(x => x.id === itemId);
   if (!item) {
     try {
@@ -905,6 +1017,31 @@ async function openEditReceivableModal(itemId) {
       console.error("Error fetching receivable detail:", e);
     }
   }
+
+  // Fallback từ segmentLookupMap nếu xem dữ liệu mẫu hoặc file riêng
+  if (!item && segmentLookupMap && segmentLookupMap[itemId]) {
+    const info = segmentLookupMap[itemId];
+    const s = info.segment;
+    const c = info.contract;
+    const gross = parseFloat(s.gross_amount) || 0;
+    const rec = parseFloat(s.curr_received !== undefined ? s.curr_received : (s.received_amount || 0)) || 0;
+    item = {
+      id: s.id,
+      project_name: s.milestone_name || c.project_title_vi || c.project_title,
+      contract_code: (c.contract_code && c.contract_code !== '-') ? c.contract_code : '',
+      customer_name: c.customer_name || '',
+      net_amount: gross,
+      vat_rate: 0,
+      received_amount: rec,
+      customer_promised_date: (s.customer_promised_date && s.customer_promised_date !== '-') ? s.customer_promised_date : '',
+      due_date: (s.due_date && s.due_date !== '-') ? s.due_date : '',
+      paid_date: (s.paid_date && s.paid_date !== '-') ? s.paid_date : '',
+      doc_status: (s.doc_status && s.doc_status !== '-') ? s.doc_status : '',
+      collection_status: s.curr_status || 'PENDING',
+      notes: (s.notes && s.notes !== '-') ? s.notes : ''
+    };
+  }
+
   if (!item) {
     showToast("Không tìm thấy thông tin đợt thanh toán.", "error");
     return;
@@ -946,6 +1083,7 @@ function closeEditReceivableModal() {
     modal.style.display = "none";
     modal.classList.remove("show");
   }
+  removeSegmentActiveHighlight();
 }
 
 // Recalculate Live Amounts on Edit Modal
@@ -1027,7 +1165,13 @@ async function saveReceivableModal() {
     if (data.status === "success") {
       showToast("Đã lưu chi tiết đợt công nợ thành công!", "success");
       closeEditReceivableModal();
-      loadReceivablesData();
+      loadReceivablesData(true);
+
+      // Tự động làm mới biểu đồ so sánh tuần nếu đang mở fullscreen modal
+      const compModal = document.getElementById("modalWeeklyComparisonFullscreen");
+      if (compModal && (compModal.style.display === "flex" || compModal.classList.contains("active"))) {
+        loadWeeklyComparisonData();
+      }
     } else {
       showToast(data.message || "Lỗi lưu dữ liệu", "error");
     }
@@ -1051,7 +1195,12 @@ async function confirmDeleteCurrentReceivable() {
     if (data.status === "success") {
       showToast("Đã xóa đợt công nợ thành công!", "success");
       closeEditReceivableModal();
-      loadReceivablesData();
+      loadReceivablesData(true);
+
+      const compModal = document.getElementById("modalWeeklyComparisonFullscreen");
+      if (compModal && (compModal.style.display === "flex" || compModal.classList.contains("active"))) {
+        loadWeeklyComparisonData();
+      }
     } else {
       showToast(data.message || "Lỗi xóa mốc công nợ", "error");
     }
@@ -1409,4 +1558,951 @@ async function saveAiExtractedReceivables() {
   }
 }
 
+// ==============================================================================
+// WEEKLY COMPARISON FULLSCREEN DASHBOARD (2 Biểu Đồ Trục Tọa Độ: Tên Dự Án vs %)
+// ==============================================================================
 
+let currentWeeklyData = null;
+let segmentLookupMap = {};
+let contractLookupMap = {};
+let isSyncingScroll = false;
+let currentCompMode = "past_to_curr"; // 'past_to_curr' | 'curr_to_next'
+let currentDataSource = "db"; // 'db' (Gốc), 'sample' (Mẫu), 'upload' (File Riêng)
+let currentUploadId = null;
+let currentUploadedFilename = "";
+let activeClickedSegmentId = null;
+let activeClickedContractKey = null;
+
+// Mở modal toàn màn hình
+function openWeeklyComparisonFullscreen() {
+  const modal = document.getElementById("modalWeeklyComparisonFullscreen");
+  if (!modal) return;
+  modal.classList.add("active");
+  modal.style.display = "flex";
+  document.body.classList.add("table-modal-fullscreen-open");
+
+  loadWeeklyComparisonData();
+}
+
+// Đóng modal toàn màn hình
+function closeWeeklyComparisonFullscreen() {
+  const modal = document.getElementById("modalWeeklyComparisonFullscreen");
+  if (!modal) return;
+  hideSegmentTooltip();
+  hideProjectHoverCard();
+  modal.classList.remove("active");
+  modal.style.display = "none";
+  document.body.classList.remove("table-modal-fullscreen-open");
+}
+
+// Chuyển chế độ: So sánh Tuần Trước vs Tuần Này  HOẶC  Kế Hoạch Tuần Tới vs Tuần Này
+function switchWeeklyCompMode(mode) {
+  currentCompMode = mode;
+  document.getElementById("btnModePastToCurr")?.classList.toggle("active", mode === "past_to_curr");
+  document.getElementById("btnModeCurrToNext")?.classList.toggle("active", mode === "curr_to_next");
+
+  const brand = document.getElementById("compHeaderBrandTitle");
+  if (brand) {
+    if (mode === "curr_to_next") {
+      brand.innerHTML = `KẾ HOẠCH THU HỒI CÔNG NỢ TUẦN TỚI <span style="font-size: 0.8rem; font-weight: 500; color: #94A3B8;">· 下週應收帳款回收預估計劃</span>`;
+    } else {
+      brand.innerHTML = `SO SÁNH THU HỒI CÔNG NỢ TUẦN <span style="font-size: 0.8rem; font-weight: 500; color: #94A3B8;">· 每週應收帳款回收對比</span>`;
+    }
+  }
+
+  const lblPrev = document.getElementById("lblDatePrev");
+  const lblCurr = document.getElementById("lblDateCurr");
+  if (lblPrev && lblCurr) {
+    if (mode === "curr_to_next") {
+      lblPrev.textContent = "Tuần này (本週):";
+      lblCurr.textContent = "Tuần tới (下週):";
+    } else {
+      lblPrev.textContent = "Tuần trước (上週):";
+      lblCurr.textContent = "Tuần này (本週):";
+    }
+  }
+
+  loadWeeklyComparisonData();
+}
+
+function onWeeklyCompDateChange() {
+  loadWeeklyComparisonData();
+}
+
+function onWeeklyCompFilterChange() {
+  loadWeeklyComparisonData();
+}
+
+// Cập nhật dropdown Khách hàng từ dữ liệu so sánh tuần
+function populateWeeklyCompCustomerFilter(contracts) {
+  const select = document.getElementById("compFilterCustomer");
+  if (!select) return;
+
+  const currentVal = select.value;
+  select.innerHTML = '<option value="all">Tất cả khách hàng (全部客戶)</option>';
+
+  const custSet = new Set();
+  (contracts || []).forEach(c => {
+    if (c.customer_name && c.customer_name.trim()) {
+      custSet.add(c.customer_name.trim());
+    }
+  });
+
+  if (custSet.size === 0 && allStats && allStats.customers) {
+    allStats.customers.forEach(c => custSet.add(c));
+  }
+
+  Array.from(custSet).sort().forEach(cust => {
+    const opt = document.createElement("option");
+    opt.value = cust;
+    opt.textContent = cust;
+    if (cust === currentVal) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+// Nạp dữ liệu so sánh từ backend API
+async function loadWeeklyComparisonData() {
+  const prevDateInput = document.getElementById("compDatePrev");
+  const currDateInput = document.getElementById("compDateCurr");
+  const customerSelect = document.getElementById("compFilterCustomer");
+
+  const prevDate = prevDateInput?.value || "";
+  const currDate = currDateInput?.value || "";
+  const customer = (customerSelect?.value && customerSelect?.value !== "all") ? customerSelect.value : "";
+
+  const params = new URLSearchParams();
+  if (prevDate) params.append("prev_date", prevDate);
+  if (currDate) params.append("curr_date", currDate);
+  if (customer) params.append("customer", customer);
+  params.append("data_source", currentDataSource);
+  if (currentDataSource === "upload" && currentUploadId) {
+    params.append("upload_id", currentUploadId);
+  }
+
+  const prevContainer = document.getElementById("prevBarsContainer");
+  const currContainer = document.getElementById("currBarsContainer");
+
+  if (prevContainer) {
+    prevContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: #64748B;">Đang tải biểu đồ...</div>';
+  }
+  if (currContainer) {
+    currContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: #64748B;">Đang tải biểu đồ...</div>';
+  }
+
+  try {
+    const res = await fetch(`/api/v1/receivables/weekly-comparison?${params.toString()}`);
+    const data = await res.json();
+
+    if (data.status === "success") {
+      currentWeeklyData = data;
+
+      if (prevDateInput && !prevDateInput.value && data.dates?.prev_date) {
+        prevDateInput.value = data.dates.prev_date;
+      }
+      if (currDateInput && !currDateInput.value && data.dates?.curr_date) {
+        currDateInput.value = data.dates.curr_date;
+      }
+
+      // Build lookup maps for instant hover tooltip
+      segmentLookupMap = {};
+      contractLookupMap = {};
+      const contracts = data.contracts_comparison || [];
+      contracts.forEach(c => {
+        contractLookupMap[c.contract_key] = c;
+        (c.segments || []).forEach(s => {
+          segmentLookupMap[s.id] = { segment: s, contract: c };
+        });
+      });
+
+      // Populate dynamic customer filter dropdown
+      populateWeeklyCompCustomerFilter(contracts);
+
+      // Update Column Headers & Next Week Plan stats
+      updateChartColumnHeaders(data);
+
+      // Render Side-by-Side Coordinate Stacked % Charts
+      renderCoordinateChartSide("prev", contracts);
+      renderCoordinateChartSide("curr", contracts);
+
+      setupSynchronizedScrollAndHover();
+      filterComparisonItems();
+      updateDataSourceUI(data);
+    } else {
+      showToast(data.message || "Lỗi tải dữ liệu so sánh tuần", "error");
+    }
+  } catch (err) {
+    console.error("Lỗi loadWeeklyComparisonData:", err);
+    showToast("Không thể kết nối máy chủ để tải biểu đồ so sánh tuần.", "error");
+  }
+}
+
+function updateChartColumnHeaders(data) {
+  const isPlanMode = currentCompMode === "curr_to_next";
+  const prevWeek = data.prev_week || {};
+  const currWeek = data.curr_week || {};
+  const deltas = data.deltas || {};
+  const plan = data.plan_next_week || {};
+
+  const prevTag = document.getElementById("prevBadgeWeekTag");
+  const prevRec = document.getElementById("prevColReceived");
+  const prevDebt = document.getElementById("prevColDebt");
+  const prevRate = document.getElementById("prevColRate");
+
+  const currTag = document.getElementById("currBadgeWeekTag");
+  const currRec = document.getElementById("currColReceived");
+  const currDebt = document.getElementById("currColDebt");
+  const currRate = document.getElementById("currColRate");
+  const deltaBadge = document.getElementById("currColDeltaBadge");
+
+  const formatDmy = (dStr) => {
+    if (!dStr || dStr === "-") return "";
+    try {
+      const parts = dStr.split("-");
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    } catch (e) {}
+    return dStr;
+  };
+
+  const prevDateInput = document.getElementById("compDatePrev");
+  const currDateInput = document.getElementById("compDateCurr");
+  const prevDateFmt = formatDmy(prevWeek.date || (prevDateInput ? prevDateInput.value : ""));
+  const currDateFmt = formatDmy(currWeek.date || (currDateInput ? currDateInput.value : ""));
+
+  if (prevTag) {
+    const prevVi = isPlanMode ? "BIỂU ĐỒ 1 · CUỐI TUẦN NÀY" : "BIỂU ĐỒ 1 · CUỐI TUẦN TRƯỚC";
+    const prevZh = isPlanMode ? "本週末" : "上週末";
+    const dateStr = prevDateFmt ? ` (${prevDateFmt})` : "";
+    prevTag.innerHTML = `${prevVi} <span class="badge-zh-sub">· ${prevZh}</span>${dateStr}`;
+  }
+  if (prevRec) prevRec.textContent = prevWeek.total_received_formatted || "0 ₫";
+  if (prevDebt) prevDebt.textContent = prevWeek.total_debt_formatted || "0 ₫";
+  if (prevRate) prevRate.textContent = `${prevWeek.collection_rate || 0}%`;
+
+  if (currTag) {
+    const currVi = isPlanMode ? "BIỂU ĐỒ 2 · KẾ HOẠCH TUẦN TỚI" : "BIỂU ĐỒ 2 · CUỐI TUẦN NÀY";
+    const currZh = isPlanMode ? "下週預估計劃" : "本週末";
+    const dateStr = currDateFmt ? ` (${currDateFmt})` : "";
+    currTag.innerHTML = `${currVi} <span class="badge-zh-sub">· ${currZh}</span>${dateStr}`;
+  }
+  if (currRec) currRec.textContent = currWeek.total_received_formatted || "0 ₫";
+  if (currDebt) currDebt.textContent = currWeek.total_debt_formatted || "0 ₫";
+  if (currRate) currRate.textContent = `${currWeek.collection_rate || 0}%`;
+
+  if (deltaBadge) {
+    const recDelta = deltas.received_delta || 0;
+    if (recDelta > 0) {
+      deltaBadge.innerHTML = `Thu thêm (新增): +${deltas.received_delta_formatted}`;
+      deltaBadge.className = "comp-col-delta-badge positive";
+      deltaBadge.style.display = "inline-block";
+    } else {
+      deltaBadge.style.display = "none";
+    }
+  }
+}
+
+// Render Side-by-Side Coordinate Stacked % Charts
+function renderCoordinateChartSide(side, contracts) {
+  const isCurr = side === "curr";
+  const isPlanMode = currentCompMode === "curr_to_next";
+  const container = document.getElementById(`${side}BarsContainer`);
+  if (!container) return;
+
+  if (!contracts || contracts.length === 0) {
+    container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #64748B;">Không có hợp đồng / dự án phù hợp.</div>';
+    return;
+  }
+
+  const rowsHtml = contracts.map(c => {
+    const cKey = c.contract_key;
+    const codeLabel = c.contract_code && c.contract_code !== "-" ? c.contract_code : "";
+    const segments = c.segments || [];
+
+    // Xây dựng các khoản chia theo % trong thanh ngang 100% của hợp đồng
+    const segsHtml = segments.map(s => {
+      const status = isCurr ? s.curr_status : s.prev_status;
+      const colorClass = getStatusColorClass(status);
+      
+      let extraClass = "";
+      if (isCurr && !isPlanMode && s.change_type && s.change_type !== "UNCHANGED") {
+        extraClass = "seg-changed-this-week";
+      } else if (isCurr && isPlanMode) {
+        if (s.is_newly_overdue || status === "URGENT" || status === "OVERDUE") {
+          extraClass = "seg-plan-target";
+        }
+      }
+
+      return `<div class="coord-seg ${colorClass} ${extraClass}"
+                   style="width: ${s.width_pct}%; cursor: pointer;"
+                   data-seg-id="${s.id}"
+                   data-contract-key="${cKey}"
+                   onclick="openSegmentBilingualModal(${s.id})"
+                   oncontextmenu="handleSegmentContextMenu(event, ${s.id}, '${side}')"
+                   onmouseenter="onSegmentHoverEnter(event, ${s.id}, '${side}')"
+                   onmouseleave="onSegmentHoverLeave()"
+                   title="Nhấp chuột trái: Xem chi tiết | Nhấp chuột phải: Sửa đợt thanh toán">
+              </div>`;
+    }).join("");
+
+    // CHỈ hiển thị nhãn trục Y ở Biểu đồ 1 (Bên Trái).
+    const yLabelHtml = !isCurr ? `
+      <div class="coord-y-label-box"
+           data-contract-key="${cKey}"
+           onclick="handleProjectLabelClick(event, '${cKey}')"
+           onmouseenter="onProjectNameHoverEnter(event, '${cKey}')"
+           onmouseleave="onProjectNameHoverLeave()"
+           style="cursor: pointer;"
+           title="Nhấp chuột để xem tổng quan dự án">
+        <div class="coord-proj-title">${c.project_title_vi || c.project_title}</div>
+        ${c.project_title_zh && c.project_title_zh !== (c.project_title_vi || c.project_title) ? `<div class="coord-proj-title-zh" style="font-size: 0.72rem; color: #64748B; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.project_title_zh}</div>` : ""}
+        <div class="coord-contract-sub">${codeLabel ? codeLabel + " · " : ""}${c.segment_count} 期款 (khoản)</div>
+      </div>
+    ` : "";
+
+    // Phân tích trạng thái đợt và tiến độ dự án phục vụ lọc đa tiêu chí
+    const isFullyPaid = (parseFloat(c.curr_pct_collected) || 0) >= 99.9;
+    const hasDebt = (parseFloat(c.curr_pct_collected) || 0) < 99.9;
+    const hasUnstarted = c.has_unstarted_next !== undefined ? c.has_unstarted_next : (c.segments || []).some(s => s.curr_status !== "PAID" && (!s.start_date || s.start_date === "-"));
+    const hasCalculating = c.has_calculating_next !== undefined ? c.has_calculating_next : (c.segments || []).some(s => s.curr_status !== "PAID" && s.start_date && s.start_date !== "-");
+    const hasPaid = (c.segments || []).some(s => s.curr_status === "PAID" || (parseFloat(s.curr_received) || 0) > 0);
+    const hasPending = (c.segments || []).some(s => s.curr_status === "PENDING");
+    const hasOverdue = !!c.has_overdue_curr || (c.segments || []).some(s => s.curr_status === "DELAYED");
+    const hasUrgent = !!c.has_urgent_curr || (c.segments || []).some(s => s.curr_status === "URGENT");
+    const hasChange = !!c.has_change;
+    const isActive = !!c.is_active_attention || hasChange || hasOverdue || hasUrgent || hasUnstarted;
+    const custClean = (c.customer_name || "").trim().toLowerCase();
+
+    return `
+      <div class="coord-bar-row"
+           data-contract-key="${cKey}"
+           data-customer="${encodeURIComponent(custClean)}"
+           data-is-active="${isActive ? '1' : '0'}"
+           data-has-change="${hasChange ? '1' : '0'}"
+           data-has-overdue="${hasOverdue ? '1' : '0'}"
+           data-has-urgent="${hasUrgent ? '1' : '0'}"
+           data-has-pending="${hasPending ? '1' : '0'}"
+           data-is-fully-paid="${isFullyPaid ? '1' : '0'}"
+           data-has-paid="${hasPaid ? '1' : '0'}"
+           data-has-debt="${hasDebt ? '1' : '0'}"
+           data-has-unstarted="${hasUnstarted ? '1' : '0'}"
+           data-has-calculating="${hasCalculating ? '1' : '0'}"
+           data-seg-count="${c.segment_count || (c.segments || []).length}"
+           onmouseenter="onRowHoverEnter('${cKey}')"
+           onmouseleave="onRowHoverLeave('${cKey}')">
+        ${yLabelHtml}
+        <div class="coord-plot-cell">
+          <div class="coord-stacked-bar">
+            ${segsHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  container.innerHTML = rowsHtml;
+}
+
+// Chuột phải vào khoản trên biểu đồ -> Mở Modal Sửa Đợt Công Nợ
+function handleSegmentContextMenu(event, segId, side) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  hideSegmentTooltip();
+  hideProjectHoverCard();
+  openEditReceivableModal(segId);
+}
+
+// Click vào tên dự án ở Biểu đồ -> Hiển thị Modal/Card tổng quan dự án (Toggle)
+function handleProjectLabelClick(event, cKey) {
+  if (event && event.stopPropagation) {
+    event.stopPropagation();
+  }
+  if (activeClickedContractKey === cKey) {
+    hideProjectHoverCard();
+    return;
+  }
+  hideSegmentTooltip();
+  activeClickedContractKey = cKey;
+  showProjectDetailCard(event, cKey);
+}
+
+function showProjectDetailCard(event, cKey) {
+  const c = contractLookupMap[cKey];
+  if (!c) return;
+
+  const card = document.getElementById("projectDetailHoverCard");
+  if (!card) return;
+
+  const titleEl = document.getElementById("projCardTitle");
+  const custEl = document.getElementById("projCardCustomer");
+  const codeEl = document.getElementById("projCardContract");
+  const grossEl = document.getElementById("projCardGross");
+  const recEl = document.getElementById("projCardReceived");
+  const debtEl = document.getElementById("projCardDebt");
+  const rateEl = document.getElementById("projCardRate");
+  const listEl = document.getElementById("projCardMilestonesList");
+
+  if (titleEl) {
+    const zh = c.project_title_zh && c.project_title_zh !== (c.project_title_vi || c.project_title) ? `<div style="font-size: 0.76rem; color: #64748B; font-weight: 500;">${c.project_title_zh}</div>` : "";
+    titleEl.innerHTML = `<div>${c.project_title_vi || c.project_title}</div>${zh}`;
+  }
+  if (custEl) custEl.textContent = c.customer_name_vi || c.customer_name || "-";
+  if (codeEl) codeEl.textContent = (c.contract_code && c.contract_code !== "-") ? c.contract_code : "Chưa có số HĐ";
+  if (grossEl) grossEl.textContent = c.total_gross_formatted || "0 ₫";
+  if (recEl) recEl.textContent = c.curr_received_formatted || "0 ₫";
+  
+  const debtVal = Math.max(0, (c.total_gross || 0) - (c.curr_received || 0));
+  if (debtEl) debtEl.textContent = formatCurrencyVN(debtVal);
+  if (rateEl) rateEl.textContent = `${c.curr_pct_collected || 0}%`;
+
+  if (listEl) {
+    const segs = c.segments || [];
+    listEl.innerHTML = segs.map((s, idx) => {
+      const stColor = getStatusColorClass(s.curr_status);
+      const stText = s.curr_status_label_vi || s.curr_status;
+      const rec = parseFloat(s.curr_received) || 0;
+      const debt = parseFloat(s.curr_debt) || Math.max(0, (s.gross_amount || 0) - rec);
+      
+      return `
+        <div class="proj-card-ms-row" style="padding: 0.35rem 0.5rem; border-bottom: 1px solid #1E293B; display: flex; justify-content: space-between; align-items: center; font-size: 0.74rem;">
+          <div style="flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 0.5rem;">
+            <strong style="color: #F8FAFC;">Đợt ${idx + 1}: ${s.milestone_name_vi || s.milestone_name}</strong>
+            <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.35rem;">(${s.width_pct}%)</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+            <span style="font-family: monospace; font-weight: 700; color: #38BDF8;">${s.gross_formatted || "0 ₫"}</span>
+            <span class="coord-seg ${stColor}" style="width: 10px; height: 10px; border-radius: 2px; display: inline-block;"></span>
+            <span style="font-size: 0.7rem; color: #CBD5E1;">${stText}</span>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  card.style.display = "block";
+  document.querySelectorAll(".coord-y-label-box").forEach(el => el.classList.remove("selected-active"));
+  const activeYLabel = document.querySelector(`.coord-y-label-box[data-contract-key="${cKey}"]`);
+  if (activeYLabel) activeYLabel.classList.add("selected-active");
+}
+
+function hideProjectHoverCard() {
+  const card = document.getElementById("projectDetailHoverCard");
+  if (card) card.style.display = "none";
+  activeClickedContractKey = null;
+  document.querySelectorAll(".coord-y-label-box").forEach(el => el.classList.remove("selected-active"));
+}
+
+function onProjectNameHoverEnter(event, cKey) {
+  onRowHoverEnter(cKey);
+}
+
+function onProjectNameHoverLeave() {
+  onRowHoverLeave();
+}
+
+// Click vào khoản -> Hiển thị Modal chi tiết song ngữ (Toggle)
+function openSegmentBilingualModal(segId) {
+  if (activeClickedSegmentId === segId) {
+    hideSegmentTooltip();
+    return;
+  }
+  hideProjectHoverCard();
+  activeClickedSegmentId = segId;
+  showSegmentDetailCard(segId);
+}
+
+function showSegmentDetailCard(segId) {
+  const info = segmentLookupMap[segId];
+  if (!info) return;
+
+  const s = info.segment;
+  const c = info.contract;
+  const card = document.getElementById("segmentDetailFloatingModal");
+  if (!card) return;
+
+  const mNameVi = document.getElementById("floatModalMilestoneVi");
+  const mNameZh = document.getElementById("floatModalMilestoneZh");
+  const pTitle = document.getElementById("floatModalProjectTitle");
+  const cCode = document.getElementById("floatModalContractCode");
+  const gross = document.getElementById("floatModalGross");
+  const widthPct = document.getElementById("floatModalWidthPct");
+  const due = document.getElementById("floatModalDueDate");
+  const rec = document.getElementById("floatModalReceived");
+  const debt = document.getElementById("floatModalDebt");
+  const statusBadge = document.getElementById("floatModalStatusBadge");
+  const changeBanner = document.getElementById("floatModalChangeBanner");
+  const changeText = document.getElementById("floatModalChangeText");
+
+  if (mNameVi) mNameVi.textContent = s.milestone_name_vi || s.milestone_name;
+  if (mNameZh) mNameZh.textContent = s.milestone_name_zh || "";
+  if (pTitle) pTitle.textContent = `${c.project_title_vi || c.project_title} (${c.customer_name_vi || c.customer_name || ""})`;
+  if (cCode) cCode.textContent = (c.contract_code && c.contract_code !== "-") ? c.contract_code : "Chưa có số HĐ";
+  if (gross) gross.textContent = s.gross_formatted || "0 ₫";
+  if (widthPct) widthPct.textContent = `${s.width_pct}%`;
+  
+  const dueFmt = (s.due_date && s.due_date !== "-") ? formatDateVN(s.due_date) : "Chưa chốt hạn";
+  if (due) due.textContent = dueFmt;
+  
+  if (rec) rec.textContent = s.curr_received_formatted || "0 ₫";
+  if (debt) debt.textContent = s.curr_debt_formatted || "0 ₫";
+
+  if (statusBadge) {
+    const colorClass = getStatusColorClass(s.curr_status);
+    const labelVi = s.curr_status_label_vi || s.curr_status;
+    const labelZh = s.curr_status_label_zh || "";
+    statusBadge.innerHTML = `<span class="badge-bullet"></span> ${labelVi} · ${labelZh}`;
+    statusBadge.className = `float-status-pill ${colorClass}`;
+  }
+
+  if (changeBanner && changeText) {
+    if (s.change_type && s.change_type !== "UNCHANGED") {
+      changeText.textContent = s.change_badge_text || s.change_badge_text_vi || "Có biến động tuần này";
+      changeBanner.style.display = "flex";
+    } else {
+      changeBanner.style.display = "none";
+    }
+  }
+
+  // Cập nhật nút sửa trực tiếp
+  const editBtn = document.getElementById("btnEditFromFloatModal");
+  if (editBtn) {
+    editBtn.onclick = function() {
+      hideSegmentTooltip();
+      openEditReceivableModal(s.id);
+    };
+  }
+
+  card.style.display = "block";
+  document.querySelectorAll(".coord-seg").forEach(el => el.classList.remove("selected-active"));
+  const activeSegs = document.querySelectorAll(`.coord-seg[data-seg-id="${segId}"]`);
+  activeSegs.forEach(el => el.classList.add("selected-active"));
+}
+
+function hideSegmentTooltip() {
+  const card = document.getElementById("segmentDetailFloatingModal");
+  if (card) card.style.display = "none";
+  activeClickedSegmentId = null;
+  document.querySelectorAll(".coord-seg").forEach(el => el.classList.remove("selected-active"));
+}
+
+function onSegmentHoverEnter(event, segId, side) {
+  const info = segmentLookupMap[segId];
+  if (info) {
+    onRowHoverEnter(info.contract.contract_key);
+  }
+}
+
+function onSegmentHoverLeave() {
+  onRowHoverLeave();
+}
+
+function onRowHoverEnter(cKey) {
+  if (!cKey) return;
+  document.querySelectorAll(`.coord-bar-row[data-contract-key="${cKey}"]`).forEach(row => {
+    row.classList.add("row-hover-highlight");
+  });
+}
+
+function onRowHoverLeave(cKey) {
+  document.querySelectorAll(".coord-bar-row").forEach(row => {
+    row.classList.remove("row-hover-highlight");
+  });
+}
+
+function setupSynchronizedScrollAndHover() {
+  const pScroll = document.getElementById("prevChartScroll");
+  const cScroll = document.getElementById("currChartScroll");
+
+  if (!pScroll || !cScroll) return;
+
+  pScroll.onscroll = function () {
+    if (!isSyncingScroll) {
+      isSyncingScroll = true;
+      cScroll.scrollTop = pScroll.scrollTop;
+      isSyncingScroll = false;
+    }
+  };
+
+  cScroll.onscroll = function () {
+    if (!isSyncingScroll) {
+      isSyncingScroll = true;
+      pScroll.scrollTop = cScroll.scrollTop;
+      isSyncingScroll = false;
+    }
+  };
+}
+
+// ==============================================================================
+// BỘ LỌC PHÂN CẤP RÕ RÀNG & TÍNH NĂNG LỌC NHANH (QUICK FILTER PILLS)
+// ==============================================================================
+
+// Xử lý khi người dùng đổi bất kỳ dropdown bộ lọc nào
+function onFilterControlChange() {
+  syncQuickPillsWithDropdowns();
+  filterComparisonItems();
+}
+
+// Đồng bộ trạng thái sáng đèn trên các nút Quick Filter Pills
+function syncQuickPillsWithDropdowns() {
+  const proj = document.getElementById("compFilterProjProgress")?.value || "all";
+  const st = document.getElementById("compFilterStatus")?.value || "all";
+  const focus = document.getElementById("compFilterFocus")?.value || "all";
+
+  document.querySelectorAll(".btn-filter-pill").forEach(p => p.classList.remove("active"));
+
+  if (proj === "unpaid" && st === "unstarted") {
+    document.getElementById("pillFilter_unstarted_next")?.classList.add("active");
+  } else if (focus === "active_only" && proj === "all" && st === "all") {
+    document.getElementById("pillFilter_active_only")?.classList.add("active");
+  } else if (st === "overdue") {
+    document.getElementById("pillFilter_overdue")?.classList.add("active");
+  } else if (focus === "changed") {
+    document.getElementById("pillFilter_changed")?.classList.add("active");
+  } else if (proj === "unpaid" && st === "all") {
+    document.getElementById("pillFilter_unpaid")?.classList.add("active");
+  } else if (proj === "paid") {
+    document.getElementById("pillFilter_paid_all")?.classList.add("active");
+  } else if (proj === "all" && st === "all" && focus === "all") {
+    document.getElementById("pillFilter_all")?.classList.add("active");
+  }
+}
+
+// Áp dụng bộ lọc nhanh theo 1-Click Preset
+function applyQuickFilter(preset) {
+  const custSel = document.getElementById("compFilterCustomer");
+  const projSel = document.getElementById("compFilterProjProgress");
+  const statusSel = document.getElementById("compFilterStatus");
+  const focusSel = document.getElementById("compFilterFocus");
+
+  // Reset to neutral first
+  if (custSel) custSel.value = "all";
+  if (projSel) projSel.value = "all";
+  if (statusSel) statusSel.value = "all";
+  if (focusSel) focusSel.value = "all";
+
+  document.querySelectorAll(".btn-filter-pill").forEach(p => p.classList.remove("active"));
+  const clickedPill = document.getElementById(`pillFilter_${preset}`);
+  if (clickedPill) clickedPill.classList.add("active");
+
+  if (preset === "unstarted_next") {
+    // Dự án chưa thanh toán xong VÀ chưa có ngày tính hạn đợt tiếp (chờ lắp đặt/nghiệm thu)
+    if (projSel) projSel.value = "unpaid";
+    if (statusSel) statusSel.value = "unstarted";
+    showToast("Đang lọc: Dự án chưa thanh toán xong và chưa có ngày tính hạn cho đợt tiếp theo.", "info");
+  } else if (preset === "active_only") {
+    if (focusSel) focusSel.value = "active_only";
+    showToast("Đang lọc: Các dự án cần chú ý (Biến động / Quá hạn / Sắp đến hạn / Chờ tính hạn).", "info");
+  } else if (preset === "overdue") {
+    if (statusSel) statusSel.value = "overdue";
+    showToast("Đang lọc: Các dự án có đợt đến hạn hoặc quá hạn thanh toán.", "info");
+  } else if (preset === "changed") {
+    if (focusSel) focusSel.value = "changed";
+    showToast("Đang lọc: Các dự án có biến động số tiền thu hồi trong tuần.", "info");
+  } else if (preset === "unpaid") {
+    if (projSel) projSel.value = "unpaid";
+    showToast("Đang lọc: Tất cả các dự án chưa thanh toán xong (còn nợ).", "info");
+  } else if (preset === "paid_all") {
+    if (projSel) projSel.value = "paid";
+    showToast("Đang lọc: Các dự án đã thanh toán đủ 100%.", "info");
+  } else if (preset === "all") {
+    showToast("Đã hiển thị tất cả dự án.", "info");
+  }
+
+  filterComparisonItems();
+}
+
+// Bấm trực tiếp vào Chú giải màu sắc (Legend) để lọc nhanh
+function filterByLegend(key) {
+  const statusSel = document.getElementById("compFilterStatus");
+  const focusSel = document.getElementById("compFilterFocus");
+
+  if (key === "paid" || key === "overdue" || key === "urgent" || key === "pending") {
+    if (statusSel) {
+      statusSel.value = (statusSel.value === key) ? "all" : key;
+    }
+  } else if (key === "changed") {
+    if (focusSel) {
+      focusSel.value = (focusSel.value === "changed") ? "all" : "changed";
+    }
+  }
+  syncQuickPillsWithDropdowns();
+  filterComparisonItems();
+}
+
+// Đặt lại toàn bộ bộ lọc về mặc định
+function resetWeeklyComparisonFilters() {
+  const custSel = document.getElementById("compFilterCustomer");
+  const projSel = document.getElementById("compFilterProjProgress");
+  const statusSel = document.getElementById("compFilterStatus");
+  const focusSel = document.getElementById("compFilterFocus");
+
+  if (custSel) custSel.value = "all";
+  if (projSel) projSel.value = "all";
+  if (statusSel) statusSel.value = "all";
+  if (focusSel) focusSel.value = "all";
+
+  document.querySelectorAll(".btn-filter-pill").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".comp-legend-item").forEach(p => p.classList.remove("active"));
+  document.getElementById("pillFilter_active_only")?.classList.add("active");
+
+  filterComparisonItems();
+  showToast("Đã đặt lại tất cả bộ lọc về mặc định.", "info");
+}
+
+// Thực thi lọc các dòng hợp đồng trên cả 2 cột biểu đồ
+function filterComparisonItems() {
+  const customerVal = (document.getElementById("compFilterCustomer")?.value || "all").toLowerCase();
+  const projProgressVal = document.getElementById("compFilterProjProgress")?.value || "all";
+  const statusVal = document.getElementById("compFilterStatus")?.value || "all";
+  const focusVal = document.getElementById("compFilterFocus")?.value || "all";
+  const allRows = document.querySelectorAll(".coord-bar-row");
+
+  let visibleCount = 0;
+  const totalCount = allRows.length / 2; // Do mỗi dự án có 1 dòng bên Trái và 1 dòng bên Phải
+
+  allRows.forEach(row => {
+    const isActive = row.getAttribute("data-is-active") === "1";
+    const hasChange = row.getAttribute("data-has-change") === "1";
+    const hasOverdue = row.getAttribute("data-has-overdue") === "1";
+    const hasUrgent = row.getAttribute("data-has-urgent") === "1";
+    const hasPending = row.getAttribute("data-has-pending") === "1";
+    const isFullyPaid = row.getAttribute("data-is-fully-paid") === "1";
+    const hasPaid = row.getAttribute("data-has-paid") === "1";
+    const hasDebt = row.getAttribute("data-has-debt") === "1";
+    const hasUnstarted = row.getAttribute("data-has-unstarted") === "1";
+    const hasCalculating = row.getAttribute("data-has-calculating") === "1";
+    const segCount = parseInt(row.getAttribute("data-seg-count") || "1", 10);
+    const rowCust = decodeURIComponent(row.getAttribute("data-customer") || "").toLowerCase();
+
+    // 1. Kiểm tra Khách hàng
+    let matchCust = (customerVal === "all") || (rowCust === customerVal) || (rowCust.includes(customerVal));
+
+    // 2. Kiểm tra Tiến độ Dự án (Đã xong vs Chưa xong/Còn nợ)
+    let matchProj = true;
+    if (projProgressVal === "unpaid") {
+      matchProj = hasDebt;
+    } else if (projProgressVal === "paid") {
+      matchProj = isFullyPaid;
+    }
+
+    // 3. Kiểm tra Trạng thái đợt & Tính hạn đợt tiếp theo
+    let matchStatus = true;
+    if (statusVal === "unstarted") {
+      // Trường hợp: Dự án chưa thanh toán xong VÀ khoản tiếp theo chưa bắt đầu tính hạn
+      matchStatus = hasDebt && hasUnstarted;
+    } else if (statusVal === "calculating") {
+      matchStatus = hasCalculating;
+    } else if (statusVal === "overdue") {
+      matchStatus = hasOverdue;
+    } else if (statusVal === "urgent") {
+      matchStatus = hasUrgent;
+    } else if (statusVal === "pending") {
+      matchStatus = hasPending;
+    } else if (statusVal === "paid") {
+      matchStatus = isFullyPaid || hasPaid;
+    }
+
+    // 4. Kiểm tra Tiêu điểm & Biến động
+    let matchFocus = true;
+    if (focusVal === "active_only") {
+      matchFocus = isActive || hasUnstarted || hasOverdue || hasUrgent || hasChange;
+    } else if (focusVal === "changed") {
+      matchFocus = hasChange;
+    } else if (focusVal === "multi") {
+      matchFocus = segCount >= 2;
+    } else if (focusVal === "unchanged") {
+      matchFocus = !hasChange;
+    }
+
+    const isVisible = matchCust && matchProj && matchStatus && matchFocus;
+    row.style.display = isVisible ? "flex" : "none";
+    if (isVisible && row.closest("#prevBarsContainer")) {
+      visibleCount++;
+    }
+  });
+
+  // Cập nhật số đếm dự án đang hiển thị
+  const activeBadge = document.getElementById("cntActiveProjects");
+  const activeChip = document.getElementById("cntActiveProjectsChip");
+  if (activeBadge) {
+    activeBadge.textContent = `${visibleCount}/${totalCount} dự án`;
+    if (activeChip) {
+      activeChip.classList.toggle("filtered", visibleCount < totalCount);
+    }
+  }
+
+  // Đồng bộ trạng thái active trên Chú giải (Legend)
+  syncLegendActiveStyles(statusVal, focusVal);
+}
+
+// Đồng bộ viền sáng trên Chú giải màu sắc
+function syncLegendActiveStyles(statusVal, focusVal) {
+  document.querySelectorAll(".comp-legend-item").forEach(item => {
+    item.classList.remove("active");
+  });
+  if (statusVal === "paid") document.getElementById("legendPaid")?.classList.add("active");
+  if (statusVal === "overdue") document.getElementById("legendOverdue")?.classList.add("active");
+  if (statusVal === "urgent") document.getElementById("legendUrgent")?.classList.add("active");
+  if (statusVal === "pending") document.getElementById("legendPending")?.classList.add("active");
+  if (focusVal === "changed") document.getElementById("legendChanged")?.classList.add("active");
+}
+
+function getStatusColorClass(status) {
+  switch (status) {
+    case "PAID": return "bg-paid";
+    case "OVERDUE":
+    case "DELAYED": return "bg-overdue";
+    case "URGENT": return "bg-urgent";
+    case "PENDING":
+    default: return "bg-pending";
+  }
+}
+
+// Cập nhật giao diện thanh chuyển đổi nguồn dữ liệu & Banners
+function updateDataSourceUI(data) {
+  const src = data.data_source || currentDataSource || "db";
+  currentDataSource = src;
+
+  document.getElementById("btnSourceDb")?.classList.toggle("active", src === "db");
+  document.getElementById("btnSourceSample")?.classList.toggle("active", src === "sample");
+  document.getElementById("btnSourceUpload")?.classList.toggle("active", src === "upload");
+
+  const customBanner = document.getElementById("weeklyCompCustomFileBanner");
+  const sampleBanner = document.getElementById("weeklyCompSampleBanner");
+
+  if (src === "upload") {
+    if (customBanner) customBanner.style.display = "flex";
+    if (sampleBanner) sampleBanner.style.display = "none";
+
+    const nameEl = document.getElementById("customFileLoadedName");
+    const countEl = document.getElementById("customFileLoadedItems");
+    const meta = data.data_source_meta || {};
+    if (nameEl) nameEl.textContent = currentUploadedFilename || meta.filename || "Tập tin độc lập";
+    const totalSegs = (data.contracts_comparison || []).reduce((acc, c) => acc + (c.segments || []).length, 0);
+    if (countEl) countEl.textContent = totalSegs;
+  } else if (src === "sample") {
+    if (customBanner) customBanner.style.display = "none";
+    if (sampleBanner) sampleBanner.style.display = "flex";
+  } else {
+    if (customBanner) customBanner.style.display = "none";
+    if (sampleBanner) sampleBanner.style.display = "none";
+  }
+}
+
+// Chuyển đổi giữa Dữ Liệu Gốc (DB) và Dữ Liệu Mẫu (Sample)
+function switchDataSource(sourceType) {
+  if (sourceType === "upload" && !currentUploadId) {
+    triggerCustomFileUpload();
+    return;
+  }
+  currentDataSource = sourceType;
+
+  document.getElementById("btnSourceDb")?.classList.toggle("active", sourceType === "db");
+  document.getElementById("btnSourceSample")?.classList.toggle("active", sourceType === "sample");
+  document.getElementById("btnSourceUpload")?.classList.toggle("active", sourceType === "upload");
+
+  if (sourceType === "db") {
+    showToast("Đã kết nối Dữ Liệu Gốc của hệ thống (切換至系統原始數據)", "info");
+  } else if (sourceType === "sample") {
+    showToast("Đang dùng Dữ Liệu Mẫu chuẩn hóa (切換至示範數據)", "info");
+  }
+
+  loadWeeklyComparisonData();
+}
+
+function triggerCustomFileUpload() {
+  const input = document.getElementById("inputCustomChartFile");
+  if (input) {
+    input.value = "";
+    input.click();
+  }
+}
+
+async function handleCustomFileUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const prevDate = document.getElementById("compDatePrev")?.value || "";
+  const currDate = document.getElementById("compDateCurr")?.value || "";
+  if (prevDate) formData.append("prev_date", prevDate);
+  if (currDate) formData.append("curr_date", currDate);
+
+  showToast(`Đang phân tích tập tin '${file.name}' để tạo biểu đồ độc lập...`, "info");
+
+  try {
+    const res = await fetch("/api/v1/receivables/upload-custom-chart", {
+      method: "POST",
+      body: formData,
+    });
+    const result = await res.json();
+
+    if (result.status === "success") {
+      currentDataSource = "upload";
+      currentUploadId = result.upload_id;
+      currentUploadedFilename = result.filename;
+
+      showToast(`Đã nạp file '${result.filename}' thành công (${result.total_items} mốc thanh toán)!`, "success");
+
+      const modal = document.getElementById("modalWeeklyComparisonFullscreen");
+      if (!modal || modal.style.display !== "flex") {
+        openWeeklyComparisonFullscreen();
+      } else {
+        loadWeeklyComparisonData();
+      }
+    } else {
+      showToast(result.message || "Không thể phân tích tập tin đã tải lên.", "error");
+    }
+  } catch (err) {
+    console.error("Lỗi tải lên file tùy chỉnh:", err);
+    showToast("Lỗi máy chủ khi xử lý file tùy chỉnh.", "error");
+  }
+}
+
+// Chốt tuần (Snapshot)
+function saveWeeklySnapshotPrompt() {
+  const dInput = document.getElementById("compDateCurr");
+  const defaultDate = dInput ? dInput.value : new Date().toISOString().split("T")[0];
+  const snapDate = prompt("Nhập ngày chốt tuần (YYYY-MM-DD):", defaultDate);
+  if (!snapDate) return;
+  const notes = prompt("Ghi chú chốt tuần (tùy chọn):", "Chốt số liệu thu hồi công nợ tuần");
+  saveWeeklySnapshot(snapDate, notes);
+}
+
+async function saveWeeklySnapshot(snapshotDate, notes) {
+  try {
+    const res = await fetch("/api/v1/receivables/weekly-snapshot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ snapshot_date: snapshotDate, notes: notes || "" })
+    });
+    const data = await res.json();
+    if (data.status === "success") {
+      showToast(data.message || "Đã lưu chốt snapshot tuần thành công!", "success");
+      loadWeeklyComparisonData();
+    } else {
+      showToast(data.message || "Lỗi lưu snapshot", "error");
+    }
+  } catch (err) {
+    console.error("Save snapshot error:", err);
+    showToast("Lỗi máy chủ khi lưu snapshot tuần.", "error");
+  }
+}
+
+// Phím tắt Esc đóng biểu đồ toàn màn hình
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") {
+    const editModal = document.getElementById("modalEditReceivable");
+    if (editModal && editModal.style.display !== "none") {
+      closeEditReceivableModal();
+      return;
+    }
+    const compModal = document.getElementById("modalWeeklyComparisonFullscreen");
+    if (compModal && (compModal.style.display === "flex" || compModal.classList.contains("active"))) {
+      closeWeeklyComparisonFullscreen();
+    }
+  }
+});
