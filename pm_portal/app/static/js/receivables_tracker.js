@@ -1840,26 +1840,36 @@ function renderCoordinateChartSide(side, contracts) {
                    oncontextmenu="handleSegmentContextMenu(event, ${s.id}, '${side}')"
                    onmouseenter="onSegmentHoverEnter(event, ${s.id}, '${side}')"
                    onmouseleave="onSegmentHoverLeave()"
-                   title="Nhấp chuột trái: Xem chi tiết | Nhấp chuột phải: Sửa đợt thanh toán">
+                   title="Nhấp chuột trái: Chi tiết | Nhấp chuột phải: Sửa đợt">
               </div>`;
     }).join("");
 
-    // CHỈ hiển thị nhãn trục Y ở Biểu đồ 1 (Bên Trái).
-    const yLabelHtml = !isCurr ? `
-      <div class="coord-y-label-box"
-           data-contract-key="${cKey}"
+    // CẢ 2 BIỂU ĐỒ ĐỀU CÓ coord-y-label ĐỂ TRỤC ĐỨNG 0% VÀ CÁC THANH HOÀN TOÀN THẲNG HÀNG
+    const yLabelHtml = isCurr ? `
+      <div class="coord-y-label"
            onclick="handleProjectLabelClick(event, '${cKey}')"
            onmouseenter="onProjectNameHoverEnter(event, '${cKey}')"
            onmouseleave="onProjectNameHoverLeave()"
            style="cursor: pointer;"
-           title="Nhấp chuột để xem tổng quan dự án">
+           title="Nhấp chuột xem chi tiết dự án">
         <div class="coord-proj-title">${c.project_title_vi || c.project_title}</div>
-        ${c.project_title_zh && c.project_title_zh !== (c.project_title_vi || c.project_title) ? `<div class="coord-proj-title-zh" style="font-size: 0.72rem; color: #64748B; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.project_title_zh}</div>` : ""}
-        <div class="coord-contract-sub">${codeLabel ? codeLabel + " · " : ""}${c.segment_count} 期款 (khoản)</div>
+        <div class="coord-contract-sub" style="color: #0284C7;">${codeLabel ? codeLabel + ' · ' : ''}Thu: ${c.curr_pct_collected || 0}%</div>
+        ${c.has_change ? '<div style="font-size: 0.68rem; color: #EAB308; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">⚡ Có biến động tuần</div>' : ''}
       </div>
-    ` : "";
+    ` : `
+      <div class="coord-y-label"
+           onclick="handleProjectLabelClick(event, '${cKey}')"
+           onmouseenter="onProjectNameHoverEnter(event, '${cKey}')"
+           onmouseleave="onProjectNameHoverLeave()"
+           style="cursor: pointer;"
+           title="Nhấp chuột xem chi tiết dự án">
+        <div class="coord-proj-title">${c.project_title_vi || c.project_title}</div>
+        ${c.project_title_zh && c.project_title_zh !== (c.project_title_vi || c.project_title) ? `<div class="coord-proj-title-zh" style="font-size: 0.72rem; color: #64748B; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.project_title_zh}</div>` : ''}
+        <div class="coord-contract-sub">${codeLabel ? codeLabel + ' · ' : ''}${c.segment_count} 期款 (khoản)</div>
+      </div>
+    `;
 
-    // Phân tích trạng thái đợt và tiến độ dự án phục vụ lọc đa tiêu chí
+    // Thuộc tính dữ liệu phục vụ lọc
     const isFullyPaid = (parseFloat(c.curr_pct_collected) || 0) >= 99.9;
     const hasDebt = (parseFloat(c.curr_pct_collected) || 0) < 99.9;
     const hasUnstarted = c.has_unstarted_next !== undefined ? c.has_unstarted_next : (c.segments || []).some(s => s.curr_status !== "PAID" && (!s.start_date || s.start_date === "-"));
@@ -2134,128 +2144,16 @@ function setupSynchronizedScrollAndHover() {
 }
 
 // ==============================================================================
-// BỘ LỌC PHÂN CẤP RÕ RÀNG & TÍNH NĂNG LỌC NHANH (QUICK FILTER PILLS)
+// BỘ LỌC THEO DÕI CÔNG NỢ TUẦN (TIÊU ĐIỂM, TIẾN ĐỘ, TÍNH HẠN, HẠN THANH TOÁN)
 // ==============================================================================
 
-// Xử lý khi người dùng đổi bất kỳ dropdown bộ lọc nào
-function onFilterControlChange() {
-  syncQuickPillsWithDropdowns();
+function onFilterChangesDropdownChange() {
   filterComparisonItems();
 }
 
-// Đồng bộ trạng thái sáng đèn trên các nút Quick Filter Pills
-function syncQuickPillsWithDropdowns() {
-  const proj = document.getElementById("compFilterProjProgress")?.value || "all";
-  const st = document.getElementById("compFilterStatus")?.value || "all";
-  const focus = document.getElementById("compFilterFocus")?.value || "all";
-
-  document.querySelectorAll(".btn-filter-pill").forEach(p => p.classList.remove("active"));
-
-  if (proj === "unpaid" && st === "unstarted") {
-    document.getElementById("pillFilter_unstarted_next")?.classList.add("active");
-  } else if (focus === "active_only" && proj === "all" && st === "all") {
-    document.getElementById("pillFilter_active_only")?.classList.add("active");
-  } else if (st === "overdue") {
-    document.getElementById("pillFilter_overdue")?.classList.add("active");
-  } else if (focus === "changed") {
-    document.getElementById("pillFilter_changed")?.classList.add("active");
-  } else if (proj === "unpaid" && st === "all") {
-    document.getElementById("pillFilter_unpaid")?.classList.add("active");
-  } else if (proj === "paid") {
-    document.getElementById("pillFilter_paid_all")?.classList.add("active");
-  } else if (proj === "all" && st === "all" && focus === "all") {
-    document.getElementById("pillFilter_all")?.classList.add("active");
-  }
-}
-
-// Áp dụng bộ lọc nhanh theo 1-Click Preset
-function applyQuickFilter(preset) {
-  const custSel = document.getElementById("compFilterCustomer");
-  const projSel = document.getElementById("compFilterProjProgress");
-  const statusSel = document.getElementById("compFilterStatus");
-  const focusSel = document.getElementById("compFilterFocus");
-
-  // Reset to neutral first
-  if (custSel) custSel.value = "all";
-  if (projSel) projSel.value = "all";
-  if (statusSel) statusSel.value = "all";
-  if (focusSel) focusSel.value = "all";
-
-  document.querySelectorAll(".btn-filter-pill").forEach(p => p.classList.remove("active"));
-  const clickedPill = document.getElementById(`pillFilter_${preset}`);
-  if (clickedPill) clickedPill.classList.add("active");
-
-  if (preset === "unstarted_next") {
-    // Dự án chưa thanh toán xong VÀ chưa có ngày tính hạn đợt tiếp (chờ lắp đặt/nghiệm thu)
-    if (projSel) projSel.value = "unpaid";
-    if (statusSel) statusSel.value = "unstarted";
-    showToast("Đang lọc: Dự án chưa thanh toán xong và chưa có ngày tính hạn cho đợt tiếp theo.", "info");
-  } else if (preset === "active_only") {
-    if (focusSel) focusSel.value = "active_only";
-    showToast("Đang lọc: Các dự án cần chú ý (Biến động / Quá hạn / Sắp đến hạn / Chờ tính hạn).", "info");
-  } else if (preset === "overdue") {
-    if (statusSel) statusSel.value = "overdue";
-    showToast("Đang lọc: Các dự án có đợt đến hạn hoặc quá hạn thanh toán.", "info");
-  } else if (preset === "changed") {
-    if (focusSel) focusSel.value = "changed";
-    showToast("Đang lọc: Các dự án có biến động số tiền thu hồi trong tuần.", "info");
-  } else if (preset === "unpaid") {
-    if (projSel) projSel.value = "unpaid";
-    showToast("Đang lọc: Tất cả các dự án chưa thanh toán xong (còn nợ).", "info");
-  } else if (preset === "paid_all") {
-    if (projSel) projSel.value = "paid";
-    showToast("Đang lọc: Các dự án đã thanh toán đủ 100%.", "info");
-  } else if (preset === "all") {
-    showToast("Đã hiển thị tất cả dự án.", "info");
-  }
-
-  filterComparisonItems();
-}
-
-// Bấm trực tiếp vào Chú giải màu sắc (Legend) để lọc nhanh
-function filterByLegend(key) {
-  const statusSel = document.getElementById("compFilterStatus");
-  const focusSel = document.getElementById("compFilterFocus");
-
-  if (key === "paid" || key === "overdue" || key === "urgent" || key === "pending") {
-    if (statusSel) {
-      statusSel.value = (statusSel.value === key) ? "all" : key;
-    }
-  } else if (key === "changed") {
-    if (focusSel) {
-      focusSel.value = (focusSel.value === "changed") ? "all" : "changed";
-    }
-  }
-  syncQuickPillsWithDropdowns();
-  filterComparisonItems();
-}
-
-// Đặt lại toàn bộ bộ lọc về mặc định
-function resetWeeklyComparisonFilters() {
-  const custSel = document.getElementById("compFilterCustomer");
-  const projSel = document.getElementById("compFilterProjProgress");
-  const statusSel = document.getElementById("compFilterStatus");
-  const focusSel = document.getElementById("compFilterFocus");
-
-  if (custSel) custSel.value = "all";
-  if (projSel) projSel.value = "all";
-  if (statusSel) statusSel.value = "all";
-  if (focusSel) focusSel.value = "all";
-
-  document.querySelectorAll(".btn-filter-pill").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".comp-legend-item").forEach(p => p.classList.remove("active"));
-  document.getElementById("pillFilter_active_only")?.classList.add("active");
-
-  filterComparisonItems();
-  showToast("Đã đặt lại tất cả bộ lọc về mặc định.", "info");
-}
-
-// Thực thi lọc các dòng hợp đồng trên cả 2 cột biểu đồ
 function filterComparisonItems() {
+  const filterVal = document.getElementById("compFilterChanges")?.value || "active_only";
   const customerVal = (document.getElementById("compFilterCustomer")?.value || "all").toLowerCase();
-  const projProgressVal = document.getElementById("compFilterProjProgress")?.value || "all";
-  const statusVal = document.getElementById("compFilterStatus")?.value || "all";
-  const focusVal = document.getElementById("compFilterFocus")?.value || "all";
   const allRows = document.querySelectorAll(".coord-bar-row");
 
   let visibleCount = 0;
@@ -2268,84 +2166,51 @@ function filterComparisonItems() {
     const hasUrgent = row.getAttribute("data-has-urgent") === "1";
     const hasPending = row.getAttribute("data-has-pending") === "1";
     const isFullyPaid = row.getAttribute("data-is-fully-paid") === "1";
-    const hasPaid = row.getAttribute("data-has-paid") === "1";
     const hasDebt = row.getAttribute("data-has-debt") === "1";
     const hasUnstarted = row.getAttribute("data-has-unstarted") === "1";
     const hasCalculating = row.getAttribute("data-has-calculating") === "1";
     const segCount = parseInt(row.getAttribute("data-seg-count") || "1", 10);
     const rowCust = decodeURIComponent(row.getAttribute("data-customer") || "").toLowerCase();
 
-    // 1. Kiểm tra Khách hàng
+    // 1. Kiểm tra khách hàng
     let matchCust = (customerVal === "all") || (rowCust === customerVal) || (rowCust.includes(customerVal));
 
-    // 2. Kiểm tra Tiến độ Dự án (Đã xong vs Chưa xong/Còn nợ)
-    let matchProj = true;
-    if (projProgressVal === "unpaid") {
-      matchProj = hasDebt;
-    } else if (projProgressVal === "paid") {
-      matchProj = isFullyPaid;
+    // 2. Kiểm tra bộ lọc trạng thái & tiến độ
+    let matchFilter = true;
+    if (filterVal === "active_only") {
+      matchFilter = isActive;
+    } else if (filterVal === "changed") {
+      matchFilter = hasChange;
+    } else if (filterVal === "unstarted_next") {
+      // Yêu cầu: Các project chưa thanh toán xong VÀ khoản tiếp theo chưa có ngày tính hạn
+      matchFilter = hasDebt && hasUnstarted;
+    } else if (filterVal === "unpaid") {
+      matchFilter = hasDebt;
+    } else if (filterVal === "calculating") {
+      matchFilter = hasCalculating;
+    } else if (filterVal === "paid") {
+      matchFilter = isFullyPaid;
+    } else if (filterVal === "overdue") {
+      matchFilter = hasOverdue;
+    } else if (filterVal === "urgent") {
+      matchFilter = hasUrgent;
+    } else if (filterVal === "pending") {
+      matchFilter = hasPending;
+    } else if (filterVal === "multi") {
+      matchFilter = segCount >= 2;
     }
 
-    // 3. Kiểm tra Trạng thái đợt & Tính hạn đợt tiếp theo
-    let matchStatus = true;
-    if (statusVal === "unstarted") {
-      // Trường hợp: Dự án chưa thanh toán xong VÀ khoản tiếp theo chưa bắt đầu tính hạn
-      matchStatus = hasDebt && hasUnstarted;
-    } else if (statusVal === "calculating") {
-      matchStatus = hasCalculating;
-    } else if (statusVal === "overdue") {
-      matchStatus = hasOverdue;
-    } else if (statusVal === "urgent") {
-      matchStatus = hasUrgent;
-    } else if (statusVal === "pending") {
-      matchStatus = hasPending;
-    } else if (statusVal === "paid") {
-      matchStatus = isFullyPaid || hasPaid;
-    }
-
-    // 4. Kiểm tra Tiêu điểm & Biến động
-    let matchFocus = true;
-    if (focusVal === "active_only") {
-      matchFocus = isActive || hasUnstarted || hasOverdue || hasUrgent || hasChange;
-    } else if (focusVal === "changed") {
-      matchFocus = hasChange;
-    } else if (focusVal === "multi") {
-      matchFocus = segCount >= 2;
-    } else if (focusVal === "unchanged") {
-      matchFocus = !hasChange;
-    }
-
-    const isVisible = matchCust && matchProj && matchStatus && matchFocus;
+    const isVisible = matchCust && matchFilter;
     row.style.display = isVisible ? "flex" : "none";
     if (isVisible && row.closest("#prevBarsContainer")) {
       visibleCount++;
     }
   });
 
-  // Cập nhật số đếm dự án đang hiển thị
   const activeBadge = document.getElementById("cntActiveProjects");
-  const activeChip = document.getElementById("cntActiveProjectsChip");
   if (activeBadge) {
-    activeBadge.textContent = `${visibleCount}/${totalCount} dự án`;
-    if (activeChip) {
-      activeChip.classList.toggle("filtered", visibleCount < totalCount);
-    }
+    activeBadge.textContent = `${visibleCount}/${totalCount}`;
   }
-
-  // Đồng bộ trạng thái active trên Chú giải (Legend)
-  syncLegendActiveStyles(statusVal, focusVal);
-}
-
-// Đồng bộ viền sáng trên Chú giải màu sắc
-function syncLegendActiveStyles(statusVal, focusVal) {
-  document.querySelectorAll(".comp-legend-item").forEach(item => {
-    item.classList.remove("active");
-  });
-  if (statusVal === "paid") document.getElementById("legendPaid")?.classList.add("active");
-  if (statusVal === "overdue") document.getElementById("legendOverdue")?.classList.add("active");
-  if (statusVal === "urgent") document.getElementById("legendUrgent")?.classList.add("active");
-  if (statusVal === "pending") document.getElementById("legendPending")?.classList.add("active");
-  if (focusVal === "changed") document.getElementById("legendChanged")?.classList.add("active");
 }
 
 function getStatusColorClass(status) {

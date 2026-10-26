@@ -1,7 +1,7 @@
 ﻿{% extends "base.html" %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/receivables_tracker.css?v=5.0">
+<link rel="stylesheet" href="/static/css/receivables_tracker.css?v=5.1">
 {% endblock %}
 
 {% block content %}
@@ -876,9 +876,8 @@
       </div>
     </div>
 
-    <!-- Hàng 2: Bộ lọc phân chia rõ ràng, hợp lý theo đúng quy trình quản lý dự án -->
+    <!-- Hàng 2: Bộ lọc ngày tháng, khách hàng, biến động và bộ chuyển nguồn dữ liệu -->
     <div class="weekly-comp-header-controls">
-      <!-- 1. Mốc thời gian -->
       <div class="comp-control-group">
         <label for="compDatePrev" id="lblDatePrev">Tuần trước (上週):</label>
         <input type="date" id="compDatePrev" class="form-control form-control-xs" onchange="onWeeklyCompDateChange()">
@@ -889,99 +888,47 @@
         <input type="date" id="compDateCurr" class="form-control form-control-xs" onchange="onWeeklyCompDateChange()">
       </div>
 
-      <!-- 2. Khách hàng -->
-      <div class="comp-control-group comp-filter-group-cust">
-        <label for="compFilterCustomer">🏢 Khách hàng (客戶):</label>
-        <select id="compFilterCustomer" class="form-select form-select-xs" onchange="filterComparisonItems()" title="Lọc theo khách hàng">
+      <div class="comp-control-group">
+        <select id="compFilterCustomer" class="form-select form-select-xs" onchange="onWeeklyCompFilterChange()" title="Lọc theo khách hàng">
           <option value="all">Tất cả khách hàng (全部客戶)</option>
         </select>
       </div>
 
-      <!-- 3. Tiến độ Dự án (Chưa xong vs Đã thu đủ) -->
-      <div class="comp-control-group comp-filter-group-proj">
-        <label for="compFilterProjProgress">📊 Dự án (結清):</label>
-        <select id="compFilterProjProgress" class="form-select form-select-xs" onchange="onFilterControlChange()" title="Lọc theo tình trạng kết thanh của toàn bộ dự án">
-          <option value="all" selected>Tất cả dự án (全部)</option>
-          <option value="unpaid">⏳ Chưa thanh toán xong / Còn nợ (未結清)</option>
-          <option value="paid">✅ Đã thu đủ 100% (已全額結清)</option>
+      <div class="comp-control-group">
+        <select id="compFilterChanges" class="form-select form-select-xs" onchange="onFilterChangesDropdownChange()" title="Lọc hiển thị hợp đồng">
+          <optgroup label="─── TIÊU ĐIỂM ƯU TIÊN ───">
+            <option value="active_only" selected>⚡ Cần chú ý (Biến động/Đến hạn/Quá hạn) / 需關注專案</option>
+            <option value="all">🌐 Tất cả dự án (全部專案)</option>
+            <option value="changed">⚡ Có biến động trong tuần (本週有變動)</option>
+          </optgroup>
+          <optgroup label="─── TIẾN ĐỘ &amp; TÍNH HẠN ───">
+            <option value="unstarted_next">⚠️ Chưa TT xong &amp; Chưa tính hạn đợt tiếp (Chờ lắp đặt)</option>
+            <option value="unpaid">⏳ Chưa thanh toán xong / Còn nợ (未結清)</option>
+            <option value="calculating">🚀 Đang tính hạn T/T (Đã lắp đặt / Đang đếm ngược)</option>
+            <option value="paid">✅ Đã thu đủ 100% (已全額結清)</option>
+          </optgroup>
+          <optgroup label="─── HẠN THANH TOÁN ───">
+            <option value="overdue">🚨 Khoản quá hạn (逾期款項)</option>
+            <option value="urgent">⚡ Sắp đến hạn &le; 7 ngày (即將到期)</option>
+            <option value="pending">⏳ Chưa đến hạn (未到期)</option>
+            <option value="multi">📊 Dự án chia nhiều khoản (多期款項)</option>
+          </optgroup>
         </select>
       </div>
 
-      <!-- 4. Trạng thái Đợt & Tính Hạn (Đặc biệt: Chưa có ngày tính cho khoản tiếp theo) -->
-      <div class="comp-control-group comp-filter-group-status">
-        <label for="compFilterStatus">⏱️ Đợt &amp; Tính hạn (款項):</label>
-        <select id="compFilterStatus" class="form-select form-select-xs" onchange="onFilterControlChange()" title="Lọc theo trạng thái tính hạn và thời hạn thu nợ">
-          <option value="all" selected>Tất cả đợt (全部款項)</option>
-          <option value="unstarted">⚠️ Chưa tính hạn đợt tiếp (Chờ lắp đặt/nghiệm thu)</option>
-          <option value="calculating">🚀 Đang tính hạn T/T (Đã lắp đặt / Đếm ngược)</option>
-          <option value="overdue">🚨 Đến hạn / Quá hạn (逾期款項)</option>
-          <option value="urgent">⚡ Sắp đến hạn &le; 7 ngày (即將到期)</option>
-          <option value="pending">⏳ Chưa đến hạn (未到期)</option>
-          <option value="paid">✅ Đợt đã thu xong (已收期款)</option>
-        </select>
-      </div>
-
-      <!-- 5. Tiêu điểm biến động -->
-      <div class="comp-control-group comp-filter-group-focus">
-        <label for="compFilterFocus">🎯 Tiêu điểm (焦點):</label>
-        <select id="compFilterFocus" class="form-select form-select-xs" onchange="onFilterControlChange()" title="Lọc theo biến động tuần hoặc phân kỳ">
-          <option value="all">Tất cả (全部)</option>
-          <option value="active_only" selected>⚡ Cần chú ý (Biến động + Hạn)</option>
-          <option value="changed">📈 Có biến động tuần này (本週有變動)</option>
-          <option value="multi">📑 Dự án nhiều đợt (多期 &ge; 2)</option>
-          <option value="unchanged">💤 Không biến động (無變動)</option>
-        </select>
-      </div>
-
-      <!-- 6. Số lượng hiển thị & Nút Đặt lại -->
-      <div class="comp-filter-summary-group">
-        <span class="comp-filter-chip" id="cntActiveProjectsChip" title="Số lượng dự án đang hiển thị sau khi lọc">
-          <span id="cntActiveProjects">0/0 dự án</span>
-        </span>
-        <button type="button" class="btn-filter-reset" onclick="resetWeeklyComparisonFilters()" title="Đặt lại tất cả bộ lọc về mặc định (重置所有篩選)">
-          ↺ Đặt lại
-        </button>
-      </div>
-
-      <!-- 7. Bộ chọn nguồn dữ liệu đưa sát lề phải -->
-      <div class="comp-source-switch-group" style="margin-left: auto;">
+      <!-- Bộ chọn Nguồn Dữ Liệu: Gốc (DB) vs Dữ Liệu Mẫu (Demo) vs File Riêng (Upload) -->
+      <div class="comp-source-switch-group">
         <button type="button" class="btn-source-toggle active" id="btnSourceDb" onclick="switchDataSource('db')" title="Dữ liệu gốc từ hệ thống cơ sở dữ liệu (系統原始數據)">
-          <span>📊 Gốc</span>
+          <span>📊 Dữ Liệu Gốc</span>
         </button>
         <button type="button" class="btn-source-toggle" id="btnSourceSample" onclick="switchDataSource('sample')" title="Dữ liệu mẫu chuẩn hóa minh họa tiến độ các giai đoạn (標準示範數據)">
-          <span>🧪 Mẫu</span>
+          <span>🧪 Dữ Liệu Mẫu</span>
         </button>
         <button type="button" class="btn-source-upload" id="btnSourceUpload" onclick="triggerCustomFileUpload()" title="Tải lên file Excel (.xlsx/.xls) hoặc JSON riêng từ bộ phận khác để phân tích độc lập (上傳獨立檔案)">
           <span>📂 File Riêng</span>
         </button>
         <input type="file" id="inputCustomChartFile" accept=".xlsx,.xls,.json" style="display: none;" onchange="handleCustomFileUpload(event)">
       </div>
-    </div>
-
-    <!-- Hàng 3: Các nút lọc tắt nhanh (Quick Filter Pills) -->
-    <div class="weekly-comp-quick-pills-bar">
-      <span class="quick-pills-label">Lọc nhanh:</span>
-      <button type="button" class="btn-filter-pill active" id="pillFilter_active_only" onclick="applyQuickFilter('active_only')">
-        ⚡ Cần chú ý (關注)
-      </button>
-      <button type="button" class="btn-filter-pill pill-warning" id="pillFilter_unstarted_next" onclick="applyQuickFilter('unstarted_next')" title="Lọc các dự án chưa thanh toán xong nhưng cũng chưa có ngày tính cho khoản tiếp theo (chờ lắp đặt/nghiệm thu)">
-        ⚠️ Chưa tính hạn đợt tiếp (Chờ lắp đặt)
-      </button>
-      <button type="button" class="btn-filter-pill pill-danger" id="pillFilter_overdue" onclick="applyQuickFilter('overdue')">
-        🚨 Đến hạn / Quá hạn (逾期)
-      </button>
-      <button type="button" class="btn-filter-pill pill-success" id="pillFilter_changed" onclick="applyQuickFilter('changed')">
-        📈 Có biến động tuần này (本週變動)
-      </button>
-      <button type="button" class="btn-filter-pill" id="pillFilter_unpaid" onclick="applyQuickFilter('unpaid')">
-        ⏳ Chưa thanh toán xong (未結清)
-      </button>
-      <button type="button" class="btn-filter-pill" id="pillFilter_paid_all" onclick="applyQuickFilter('paid_all')">
-        ✅ Đã thu đủ 100% (已結清)
-      </button>
-      <button type="button" class="btn-filter-pill" id="pillFilter_all" onclick="applyQuickFilter('all')">
-        🌐 Xem tất cả (全部)
-      </button>
     </div>
   </div>
 
@@ -1165,5 +1112,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/receivables_tracker.js?v=5.0"></script>
+<script src="/static/js/receivables_tracker.js?v=5.1"></script>
 {% endblock %}
