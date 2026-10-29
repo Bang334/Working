@@ -18,6 +18,7 @@ const FileManagerApp = {
     viewMode: "table", // 'table' or 'grid'
     selectedFileForRename: null,
     searchDebounceTimer: null,
+    requestSequence: 0,
   },
 
   init() {
@@ -97,10 +98,12 @@ const FileManagerApp = {
       sort_by: this.state.sortBy,
     });
 
+    const sequence = ++this.state.requestSequence;
     try {
       const res = await fetch(`/api/v1/files?${params.toString()}`);
       if (!res.ok) throw new Error("Không thể tải danh sách file từ máy chủ");
       const data = await res.json();
+      if (sequence !== this.state.requestSequence) return;
 
       this.state.files = data.files || [];
       this.state.totalFiles = data.total_files || 0;
@@ -224,21 +227,29 @@ const FileManagerApp = {
     }
   },
 
+  escapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, ch => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[ch]));
+  },
+
+  inlineName(value) {
+    return encodeURIComponent(String(value || "")).replace(/'/g, "%27");
+  },
+
   renderTableRow(f) {
     const previewBtn = f.can_preview
-      ? `<button type="button" class="filemgr-btn-icon preview" onclick="FileManagerApp.previewFile('${f.id}', '${f.file_name}', '${f.file_ext}')" title="Xem trước tài liệu/hình ảnh">
+      ? `<button type="button" class="filemgr-btn-icon preview" onclick="FileManagerApp.previewFile('${f.id}', decodeURIComponent('${this.inlineName(f.file_name)}'), '${this.escapeHtml(f.file_ext)}')" title="Xem trước tài liệu/hình ảnh">
           <svg class="icon" viewBox="0 0 24 24" width="15" height="15"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>`
       : "";
 
     const renameBtn = f.can_rename
-      ? `<button type="button" class="filemgr-btn-icon rename" onclick="FileManagerApp.openRenameModal('${f.id}', '${f.file_name}')" title="Đổi tên file">
+      ? `<button type="button" class="filemgr-btn-icon rename" onclick="FileManagerApp.openRenameModal('${f.id}', decodeURIComponent('${this.inlineName(f.file_name)}'))" title="Đổi tên file">
           <svg class="icon" viewBox="0 0 24 24" width="15" height="15"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </button>`
       : "";
 
     const deleteBtn = f.can_delete
-      ? `<button type="button" class="filemgr-btn-icon delete" onclick="FileManagerApp.confirmDelete('${f.id}', '${f.file_name}')" title="Xóa file">
+      ? `<button type="button" class="filemgr-btn-icon delete" onclick="FileManagerApp.confirmDelete('${f.id}', decodeURIComponent('${this.inlineName(f.file_name)}'))" title="Xóa file">
           <svg class="icon" viewBox="0 0 24 24" width="15" height="15"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>`
       : "";
@@ -253,13 +264,14 @@ const FileManagerApp = {
       <tr>
         <td>
           <div class="filemgr-file-cell">
-            <div class="filemgr-ext-icon ${f.icon_type}">${f.file_ext}</div>
+            <div class="filemgr-ext-icon ${f.icon_type}">${this.escapeHtml(f.file_ext)}</div>
             <div class="filemgr-file-meta">
-              <a href="javascript:void(0)" onclick="FileManagerApp.openFile('${f.id}', '${f.file_name}')" class="filemgr-file-name" title="Bấm để mở trực tiếp trên máy tính bằng Word/Excel (${f.file_name})">
-                ${f.file_name}
+              <a href="javascript:void(0)" onclick="FileManagerApp.openFile('${f.id}', decodeURIComponent('${this.inlineName(f.file_name)}'))" class="filemgr-file-name" title="Bấm để mở trực tiếp trên máy tính bằng Word/Excel (${this.escapeHtml(f.file_name)})">
+                ${this.escapeHtml(f.file_name)}
               </a>
-              <span class="filemgr-folder-tag" title="Thư mục: ${f.folder_relative}">
-                📁 ${f.folder_name}
+              ${f.template_label ? `<span class="filemgr-folder-tag">${this.escapeHtml(f.template_label)}</span>` : ""}
+              <span class="filemgr-folder-tag" title="Thư mục: ${this.escapeHtml(f.folder_relative)}">
+                📁 ${this.escapeHtml(f.folder_name)}
               </span>
             </div>
           </div>
@@ -295,19 +307,19 @@ const FileManagerApp = {
 
   renderGridCard(f) {
     const previewBtn = f.can_preview
-      ? `<button type="button" class="filemgr-btn-icon preview" onclick="FileManagerApp.previewFile('${f.id}', '${f.file_name}', '${f.file_ext}')" title="Xem trước">
+      ? `<button type="button" class="filemgr-btn-icon preview" onclick="FileManagerApp.previewFile('${f.id}', decodeURIComponent('${this.inlineName(f.file_name)}'), '${this.escapeHtml(f.file_ext)}')" title="Xem trước">
           <svg class="icon" viewBox="0 0 24 24" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>`
       : "";
 
     const renameBtn = f.can_rename
-      ? `<button type="button" class="filemgr-btn-icon rename" onclick="FileManagerApp.openRenameModal('${f.id}', '${f.file_name}')" title="Đổi tên">
+      ? `<button type="button" class="filemgr-btn-icon rename" onclick="FileManagerApp.openRenameModal('${f.id}', decodeURIComponent('${this.inlineName(f.file_name)}'))" title="Đổi tên">
           <svg class="icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </button>`
       : "";
 
     const deleteBtn = f.can_delete
-      ? `<button type="button" class="filemgr-btn-icon delete" onclick="FileManagerApp.confirmDelete('${f.id}', '${f.file_name}')" title="Xóa file">
+      ? `<button type="button" class="filemgr-btn-icon delete" onclick="FileManagerApp.confirmDelete('${f.id}', decodeURIComponent('${this.inlineName(f.file_name)}'))" title="Xóa file">
           <svg class="icon" viewBox="0 0 24 24" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>`
       : "";
@@ -315,15 +327,15 @@ const FileManagerApp = {
     return `
       <div class="filemgr-grid-card">
         <div class="filemgr-grid-top">
-          <div class="filemgr-ext-icon ${f.icon_type}">${f.file_ext}</div>
+          <div class="filemgr-ext-icon ${f.icon_type}">${this.escapeHtml(f.file_ext)}</div>
           <div class="filemgr-grid-meta">
             <span class="badge-cat ${f.category_badge_class}" style="width: fit-content;">
               ${f.category_label}
             </span>
-            <a href="javascript:void(0)" onclick="FileManagerApp.openFile('${f.id}', '${f.file_name}')" class="filemgr-file-name" title="Bấm để mở trực tiếp trên máy tính bằng Word/Excel (${f.file_name})">
-              ${f.file_name}
+            <a href="javascript:void(0)" onclick="FileManagerApp.openFile('${f.id}', decodeURIComponent('${this.inlineName(f.file_name)}'))" class="filemgr-file-name" title="Bấm để mở trực tiếp trên máy tính bằng Word/Excel (${this.escapeHtml(f.file_name)})">
+              ${this.escapeHtml(f.file_name)}
             </a>
-            <span class="filemgr-folder-tag">📁 ${f.folder_name} · ${f.file_size_human}</span>
+            <span class="filemgr-folder-tag">📁 ${this.escapeHtml(f.folder_name)} · ${f.file_size_human}</span>
           </div>
         </div>
 
@@ -470,7 +482,7 @@ const FileManagerApp = {
   },
 
   confirmDelete(fileId, fileName) {
-    if (confirm(`Bạn có chắc chắn muốn xóa file "${fileName}" không?\nHành động này sẽ xóa file khỏi máy tính.`)) {
+    if (confirm(`Bạn có chắc chắn muốn xóa file "${fileName}" không?\nFile sẽ được chuyển vào thư mục thùng rác để có thể khôi phục thủ công.`)) {
       this.executeDelete(fileId);
     }
   },
@@ -531,10 +543,16 @@ const FileManagerApp = {
 
     const file = input.files[0];
     const category = select ? select.value : "hop_dong";
+    const company = (document.getElementById("filemgrUploadCompany")?.value || "").trim();
+    if (!company) {
+      this.showToast("Vui lòng nhập tên công ty để lưu đúng hồ sơ.", "warning");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("category", category);
+    formData.append("company", company);
 
     try {
       this.showToast("Đang tải file lên kho tài liệu...", "info");

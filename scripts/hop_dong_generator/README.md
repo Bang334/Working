@@ -45,7 +45,7 @@ scripts/hop_dong_generator/
 Khi nhận tin nhắn Zalo, WeChat, email hoặc ghi chú lộn xộn, chỉ cần truyền vào tham số `--ai-text`:
 ```bash
 python scripts/hop_dong_generator/dien_hop_dong_tu_dong.py \
-  --template "Bieu Mau/Hợp đồng.docx" \
+  --template "Bieu Mau/Mau_Goc_Hop_Dong_Mua_Ban.docx" \
   --ai-text "Tên công ty: CÔNG TY TNHH CÔNG NGHỆ JINXUN VIỆT NAM, MST 0801382054, đại diện HUANG YU, thanh toán 35% cọc, 55% lắp đặt, 10% nghiệm thu, tổng tiền 781.530.000 VND" \
   --output "Hop_Dong_JINXUN.docx"
 ```
@@ -53,7 +53,7 @@ python scripts/hop_dong_generator/dien_hop_dong_tu_dong.py \
 ### Cách 2: Sinh hợp đồng JINXUN từ script chuyên biệt, không dùng JSON
 ```bash
 python scripts/hop_dong_generator/generate_jinxun_mes_contract.py \
-  --template "Bieu Mau/Hợp đồng.docx" \
+  --template "Bieu Mau/Mau_Goc_Hop_Dong_Mua_Ban.docx" \
   --output "scripts/hop_dong_generator/outputs/final/Hop_Dong_JINXUN_MES_Lite_DA_SUA_V2.docx"
 ```
 

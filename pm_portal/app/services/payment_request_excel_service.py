@@ -18,8 +18,8 @@ from app.services.reminder_service import (
 )
 from app.services.payment_request_word_service import generate_payment_request_word
 
-TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "đơn yêu cầu NCC thanh toán-Gốc.xlsx"
-WORD_TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "đơn yêu cầu NCC thanh toán-Gốc.docx"
+TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx"
+WORD_TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx"
 TEMPLATE_SHEET_NAME = "712TR"
 OUTPUT_DIR = WORKING_DIR / "Ho So Du An" / "Yeu Cau Thanh Toan"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -456,8 +456,8 @@ def generate_payment_request_excel(
         wb.calculation.fullCalcOnLoad = True
         wb.calculation.forceFullCalc = True
 
-    safe_customer = _safe_file_component(cust_vi)
-    base_file_name = f"đơn yêu cầu thanh toán - {safe_customer} - {c_code}"
+    from app.utils.file_helper import document_filename
+    base_file_name = Path(document_filename("De_Nghi_Thanh_Toan", cust_vi, c_code)).stem
     file_name = f"{base_file_name}.xlsx"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_file = OUTPUT_DIR / file_name
@@ -465,16 +465,9 @@ def generate_payment_request_excel(
     try:
         wb.save(str(out_file))
     except PermissionError:
-        file_name = f"đơn yêu cầu thanh toán - {cust_vi} - {c_code}_v2.xlsx"
+        file_name = f"{base_file_name}_v2.xlsx"
         out_file = OUTPUT_DIR / file_name
         wb.save(str(out_file))
-
-    # Giữ bản tham chiếu nhanh tại thư mục làm việc.
-    root_copy = WORKING_DIR / file_name
-    try:
-        wb.save(str(root_copy))
-    except Exception:
-        pass
 
     file_size = out_file.stat().st_size
     contract_id = c_row["id"] if c_row else None
@@ -523,14 +516,6 @@ def generate_payment_request_excel(
         OUTPUT_DIR / f"{base_file_name}.docx",
         template_path=selected_word_template,
     )
-    try:
-        generate_payment_request_word(
-            sheet_data,
-            WORKING_DIR / word_file.name,
-            template_path=selected_word_template,
-        )
-    except Exception:
-        pass
     word_doc_id = _index_document(
         cursor,
         contract_id=contract_id,
@@ -583,7 +568,7 @@ def generate_payment_request_excel(
 
 
 def render_payment_request_sheet_html(data: Dict[str, Any]) -> str:
-    """Render high-fidelity HTML table mimicking Excel spreadsheet 1:1 exactly from 'đơn yêu cầu NCC thanh toán-Gốc.xlsx'."""
+    """Render high-fidelity HTML table mimicking Excel spreadsheet 1:1 exactly from 'Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx'."""
     cust_vi = html.escape(str(data.get("customer_name_vi") or ""))
     c_code = html.escape(str(data.get("contract_code") or ""))
     proj_vi = html.escape(str(data.get("project_name_vi") or ""))

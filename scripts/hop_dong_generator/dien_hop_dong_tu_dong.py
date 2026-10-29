@@ -981,7 +981,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Điền hợp đồng tự động bảo toàn 100% bố cục - tích hợp AI phân tích."
     )
-    parser.add_argument("--template", "-t", default=r"E:\Working\Bieu Mau\Hợp đồng.docx", help="File Word mẫu (.docx)")
+    parser.add_argument("--template", "-t", default=r"E:\Working\Bieu Mau\Mau_Goc_Hop_Dong_Mua_Ban.docx", help="File Word mẫu (.docx)")
     parser.add_argument("--data", "-d", help="File JSON chứa dữ liệu hợp đồng")
     parser.add_argument("--ai-text", "-a", help="Đoạn văn bản tự do để AI tự động phân tích và điền")
     default_output = os.path.join(

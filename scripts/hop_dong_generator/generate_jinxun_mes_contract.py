@@ -15,7 +15,7 @@ from dien_hop_dong_tu_dong import fill_contract
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 WORKSPACE_ROOT = SCRIPT_DIR.parents[1]
-DEFAULT_TEMPLATE = WORKSPACE_ROOT / "Bieu Mau" / "Hợp đồng.docx"
+DEFAULT_TEMPLATE = WORKSPACE_ROOT / "Bieu Mau" / "Mau_Goc_Hop_Dong_Mua_Ban.docx"
 DEFAULT_OUTPUT = SCRIPT_DIR / "outputs" / "final" / "Hop_Dong_JINXUN_MES_Lite_DA_SUA_V2.docx"
 
 

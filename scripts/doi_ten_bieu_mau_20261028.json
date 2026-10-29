@@ -1,0 +1,117 @@
+[
+  {
+    "old": "Bieu Mau\\Biên Bản Nghiệm Thu.xlsx",
+    "new": "Bieu Mau\\Mau_Goc_Nghiem_Thu_Sua_Chua.xlsx",
+    "sha256": "a9761c67ed5a8e911a269580b241ad22b5852a45cfda72ab06201ec3dd8c034f"
+  },
+  {
+    "old": "Bieu Mau\\Bien_ban_nghiem_thu_HMV100120260001.docx",
+    "new": "Bieu Mau\\Mau_Goc_Nghiem_Thu_Lap_Dat_CX.docx",
+    "sha256": "6212a5585e5a9bad4170dbe0ec364ed7d6aa1eeaef188bcf6203ad6241b4bc70"
+  },
+  {
+    "old": "Bieu Mau\\đơn yêu cầu NCC thanh toán-Gốc.docx",
+    "new": "Bieu Mau\\Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx",
+    "sha256": "6615b9c3e98d3d68ca8fe29d24eff81480570615bfb7a5a0499f88846b6cd1c8"
+  },
+  {
+    "old": "Bieu Mau\\đơn yêu cầu NCC thanh toán-Gốc.xlsx",
+    "new": "Bieu Mau\\Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx",
+    "sha256": "10ff112c7ba82457587f0d40180ecf659e1ee99e0d020209f7eede686c8ac576"
+  },
+  {
+    "old": "Bieu Mau\\đơn yêu cầu NCC thanh toán-Gốc_backup.xlsx",
+    "new": "Bieu Mau\\Du_Phong_De_Nghi_Thanh_Toan_NCC.xlsx",
+    "sha256": "f3c7e8db0943415b7a5954922b79a8ab6f882d2b2450b9e244b92089e3e1eddf"
+  },
+  {
+    "old": "Bieu Mau\\DON_XIN_THANH_TOAN_TEMPLATE.xlsx",
+    "new": "Bieu Mau\\Mau_Goc_Don_Xin_Thanh_Toan.xlsx",
+    "sha256": "6085a1658623c15b15e959f83fc0682badf31f9d4cc8c70fa28974dcb3ed3848"
+  },
+  {
+    "old": "Bieu Mau\\ĐƠN XIN THANH TOÁN.xlsx",
+    "new": "Bieu Mau\\Du_Phong_Don_Xin_Thanh_Toan.xlsx",
+    "sha256": "650e73a8392c29a654e82cfe138f1df0a81e4853ec36031ad20e506e9a915c9c"
+  },
+  {
+    "old": "Bieu Mau\\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx",
+    "new": "Bieu Mau\\Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx",
+    "sha256": "00c68f96262c279469a94db479c00df6d3c8a45469eed2547bc57d226d45aceb"
+  },
+  {
+    "old": "Bieu Mau\\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc_backup.xlsx",
+    "new": "Bieu Mau\\Du_Phong_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx",
+    "sha256": "afa1d0f8f060577a83ecc2b3e4a2c64d5101d5ac60c40cd3a24fff15820a4c55"
+  },
+  {
+    "old": "Bieu Mau\\Hợp đồng.docx",
+    "new": "Bieu Mau\\Mau_Goc_Hop_Dong_Mua_Ban.docx",
+    "sha256": "dc718a46da1aee1fa08d90ca2e4c040a9843dd9d249e7d58eeda7c3ad0741fcc"
+  },
+  {
+    "old": "Bieu Mau\\đơn xin nghỉ phép 请假条.xlsx",
+    "new": "Bieu Mau\\Mau_Don_Xin_Nghi_Phep.xlsx",
+    "sha256": "b744d4409580ab362559f95f79c59d45fb9c98f25d98f2924e769fd69e69085f"
+  },
+  {
+    "old": "Bieu Mau\\PHIEU CHI 支出傳票.docx",
+    "new": "Bieu Mau\\Mau_Phieu_Chi.docx",
+    "sha256": "59bdb08593ce52ff1625f50c32b511aa9141895dc5cde697c2c96178de6129b4"
+  },
+  {
+    "old": "Bieu Mau\\quên quẹt thẻ 打卡异常审批单.xlsx",
+    "new": "Bieu Mau\\Mau_Don_Quen_Cham_Cong.xlsx",
+    "sha256": "21ded89d41b3dc07f5e33d5dda69e2b55a65266cc762567bb8cb7b471a7188ce"
+  },
+  {
+    "old": "Bieu Mau\\CX_RFID_Bao_gia_sua_loi_202609_V1.1.xlsx",
+    "new": "Bieu Mau\\Tham_Khao_Bao_Gia_Sua_Loi_RFID_CX_202609_V1.1.xlsx",
+    "sha256": "dfe6be664a56b82652921ebdef031915f67b17657924a6c23cda3ac09ad6a0da"
+  },
+  {
+    "old": "Bieu Mau\\CX Technology貨物交接單,貨物價值為13,700,000越南盾(VND).xlsx",
+    "new": "Bieu Mau\\Tham_Khao_Bien_Ban_Giao_Nhan_CX_13700000_VND.xlsx",
+    "sha256": "7f7b1294f151cb4be15e8f2807ffc95062ae6c13035f744c9eddee4fa02b1c9e"
+  },
+  {
+    "old": "Bieu Mau\\Biên Bản Nghiệm Thu_維修設備驗收記錄_HDSC-HMV06032026001_HOAN_TAT.xlsx",
+    "new": "Bieu Mau\\Tham_Khao_Nghiem_Thu_Sua_Chua_HDSC-HMV06032026001_Hoan_Tat.xlsx",
+    "sha256": "84734e6737c85648b7c90dab0abd50baf2ed6a3024a4d82f01755dd531a45705"
+  },
+  {
+    "old": "Bieu Mau\\浤詺-CX合同 HopDong_CX_HongMing HMV220820260001-157,000,000VND (1) (1).docx",
+    "new": "Bieu Mau\\Tham_Khao_Hop_Dong_CX_HMV220820260001_157000000_VND.docx",
+    "sha256": "303a9ef550dd98e5c4db05f3b6ba1bf6d0df67954ee9a595407902928587ee69"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\BIÊN BẢN GIAO NHẬN SỬA CHỮA PHẦN CỨNG-硬件維修交接記錄20082026.xlsx",
+    "new": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\Tham_Khao_Giao_Nhan_Sua_Chua_Phan_Cung_20260820.xlsx",
+    "sha256": "ea343ed14289eb2efdedbc987f269744b6081ac1b8ec3a2a58703f696499188e"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\DANH_SACH_THIET_BI_SUA_CHUA_THAY_THE_DFV_DARFON.xlsx",
+    "new": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx",
+    "sha256": "2f55029ecbac912c835cd4b8e7f8013587af24d5ac759cd615606f9b5d4ae705"
+  },
+  {
+    "old": "Bieu Mau\\zip\\Biên Bản Nghiệm Thu.xlsx",
+    "new": "Bieu Mau\\zip\\Du_Phong_Nghiem_Thu_Sua_Chua.xlsx",
+    "sha256": "a9761c67ed5a8e911a269580b241ad22b5852a45cfda72ab06201ec3dd8c034f"
+  },
+  {
+    "old": "Bieu Mau\\zip\\đơn yêu cầu NCC thanh toán-Gốc.docx",
+    "new": "Bieu Mau\\zip\\Du_Phong_De_Nghi_Thanh_Toan_NCC.docx",
+    "sha256": "6615b9c3e98d3d68ca8fe29d24eff81480570615bfb7a5a0499f88846b6cd1c8"
+  },
+  {
+    "old": "Bieu Mau\\zip\\đơn yêu cầu NCC thanh toán-Gốc.xlsx",
+    "new": "Bieu Mau\\zip\\Du_Phong_De_Nghi_Thanh_Toan_NCC.xlsx",
+    "sha256": "f3c7e8db0943415b7a5954922b79a8ab6f882d2b2450b9e244b92089e3e1eddf"
+  },
+  {
+    "old": "Bieu Mau\\zip\\Hợp đồng.docx",
+    "new": "Bieu Mau\\zip\\Du_Phong_Hop_Dong_Mua_Ban.docx",
+    "sha256": "8b86b8993d1473d7a3c6bbb2eadc10b6877069aea25e67e3b3c7c851265f785e"
+  }
+]

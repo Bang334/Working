@@ -2,7 +2,7 @@
 """Fill the approved supplier payment request DOCX without changing layout.
 
 The file below is the live golden template and is never overwritten:
-E:\\Working\\Bieu Mau\\đơn yêu cầu NCC thanh toán-Gốc.docx
+E:\\Working\\Bieu Mau\\Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx
 
 Only existing text nodes are edited. Paragraph properties, run properties,
 table grids, cell widths, borders, row heights, margins and section settings
@@ -25,7 +25,7 @@ from docx.oxml.ns import qn
 from lxml import etree
 
 
-DEFAULT_TEMPLATE = Path(r"E:\Working\Bieu Mau\đơn yêu cầu NCC thanh toán-Gốc.docx")
+DEFAULT_TEMPLATE = Path(r"E:\Working\Bieu Mau\Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx")
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 
 

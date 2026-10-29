@@ -7,8 +7,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 WORKING_DIR = BASE_DIR.parent
 OUTPUTS_DIR = BASE_DIR / "outputs"
-TEMPLATE_DOCX = WORKING_DIR / "Bieu Mau" / "Hợp đồng.docx"
-REPAIR_ACCEPTANCE_TEMPLATE = WORKING_DIR / "Bieu Mau" / "Biên Bản Nghiệm Thu.xlsx"
+TEMPLATE_DOCX = WORKING_DIR / "Bieu Mau" / "Mau_Goc_Hop_Dong_Mua_Ban.docx"
+REPAIR_ACCEPTANCE_TEMPLATE = WORKING_DIR / "Bieu Mau" / "Mau_Goc_Nghiem_Thu_Sua_Chua.xlsx"
 REPAIR_ACCEPTANCE_SCRIPT = (
     WORKING_DIR
     / ".agents"
@@ -22,10 +22,8 @@ REPAIR_ACCEPTANCE_SCRIPT = (
 os.makedirs(OUTPUTS_DIR, exist_ok=True)
 
 # Gemini API configuration
-DEFAULT_GEMINI_KEYS = [
-    "AIzaSyDIGsxjjDNtk6_fvp_fpPKFBX-etiimtv4",
-]
-DEFAULT_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", DEFAULT_GEMINI_KEYS[0])
+DEFAULT_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+DEFAULT_GEMINI_KEYS = [DEFAULT_GEMINI_KEY] if DEFAULT_GEMINI_KEY else []
 
 # Chuỗi Model Gemini ưu tiên tốc độ cao & ổn định (ưu tiên 3.5-flash-lite, 3.1-flash-lite)
 CANDIDATE_MODELS = [

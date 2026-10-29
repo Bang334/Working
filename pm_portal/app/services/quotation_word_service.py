@@ -547,16 +547,17 @@ def generate_quotation_word(data: Dict[str, Any]) -> Dict[str, Any]:
     p_sp1.add_run("______________________________\nNgày / 日期: ..... / ..... / 2026").font.size = Pt(9)
 
     # 6. Save File with PermissionError fallback
-    clean_cust = sanitize_filename(cust_vi)
-    clean_quote = sanitize_filename(quote_no)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"Bao_Gia_{clean_cust}_{clean_quote}_{timestamp}.docx"
+    from app.utils.file_helper import document_filename
+    timestamp = str(data.get("_file_timestamp") or "")
+    if not re.fullmatch(r"\d{8}_\d{6}_\d{6}", timestamp):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    file_name = document_filename("Bao_Gia", cust_vi, quote_no, "docx", timestamp)
     output_path = target_dir / file_name
 
     try:
         doc.save(str(output_path))
     except PermissionError:
-        file_name = f"Bao_Gia_{clean_cust}_{clean_quote}_{timestamp}_v2.docx"
+        file_name = f"{output_path.stem}_v2.docx"
         output_path = target_dir / file_name
         doc.save(str(output_path))
 

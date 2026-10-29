@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 r"""
 Script tạo Biên bản nghiệm thu lắp đặt & bàn giao đưa vào sử dụng
-Mẫu chuẩn 1:1 theo: E:\Working\Bieu Mau\Bien_ban_nghiem_thu_HMV100120260001.docx
+Mẫu chuẩn 1:1 theo: E:\Working\Bieu Mau\Mau_Goc_Nghiem_Thu_Lap_Dat_CX.docx
 Dữ liệu nguồn: C:\Users\BANG\Downloads\02_BIEN_BAN_NGHIEM_THU_BAN_GIAO_CX_.docx
 Áp dụng Quy tắc bảo toàn bố cục (Zero-Layout-Distortion Protocol)
 """
@@ -24,7 +24,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 WORKING_DIR = Path(r"E:\Working")
 OUTPUTS_DIR = WORKING_DIR / "pm_portal" / "outputs"
 DOSSIER_DIR = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
-TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "Bien_ban_nghiem_thu_HMV100120260001.docx"
+TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "Mau_Goc_Nghiem_Thu_Lap_Dat_CX.docx"
 
 
 def set_cell_text_and_style(cell, text: str, font_name: str = "微軟正黑體", font_size_pt: float = 8.5, bold: bool = False, color_rgb: RGBColor = None, alignment = None):

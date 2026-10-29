@@ -455,7 +455,7 @@ def generate_pouhui_with_reference_format(template_path, output_path):
         print(f"[THÔNG BÁO] File đang mở, đã lưu dự phòng tại: {alt}")
 
 if __name__ == "__main__":
-    tmpl = r"E:\Working\Bieu Mau\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx"
+    tmpl = r"E:\Working\Bieu Mau\Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx"
     out1 = r"E:\Working\ChuaHieu\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx"
     out2 = r"E:\Working\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx"
 

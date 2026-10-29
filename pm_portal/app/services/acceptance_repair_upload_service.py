@@ -102,12 +102,14 @@ def process_uploaded_repair_file(
             final_contract_id = matched_contract["id"]
             cust_name = matched_contract.get("customer_name_vi", "")
             clean_c_code = re.sub(r'[\\/*?:"<>|]', '_', final_contract_code).strip()
-            output_name = f"Bien_Ban_Nghiem_Thu_{clean_c_code}_{clean_stem}_{timestamp}.xlsx"
+            from app.utils.file_helper import document_filename
+            output_name = document_filename("Nghiem_Thu_Sua_Chua", cust_name, clean_c_code)
         else:
             final_contract_code = ""
             final_contract_id = None
             cust_name = ""
-            output_name = f"Bien_Ban_Nghiem_Thu_{clean_stem}_{timestamp}.xlsx"
+            from app.utils.file_helper import document_filename
+            output_name = document_filename("Nghiem_Thu_Sua_Chua", "", clean_stem)
 
         output_path = target_dir / output_name
         shutil.copy2(REPAIR_ACCEPTANCE_TEMPLATE, output_path)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Script bổ sung 8 viên pin vào file Excel thiết bị DFV
-Đường dẫn file: E:\Working\Bieu Mau\26 10 Làm file liệt kê thiết bị\DANH_SACH_THIET_BI_SUA_CHUA_THAY_THE_DFV_DARFON.xlsx
+Đường dẫn file: E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi\Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx
 """
 
 import os
@@ -10,8 +10,8 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.drawing.image import Image as XLImage
 
-EXCEL_PATH = r"E:\Working\Bieu Mau\26 10 Làm file liệt kê thiết bị\DANH_SACH_THIET_BI_SUA_CHUA_THAY_THE_DFV_DARFON.xlsx"
-BAT_DIR = r"E:\Working\Bieu Mau\26 10 Làm file liệt kê thiết bị\batteries"
+EXCEL_PATH = r"E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi\Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx"
+BAT_DIR = r"E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi\Anh_Pin"
 
 BATTERIES = [
     {

@@ -6,6 +6,10 @@ import base64
 import logging
 import os
 import subprocess
+import shutil
+import re
+import uuid
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -93,6 +97,21 @@ CATEGORY_CONFIG = {
         "icon": "folder",
         "allow_upload": True,
     },
+    "thiet_bi": {
+        "label": "Hồ sơ thiết bị", "subdirs": ["Thiet Bi"],
+        "color": "purple", "badge_class": "badge-purple", "tab_url": "/files",
+        "icon": "folder", "allow_upload": True,
+    },
+    "bao_cao": {
+        "label": "Báo cáo", "subdirs": ["Bao Cao"],
+        "color": "blue", "badge_class": "badge-blue", "tab_url": "/files",
+        "icon": "folder", "allow_upload": True,
+    },
+    "tham_khao": {
+        "label": "Tài liệu tham khảo", "subdirs": ["Tham Khao"],
+        "color": "gray", "badge_class": "badge-gray", "tab_url": "/files",
+        "icon": "folder", "allow_upload": True,
+    },
     "outputs": {
         "label": "File Vừa Xuất",
         "subdirs": [],
@@ -125,6 +144,14 @@ def format_size_human(size_in_bytes: int) -> str:
     return f"{size_in_bytes / (1024 * 1024 * 1024):.2f} GB"
 
 
+def _is_inside(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
+
+
 def encode_file_id(path: Path) -> str:
     """Encode relative path from WORKING_DIR safely as base64 string."""
     rel = path.resolve().relative_to(WORKING_DIR.resolve()).as_posix()
@@ -138,8 +165,9 @@ def decode_file_id(file_id: str) -> Path:
         target_path = (WORKING_DIR / rel_str).resolve()
         # Security check: Target must stay inside WORKING_DIR
         working_res = WORKING_DIR.resolve()
-        if not str(target_path).startswith(str(working_res)):
-            raise ValueError("Đường dẫn file không hợp lệ hoặc nằm ngoài thư mục dự án.")
+        target_path.relative_to(working_res)
+        if not any(_is_inside(target_path, root) for root in (HO_SO_DIR, BIEU_MAU_DIR, OUTPUTS_DIR)):
+            raise ValueError("File nằm ngoài khu vực hồ sơ được quản lý.")
         return target_path
     except Exception as exc:
         logger.error("Failed to decode file_id '%s': %s", file_id, exc)
@@ -167,18 +195,21 @@ def determine_category_for_path(path: Path) -> str:
     resolved = path.resolve()
     
     # Check if inside Bieu Mau
-    if str(resolved).startswith(str(BIEU_MAU_DIR.resolve())):
+    if _is_inside(resolved, BIEU_MAU_DIR):
         return "bieu_mau"
     
     # Check if inside outputs
-    if str(resolved).startswith(str(OUTPUTS_DIR.resolve())):
+    if _is_inside(resolved, OUTPUTS_DIR):
         return "outputs"
     
     # Check inside Ho So Du An subdirs
-    if str(resolved).startswith(str(HO_SO_DIR.resolve())):
+    if _is_inside(resolved, HO_SO_DIR):
         try:
             rel = resolved.relative_to(HO_SO_DIR.resolve())
             top_part = rel.parts[0] if rel.parts else ""
+            # New hierarchy: Cong Ty / company / document category / ...
+            if top_part.lower() == "cong ty" and len(rel.parts) >= 3:
+                top_part = rel.parts[2]
             for cat_key, cfg in CATEGORY_CONFIG.items():
                 for s in cfg.get("subdirs", []):
                     if top_part.lower() == s.lower():
@@ -229,6 +260,7 @@ def collect_single_file_metadata(p: Path) -> Optional[Dict[str, Any]]:
             "icon_type": get_file_icon_type(file_ext),
             "category": category,
             "category_label": cfg.get("label", "Khác"),
+            "template_label": TEMPLATE_LABELS.get(p.name, "") if is_bieu_mau else "",
             "category_color": cfg.get("color", "gray"),
             "category_badge_class": cfg.get("badge_class", "badge-gray"),
             "tab_url": cfg.get("tab_url", "/files"),
@@ -245,6 +277,45 @@ def collect_single_file_metadata(p: Path) -> Optional[Dict[str, Any]]:
         return None
 
 
+# Labels help find fixed-name master templates without renaming them.
+TEMPLATE_LABELS = {
+    "Mau_Goc_Hop_Dong_Mua_Ban.docx": "Mẫu gốc hợp đồng mua bán",
+    "Mau_Goc_Nghiem_Thu_Sua_Chua.xlsx": "Mẫu gốc nghiệm thu sửa chữa",
+    "Mau_Goc_Nghiem_Thu_Lap_Dat_CX.docx": "Mẫu gốc nghiệm thu lắp đặt",
+    "Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx": "Mẫu gốc đề nghị thanh toán Word",
+    "Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx": "Mẫu gốc đề nghị thanh toán Excel",
+    "Mau_Goc_Don_Xin_Thanh_Toan.xlsx": "Mẫu gốc đơn xin thanh toán",
+    "Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx": "Mẫu gốc báo giá ECO PRIME đồng hồ điện",
+}
+
+
+def _search_normalize(value: str) -> str:
+    value = unicodedata.normalize("NFKD", str(value or "").casefold().replace("đ", "d"))
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
+    return re.sub(r"[^\w]+", " ", value).replace("_", " ")
+
+
+def _document_search_metadata() -> Dict[str, str]:
+    """Load explicit document/contract associations in one query, without reindexing."""
+    try:
+        from app.database import get_db_connection
+        conn = get_db_connection()
+        try:
+            rows = conn.execute("""SELECT d.file_path, d.contract_code, d.doc_name,
+                c.customer_name_vi, c.customer_name_zh, c.project_name_vi, c.project_name_zh
+                FROM documents d LEFT JOIN contracts c ON c.id = d.contract_id""").fetchall()
+            result = {}
+            for row in rows:
+                key = os.path.normcase(os.path.normpath(row["file_path"]))
+                result[key] = result.get(key, "") + " " + " ".join(str(v or "") for v in row[1:])
+            return result
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.warning("Không thể tải thông tin liên kết để tìm kiếm: %s", exc)
+        return {}
+
+
 def list_all_files(
     category: Optional[str] = None,
     search: Optional[str] = None,
@@ -255,7 +326,6 @@ def list_all_files(
     targets = [HO_SO_DIR, BIEU_MAU_DIR, OUTPUTS_DIR]
     all_files: List[Dict[str, Any]] = []
     seen_paths = set()
-    seen_signatures = set()
 
     # Thống kê tổng hợp
     category_counts: Dict[str, int] = {k: 0 for k in CATEGORY_CONFIG.keys()}
@@ -268,6 +338,7 @@ def list_all_files(
         "other": 0,
     }
     total_size = 0
+    linked_metadata = _document_search_metadata() if search and search.strip() else {}
 
     for target_dir in targets:
         if not target_dir.exists():
@@ -275,34 +346,16 @@ def list_all_files(
         for p in target_dir.rglob("*"):
             if not p.is_file():
                 continue
-            # Bỏ qua file tạm, file backup zip của template, và file ẩn
-            if p.name.startswith("~$") or p.name.startswith(".") or "_backup" in p.name.lower():
-                continue
-            if "zip" in p.parts:
+            # Chỉ bỏ file khóa Excel và file ẩn, giữ các phiên bản lịch sử.
+            if p.name.startswith("~$") or p.name.startswith("."):
                 continue
 
             resolved_str = str(p.resolve())
             if resolved_str in seen_paths:
                 continue
 
-            # Chống trùng lặp tuyệt đối (Deduplication):
-            # Nếu một file có cùng tên và cùng dung lượng (hoặc file trùng tên từ outputs),
-            # hệ thống chỉ giữ 1 bản duy nhất chính thức, loại bỏ hoàn toàn việc nhân đôi hiển thị.
-            try:
-                fsize = p.stat().st_size
-            except Exception:
-                fsize = 0
-
-            file_sig = (p.name.lower(), fsize)
-            if file_sig in seen_signatures:
-                continue
-
-            is_in_outputs = str(p.resolve()).startswith(str(OUTPUTS_DIR.resolve()))
-            if is_in_outputs and any(sig[0] == p.name.lower() for sig in seen_signatures):
-                continue
-
+            # Each distinct path is a separate record, even if names or sizes match.
             seen_paths.add(resolved_str)
-            seen_signatures.add(file_sig)
 
             meta = collect_single_file_metadata(p)
             if not meta:
@@ -340,16 +393,18 @@ def list_all_files(
         else:
             filtered = [f for f in filtered if f["file_ext"] == ext_clean]
 
-    # Áp dụng tìm kiếm từ khóa (Search Keyword)
+    # Search independent words across filename, full path, category and explicit links.
     if search and search.strip():
-        term = search.strip().lower()
-        filtered = [
-            f for f in filtered
-            if term in f["file_name"].lower()
-            or term in f["category_label"].lower()
-            or term in f["folder_name"].lower()
-            or term in f["file_ext"].lower()
-        ]
+        terms = _search_normalize(search).split()
+        def matches(f):
+            path_key = os.path.normcase(os.path.normpath(str(WORKING_DIR / f["relative_path"])))
+            haystack = _search_normalize(" ".join((
+                f["relative_path"], f["category_label"], f["file_ext"],
+                f["updated_at_formatted"], TEMPLATE_LABELS.get(f["file_name"], ""),
+                linked_metadata.get(path_key, ""),
+            )))
+            return all(term in haystack for term in terms)
+        filtered = [f for f in filtered if matches(f)]
 
     # Sắp xếp danh sách
     if sort_by == "updated_at_desc":
@@ -451,6 +506,9 @@ def open_category_folder(category: str) -> Dict[str, Any]:
         subdirs = CATEGORY_CONFIG[category].get("subdirs", [])
         if subdirs:
             folder_path = HO_SO_DIR / subdirs[0]
+            company_root = HO_SO_DIR / "Cong Ty"
+            if not folder_path.exists() and company_root.is_dir():
+                folder_path = company_root
         else:
             folder_path = HO_SO_DIR
     else:
@@ -473,6 +531,50 @@ def open_category_folder(category: str) -> Dict[str, Any]:
         raise RuntimeError(f"Không thể mở thư mục: {exc}")
 
 
+def _validate_filename(name: str) -> None:
+    if (not name or name in (".", "..") or re.search(r'[\\/:*?"<>|\x00-\x1f]', name)
+            or name.endswith((".", " "))):
+        raise ValueError("Tên file không hợp lệ; không được chứa đường dẫn hoặc ký tự đặc biệt.")
+
+
+def _move_and_update_references(source: Path, destination: Path, *, trash: bool = False) -> None:
+    """Move a file and update known database references, restoring it on failure."""
+    from app.database import get_db_connection
+    conn = get_db_connection()
+    old, new = str(source.resolve()), str(destination.resolve())
+    moved = False
+    try:
+        # Reminder attachments may be stored as JSON and need a dedicated editor.
+        rows = conn.execute("SELECT attachment_path, attachments FROM custom_reminders").fetchall()
+        if any(old in str(row[0] or "") or old in str(row[1] or "") for row in rows):
+            raise ValueError("File đang đính kèm nhắc nhở; hãy xử lý trong mục Nhắc nhở trước.")
+        if trash:
+            for table, column in (("quotations", "docx_file_path"), ("quotations", "xlsx_file_path"),
+                                  ("payment_voucher_requests", "file_path")):
+                if conn.execute(f"SELECT 1 FROM {table} WHERE {column}=? LIMIT 1", (old,)).fetchone():
+                    raise ValueError("File đang liên kết với dữ liệu nghiệp vụ; hãy xử lý trong chức năng tương ứng trước.")
+        if destination.exists():
+            raise ValueError("File đích đã tồn tại.")
+        shutil.move(str(source), str(destination))
+        moved = True
+        if trash:
+            conn.execute("DELETE FROM documents WHERE file_path=?", (old,))
+        else:
+            conn.execute("UPDATE documents SET file_path=?, file_name=? WHERE file_path=?", (new, destination.name, old))
+        for table, path_col, name_col in (("quotations", "docx_file_path", "docx_file_name"),
+                                          ("quotations", "xlsx_file_path", "xlsx_file_name"),
+                                          ("payment_voucher_requests", "file_path", "file_name")):
+            conn.execute(f"UPDATE {table} SET {path_col}=?, {name_col}=? WHERE {path_col}=?", (new, destination.name, old))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        if moved:
+            shutil.move(str(destination), str(source))
+        raise
+    finally:
+        conn.close()
+
+
 def delete_file(file_id: str) -> Dict[str, Any]:
     """Delete a file safely with anti-template protection."""
     target_path = decode_file_id(file_id)
@@ -485,17 +587,17 @@ def delete_file(file_id: str) -> Dict[str, Any]:
         raise PermissionError("Không thể xóa file Biểu Mẫu Gốc của hệ thống.")
 
     file_name = target_path.name
-    try:
-        os.remove(target_path)
-        logger.info("Deleted file safely: %s", target_path)
-        return {
-            "status": "success",
-            "message": f"Đã xóa file '{file_name}' thành công.",
-            "file_name": file_name,
-        }
-    except Exception as exc:
-        logger.exception("Error deleting file %s: %s", target_path, exc)
-        raise RuntimeError(f"Lỗi khi xóa file: {exc}")
+    trash_dir = WORKING_DIR / "database" / "thung_rac"
+    trash_dir.mkdir(parents=True, exist_ok=True)
+    destination = trash_dir / f"{datetime.now():%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}_{file_name}"
+    _move_and_update_references(target_path, destination, trash=True)
+    return {
+        "status": "success",
+        "message": f"Đã chuyển '{file_name}' vào thùng rác có thể khôi phục.",
+        "file_name": file_name,
+        "trash_path": str(destination),
+    }
+
 
 
 def rename_file(file_id: str, new_name: str) -> Dict[str, Any]:
@@ -509,6 +611,7 @@ def rename_file(file_id: str, new_name: str) -> Dict[str, Any]:
         raise PermissionError("Không được phép đổi tên file Biểu Mẫu Gốc.")
 
     cleaned_name = new_name.strip()
+    _validate_filename(cleaned_name)
     if not cleaned_name:
         raise ValueError("Tên file mới không được để trống.")
 
@@ -522,7 +625,7 @@ def rename_file(file_id: str, new_name: str) -> Dict[str, Any]:
         raise ValueError(f"Tên file '{cleaned_name}' đã tồn tại trong thư mục.")
 
     try:
-        target_path.rename(destination_path)
+        _move_and_update_references(target_path, destination_path)
         new_meta = collect_single_file_metadata(destination_path)
         return {
             "status": "success",
@@ -531,19 +634,30 @@ def rename_file(file_id: str, new_name: str) -> Dict[str, Any]:
             "new_name": cleaned_name,
             "file": new_meta,
         }
+    except ValueError:
+        raise
     except Exception as exc:
         logger.exception("Error renaming file %s: %s", target_path, exc)
         raise RuntimeError(f"Không thể đổi tên file: {exc}")
 
 
-def upload_file_to_category(category: str, file_name: str, file_bytes: bytes) -> Dict[str, Any]:
+def upload_file_to_category(category: str, file_name: str, file_bytes: bytes, company: str = "") -> Dict[str, Any]:
     """Upload a new document file directly to the appropriate category directory."""
     if not file_name or not file_bytes:
         raise ValueError("File hoặc dữ liệu tải lên không hợp lệ.")
 
+    _validate_filename(file_name)
+    if category not in CATEGORY_CONFIG or not CATEGORY_CONFIG[category].get("allow_upload"):
+        raise ValueError("Danh mục tải lên không hợp lệ.")
     # Xác định thư mục đích
     subdirs = CATEGORY_CONFIG.get(category, {}).get("subdirs", [])
-    if subdirs:
+    if company:
+        company = company.strip()
+        _validate_filename(company)
+        if len(company) > 80:
+            raise ValueError("Tên thư mục công ty không được dài quá 80 ký tự.")
+        dest_dir = HO_SO_DIR / "Cong Ty" / company / subdirs[0]
+    elif subdirs:
         dest_dir = HO_SO_DIR / subdirs[0]
     else:
         dest_dir = HO_SO_DIR / "Hop Dong"
@@ -563,6 +677,13 @@ def upload_file_to_category(category: str, file_name: str, file_bytes: bytes) ->
             f.write(file_bytes)
 
         new_meta = collect_single_file_metadata(target_path)
+        try:
+            from app.database import index_single_document
+            index_single_document("", category.upper(), target_path.stem, target_path.name,
+                                  str(target_path), target_path.stat().st_size, target_path.suffix.lstrip("."))
+        except Exception:
+            target_path.unlink(missing_ok=True)
+            raise
         return {
             "status": "success",
             "message": f"Đã tải file '{target_path.name}' lên thư mục '{dest_dir.name}'.",

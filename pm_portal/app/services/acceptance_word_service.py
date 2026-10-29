@@ -203,7 +203,8 @@ def generate_acceptance_word(raw_data: Dict[str, Any]) -> Dict[str, Any]:
 
     clean_so_hd = re.sub(r'[\\/*?:"<>|]', '_', data["so_hop_dong"])
     date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"Bien_Ban_Nghiem_Thu_{clean_so_hd}_{date_str}.docx"
+    from app.utils.file_helper import document_filename
+    file_name = document_filename("Nghiem_Thu", data.get("ben_a", {}).get("ten_cong_ty", ""), clean_so_hd, "docx")
     target_dir = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
     target_dir.mkdir(parents=True, exist_ok=True)
     target_path = target_dir / file_name
@@ -211,7 +212,7 @@ def generate_acceptance_word(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     try:
         doc.save(target_path)
     except PermissionError:
-        file_name = f"Bien_Ban_Nghiem_Thu_{clean_so_hd}_{date_str}_v2.docx"
+        file_name = f"{target_path.stem}_v2.docx"
         target_path = target_dir / file_name
         doc.save(target_path)
 

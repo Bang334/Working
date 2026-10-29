@@ -28,7 +28,7 @@
         <span>📤 Tải Lên File Mới</span>
       </button>
 
-      <button type="button" class="btn btn-primary btn-sm" onclick="FileManagerApp.loadFiles()" title="Quét lại toàn bộ ổ đĩa và thư mục">
+      <button type="button" class="btn btn-primary btn-sm" onclick="FileManagerApp.loadFiles()" title="Quét lại hồ sơ dự án, biểu mẫu và file đã xuất">
         <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         <span>Làm Mới</span>
       </button>
@@ -78,10 +78,12 @@
         <span class="filemgr-search-icon">
           <svg class="icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </span>
-        <input type="text" id="filemgrSearchInput" class="filemgr-search-input" placeholder="Tìm kiếm nhanh file: tên khách hàng (CX, Pou Hui...), số hợp đồng (HMV...), ngày tháng hoặc định dạng (.docx, .xlsx)..." autocomplete="off">
+        <input type="text" id="filemgrSearchInput" class="filemgr-search-input" placeholder="Gõ không dấu, nhiều từ: CX nghiem thu, HMV... hoặc mau hop dong" autocomplete="off">
         <button type="button" id="filemgrSearchClear" class="filemgr-search-clear" title="Xóa tìm kiếm">✕</button>
       </div>
     </div>
+
+    <p style="margin: .35rem 0 .8rem; font-size: .8rem; color: var(--text-muted);">Tìm theo tên, thư mục, loại file, ngày cập nhật và thông tin hợp đồng đã liên kết. Ví dụ: <b>CX nghiem thu</b> hoặc <b>mau bao gia eco prime</b>.</p>
 
     <!-- Category Pills -->
     <div class="filemgr-categories-wrap">
@@ -119,6 +121,10 @@
         <span>🚚 Xuất Kho</span>
         <span class="cat-count">0</span>
       </button>
+
+      <button type="button" class="filemgr-cat-pill" data-cat="thiet_bi" onclick="FileManagerApp.setCategory('thiet_bi')"><span>🔧 Thiết bị</span><span class="cat-count">0</span></button>
+      <button type="button" class="filemgr-cat-pill" data-cat="bao_cao" onclick="FileManagerApp.setCategory('bao_cao')"><span>📊 Báo cáo</span><span class="cat-count">0</span></button>
+      <button type="button" class="filemgr-cat-pill" data-cat="tham_khao" onclick="FileManagerApp.setCategory('tham_khao')"><span>📚 Tham khảo</span><span class="cat-count">0</span></button>
 
       <button type="button" class="filemgr-cat-pill" data-cat="outputs" onclick="FileManagerApp.setCategory('outputs')">
         <span>⚡ File Vừa Xuất</span>
@@ -218,17 +224,25 @@
 
     <div class="filemgr-modal-body">
       <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="filemgrUploadCompany" style="font-weight: 600; display: block; margin-bottom: .35rem;">Công ty / khách hàng</label>
+        <input id="filemgrUploadCompany" class="form-control" type="text" maxlength="80" placeholder="Ví dụ: DFV_Darfon" style="width: 100%; padding: .5rem;">
+        <small>File được lưu trong Ho So Du An / Cong Ty / tên công ty / loại hồ sơ.</small>
+      </div>
+      <div class="form-group" style="margin-bottom: 1rem;">
         <label for="filemgrUploadCategory" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">
           Chọn thư mục hồ sơ muốn lưu trữ:
         </label>
         <select id="filemgrUploadCategory" class="form-control" style="width: 100%; padding: 0.5rem;">
-          <option value="hop_dong">📑 Hợp Đồng (Ho So Du An / Hop Dong)</option>
-          <option value="bao_gia">📊 Báo Giá (Ho So Du An / Bao Gia)</option>
-          <option value="nghiem_thu">✅ Nghiệm Thu (Ho So Du An / Nghiem Thu)</option>
-          <option value="don_xin_thanh_toan">💳 Đơn Xin Thanh Toán (Ho So Du An / Don Xin Thanh Toan)</option>
-          <option value="yeu_cau_thanh_toan">💰 Đề Nghị TT & Nhắc Nợ (Ho So Du An / Yeu Cau Thanh Toan)</option>
-          <option value="xuat_kho">🚚 Xuất Kho (Ho So Du An / Xuat Kho)</option>
-          <option value="nhac_nho">🔔 Nhắc Nợ & Đính Kèm (Ho So Du An / Nhac Nho)</option>
+          <option value="hop_dong">📑 Hợp Đồng</option>
+          <option value="bao_gia">📊 Báo Giá</option>
+          <option value="nghiem_thu">✅ Nghiệm Thu</option>
+          <option value="don_xin_thanh_toan">💳 Đơn Xin Thanh Toán</option>
+          <option value="yeu_cau_thanh_toan">💰 Đề Nghị TT & Nhắc Nợ</option>
+          <option value="xuat_kho">🚚 Xuất Kho</option>
+          <option value="nhac_nho">🔔 Nhắc Nợ & Đính Kèm</option>
+          <option value="thiet_bi">🔧 Hồ sơ thiết bị</option>
+          <option value="bao_cao">📊 Báo cáo</option>
+          <option value="tham_khao">📚 Tài liệu tham khảo</option>
         </select>
       </div>
 

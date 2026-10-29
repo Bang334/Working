@@ -25,7 +25,7 @@ Khi người dùng yêu cầu thực hiện một nhiệm vụ, hãy kích hoạ
 - **Mục tiêu:** Tạo hoặc rà soát báo giá thiết bị IoT, hệ thống tiết kiệm năng lượng (EMS), bản quyền phần mềm, hoặc gói nhân công thi công.
 - **Tài liệu tham khảo:**
   - Báo giá EMS/IoT Hong Ming: [quotation_sample.md](./resources/quotation_sample.md) & Bảng giá gốc [`HM浤詺資訊_Vonmax弘聲 機聯網暨工廠節能 第二階段 硬體報價單_202603_V1.5.xlsx`](file:///e:/Working/HM浤詺資訊_Vonmax弘聲%20機聯網暨工廠節能%20第二階段%20硬體報價單_202603_V1.5.xlsx).
-  - Báo giá chuẩn ECO PRIME (Đồng hồ điện, Gateway CC2051, biến dòng Rogowski): Mẫu phôi chuẩn bất biến `E:\Working\Bieu Mau\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx` và script tạo tự động 1:1 `scripts/generate_eco_prime_quotation.py`.
+  - Báo giá chuẩn ECO PRIME (Đồng hồ điện, Gateway CC2051, biến dòng Rogowski): Mẫu phôi chuẩn bất biến `E:\Working\Bieu Mau\Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx` và script tạo tự động 1:1 `scripts/generate_eco_prime_quotation.py`.
 - **Quy tắc bắt buộc:**
   1. Thể hiện song ngữ: Tiếng Việt và Tiếng Trung Phồn thể.
   2. Bóc tách rõ danh mục thiết bị từ sơ đồ thiết kế. Bám sát 100% bản vẽ sơ đồ nguyên lý (Zero Deviation from Schematic Drawing), tuyệt đối không tự suy diễn hoặc tùy tiện tăng giảm số lượng Gateway hay thiết bị (trên bản vẽ vẽ 1 Gateway thì bóc tách đúng 1 Gateway). TUYỆT ĐỐI KHÔNG tự ý bịa thêm chi phí thi công nếu đề bài không yêu cầu.
@@ -70,7 +70,7 @@ Khi người dùng yêu cầu thực hiện một nhiệm vụ, hãy kích hoạ
 ### Workflow 5: Đề Nghị Thanh Toán & Đôn Đốc Công Nợ (Payment Request & AR Reminder)
 - **Mục tiêu:** Nhắc khách hàng thanh toán đúng hạn hợp đồng (T/T 14 days, T/T 30 days, T/T 60 days).
 - **Tài liệu tham khảo:** [payment_request_and_reminder_sample.md](./resources/payment_request_and_reminder_sample.md).
-- **Mẫu Word chuẩn bắt buộc cho Phiếu yêu cầu NCC thanh toán:** `E:\Working\Bieu Mau\đơn yêu cầu NCC thanh toán-Gốc.docx`.
+- **Mẫu Word chuẩn bắt buộc cho Phiếu yêu cầu NCC thanh toán:** `E:\Working\Bieu Mau\Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx`.
 - **Quy tắc mẫu gốc bất biến:** Luôn nhân bản trực tiếp từ file trên và chỉ thay dữ liệu. Giữ nguyên 100% cấu trúc, thứ tự khối, lề A4, độ rộng cột, chiều cao hàng, ô gộp, font, cỡ chữ, màu, viền, padding, khoảng cách, vùng ký và ngắt trang. Không dựng lại mẫu bằng code và không tự động làm đẹp lại.
 - **Công cụ bắt buộc:** Dùng `scripts/fill_supplier_payment_request_docx.py` để thay chuỗi ở cấp run và xác minh dấu vân tay layout/style. Dùng `scripts/create_payment_request_word_template.py` chỉ để tạo bản sao 1:1 chưa điền dữ liệu.
 - **Dữ liệu thay thế:** Truyền file JSON dạng `{"replacements":[{"find":"giá trị cũ","replace":"giá trị mới","expected":1}]}`; tách riêng từng dòng nếu nội dung song ngữ có xuống dòng.
@@ -197,7 +197,7 @@ Khi lưu file vào thư mục người dùng (ví dụ Downloads):
 
 ## 6. QUY CHUẨN BIỂU MẪU BÁO GIÁ ECO PRIME (ECO PRIME 報價單)
 
-1. **File phôi mẫu gốc bất biến:** `E:\Working\Bieu Mau\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx` (nhân bản từ `ECO PRIME_BHT Báo Giá Đồng Hồ Điện_24-07-2026.xlsx`).
+1. **File phôi mẫu gốc bất biến:** `E:\Working\Bieu Mau\Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx` (nhân bản từ `ECO PRIME_BHT Báo Giá Đồng Hồ Điện_24-07-2026.xlsx`).
 2. **Script tạo tự động 1:1 cố định:** `E:\Working\scripts\generate_eco_prime_quotation.py` (đồng bộ tại `hongming-pm-hub/scripts/generate_eco_prime_quotation.py`).
 3. **Quy tắc bắt buộc khi tạo báo giá ECO PRIME:**
    - **Bám sát 100% bản vẽ sơ đồ nguyên lý (Zero Deviation from Schematic Drawing):** Phân tích chính xác số lượng thiết bị từ sơ đồ đơn tuyến, TUYỆT ĐỐI KHÔNG tự suy diễn hoặc tùy tiện tăng giảm số lượng (ví dụ: trên bản vẽ vẽ 1 Gateway kết nối 4 trạm biến áp qua vòng RS485 thì bóc tách đúng 1 Gateway, không tự ý sửa thành 2). Mọi prompt AI và code bóc tách phải trung thành tuyệt đối với bản vẽ.

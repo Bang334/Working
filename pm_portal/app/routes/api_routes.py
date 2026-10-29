@@ -1144,10 +1144,11 @@ async def delete_file_endpoint(file_id: str):
 @router.post("/files/upload")
 async def upload_file_endpoint(
     file: UploadFile = File(...),
-    category: str = Form("hop_dong")
+    category: str = Form("hop_dong"),
+    company: str = Form("")
 ):
-    """Tải file mới lên kho hồ sơ theo đúng danh mục."""
-    return await upload_file_controller(file=file, category=category)
+    """Tải file mới lên kho hồ sơ theo công ty và danh mục."""
+    return await upload_file_controller(file=file, category=category, company=company)
 
 
 

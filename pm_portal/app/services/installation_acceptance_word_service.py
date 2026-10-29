@@ -2,7 +2,7 @@
 """
 Installation Acceptance Word document (.docx) generator.
 Preserves 100% layout, styles, fonts, margins, headers, and footers
-from template: E:\\Working\\Bieu Mau\\Bien_ban_nghiem_thu_HMV100120260001.docx
+from template: E:\\Working\\Bieu Mau\\Mau_Goc_Nghiem_Thu_Lap_Dat_CX.docx
 """
 
 import copy
@@ -30,7 +30,7 @@ from app.utils.currency_helper import (
 
 logger = logging.getLogger(__name__)
 
-TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "Bien_ban_nghiem_thu_HMV100120260001.docx"
+TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "Mau_Goc_Nghiem_Thu_Lap_Dat_CX.docx"
 DOSSIER_DIR = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
 
 COLOR_BLUE = RGBColor(0x1F, 0x4E, 0x79)       # #1F4E79 (Màu xanh đậm tiêu đề của template mẫu)
@@ -281,11 +281,9 @@ def generate_installation_acceptance_word(raw_data: Dict[str, Any]) -> Dict[str,
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     DOSSIER_DIR.mkdir(parents=True, exist_ok=True)
 
-    template_file = Path(r"E:\Bien_ban_nghiem_thu_HMV100120260001.docx")
+    template_file = TEMPLATE_PATH
     if not template_file.exists():
-        template_file = TEMPLATE_PATH
-        if not template_file.exists():
-            raise FileNotFoundError(f"Không tìm thấy template mẫu: {template_file}")
+        raise FileNotFoundError(f"Không tìm thấy template mẫu: {template_file}")
 
     doc = Document(str(template_file))
     so_hd = data["so_hop_dong"]
@@ -594,13 +592,14 @@ def generate_installation_acceptance_word(raw_data: Dict[str, Any]) -> Dict[str,
 
     # 10. LƯU TÀI LIỆU
     clean_so_hd = re.sub(r'[^A-Za-z0-9_-]', '_', so_hd)
-    file_name = f"Bien_Ban_Nghiem_Thu_Lap_Dat_{clean_so_hd}.docx"
+    from app.utils.file_helper import document_filename
+    file_name = document_filename("Nghiem_Thu_Lap_Dat", (data.get("ben_a") or {}).get("ten_cong_ty", ""), clean_so_hd, "docx")
     output_path = DOSSIER_DIR / file_name
 
     try:
         doc.save(str(output_path))
     except PermissionError:
-        output_path = DOSSIER_DIR / f"Bien_Ban_Nghiem_Thu_Lap_Dat_{clean_so_hd}_v2.docx"
+        output_path = DOSSIER_DIR / f"{output_path.stem}_v2.docx"
         file_name = output_path.name
         doc.save(str(output_path))
 

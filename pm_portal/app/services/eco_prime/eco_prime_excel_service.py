@@ -18,7 +18,7 @@ from openpyxl.styles import Alignment, Border, Color, Font, PatternFill, Side
 from app.config import OUTPUTS_DIR, WORKING_DIR
 from app.models.eco_prime_models import EcoPrimeItem, EcoPrimeQuotationData
 
-ECO_PRIME_TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx"
+ECO_PRIME_TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx"
 
 
 def compute_cell_lines(text: str, col_width_chars: float) -> int:
@@ -71,7 +71,7 @@ def generate_eco_prime_excel(
     template_path = ECO_PRIME_TEMPLATE_PATH
     if not template_path.is_file():
         # Fallback thử tìm ở thư mục cha
-        fallback_path = Path("E:/Working/Bieu Mau/ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx")
+        fallback_path = Path("E:/Working/Bieu Mau/Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx")
         if fallback_path.is_file():
             template_path = fallback_path
         else:
@@ -339,24 +339,34 @@ def generate_eco_prime_excel(
     content_bytes = byte_stream.getvalue()
     byte_stream.seek(0)
 
+    from app.utils.file_helper import document_filename
+    fname = document_filename("Bao_Gia_ECO_PRIME", quote_data.customer_name or "", "", "xlsx")
+    if custom_output_filename:
+        if (Path(custom_output_filename).name != custom_output_filename
+                or any(ch in custom_output_filename for ch in '\\/:*?"<>|')
+                or not custom_output_filename.lower().endswith(".xlsx")):
+            raise ValueError("Tên file ECO PRIME không hợp lệ.")
+        fname = custom_output_filename
     saved_file_path = None
     if save_to_disk:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         target_dir = WORKING_DIR / "Ho So Du An" / "Bao Gia"
         target_dir.mkdir(parents=True, exist_ok=True)
-        
-        fname = custom_output_filename or f"ECO_PRIME_Bao_Gia_{clean_cust or 'Project'}_{timestamp}.xlsx"
         out_file = target_dir / fname
+        # Preserve any existing version, including when a custom name is supplied.
+        counter = 2
+        while out_file.exists():
+            out_file = target_dir / f"{Path(fname).stem}_v{counter}.xlsx"
+            counter += 1
         try:
             out_file.write_bytes(content_bytes)
-            saved_file_path = str(out_file)
         except PermissionError:
-            out_file_v2 = target_dir / f"{out_file.stem}_v2.xlsx"
-            out_file_v2.write_bytes(content_bytes)
-            saved_file_path = str(out_file_v2)
+            out_file = target_dir / f"{out_file.stem}_v2.xlsx"
+            out_file.write_bytes(content_bytes)
+        saved_file_path = str(out_file)
+        fname = out_file.name
 
     return {
-        "file_name": custom_output_filename or f"ECO_PRIME_Bao_Gia_{clean_cust or 'Project'}.xlsx",
+        "file_name": fname,
         "file_path": saved_file_path,
         "bytes_io": byte_stream,
         "content_bytes": content_bytes,

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Script điền danh sách 19 thiết bị từ file DANH_SACH_THIET_BI_SUA_CHUA_THAY_THE_DFV_DARFON.xlsx
+Script điền danh sách 19 thiết bị từ file Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx
 vào mẫu phiếu gửi sửa chữa 'Copy of danh sach sua lot 3 (1).xlsx'.
 Giữ nguyên 100% thông tin người bán, người mua, logo và phần tiêu đề/chân trang.
 Đơn giá để trống cho Sếp tự điền, có sẵn công thức sống tính tổng.
@@ -15,7 +15,7 @@ from openpyxl.utils import get_column_letter
 
 SRC_TEMPLATE = r"C:\Users\BANG\Downloads\Copy of danh sach sua lot 3 (1)_backup.xlsx"
 DEST_DOWNLOADS = r"C:\Users\BANG\Downloads\Copy of danh sach sua lot 3 (1).xlsx"
-DEST_WORKING = r"E:\Working\Bieu Mau\26 10 Làm file liệt kê thiết bị\Copy of danh sach sua lot 3 (1).xlsx"
+DEST_WORKING = r"E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi\Phieu_Gui_Sua_Chua_DFV_Darfon.xlsx"
 
 ITEMS_19 = [
     # 3 Máy tính bảng HT10

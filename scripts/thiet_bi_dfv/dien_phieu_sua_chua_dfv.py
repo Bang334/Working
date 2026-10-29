@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Script điền thông tin từ file DANH_SACH_THIET_BI_SUA_CHUA_THAY_THE_DFV_DARFON.xlsx
+Script điền thông tin từ file Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx
 vào mẫu Phiếu yêu cầu sửa chữa phần cứng (Copy of danh sach sua lot 3 (1).xlsx)
 cho đối tác DFV (Darfon Việt Nam).
 Đơn giá và thành tiền để trống (có sẵn công thức) để Sếp Trương tự điền.
@@ -13,9 +13,9 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 TEMPLATE_PATH = r"C:\Users\BANG\Downloads\Copy of danh sach sua lot 3 (1).xlsx"
-SOURCE_PATH = r"E:\Working\Bieu Mau\26 10 Làm file liệt kê thiết bị\DANH_SACH_THIET_BI_SUA_CHUA_THAY_THE_DFV_DARFON.xlsx"
+SOURCE_PATH = r"E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi\Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx"
 
-OUT_PATH_WORKING = r"E:\Working\Bieu Mau\26 10 Làm file liệt kê thiết bị\PHIEU_GUI_SUA_CHUA_THIET_BI_DFV_DARFON.xlsx"
+OUT_PATH_WORKING = r"E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi\PHIEU_GUI_SUA_CHUA_THIET_BI_DFV_DARFON.xlsx"
 OUT_PATH_DOWNLOADS = r"C:\Users\BANG\Downloads\PHIEU_GUI_SUA_CHUA_THIET_BI_DFV_DARFON.xlsx"
 
 # 19 thiết bị chi tiết

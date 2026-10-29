@@ -14,7 +14,7 @@ from openpyxl.utils import get_column_letter
 
 # Đường dẫn thư mục ảnh gốc
 IMG_DIR = r"C:\Users\BANG\Downloads\My Documents [26-10-2026 13_34]"
-THUMB_DIR = r"e:\Personal\Chấm Công\.thumbs"
+THUMB_DIR = r"E:\Working\.tmp\thiet_bi_dfv_thumbnails"
 os.makedirs(THUMB_DIR, exist_ok=True)
 
 # Danh sách dữ liệu thiết bị
@@ -693,17 +693,13 @@ def build_excel(out_path):
     print(f"Workbook successfully saved to: {out_path}")
 
 if __name__ == "__main__":
-    downloads_target = r"C:\Users\BANG\Downloads\DANH_SACH_THIET_BI_SUA_CHUA_THAY_THE_DFV_DARFON.xlsx"
-    local_target = r"e:\Personal\Chấm Công\DANH_SACH_THIET_BI_SUA_CHUA_THAY_THE_DFV_DARFON.xlsx"
-    
+    from datetime import datetime
+    target_dir = r"E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi"
+    os.makedirs(target_dir, exist_ok=True)
+    if not os.path.isdir(IMG_DIR):
+        raise FileNotFoundError("Thiếu thư mục ảnh nguồn: " + IMG_DIR)
+    output = os.path.join(target_dir, "Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f") + ".xlsx")
     try:
-        build_excel(downloads_target)
+        build_excel(output)
     except PermissionError:
-        downloads_target = r"C:\Users\BANG\Downloads\DANH_SACH_THIET_BI_SUA_CHUA_THAY_THE_DFV_DARFON_v2.xlsx"
-        build_excel(downloads_target)
-        
-    try:
-        build_excel(local_target)
-        print("Local copy successfully saved.")
-    except Exception as e:
-        print("Warning: could not save local copy:", str(e).encode('ascii', 'replace').decode())
+        build_excel(output[:-5] + "_v2.xlsx")

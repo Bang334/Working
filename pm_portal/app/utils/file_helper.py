@@ -22,3 +22,19 @@ def generate_contract_filename(company_name: str, contract_no: str = "") -> str:
         return f"Hop_Dong_{safe_company}_{safe_no}.docx"
     date_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     return f"Hop_Dong_{safe_company}_{safe_no}_{date_stamp}.docx"
+
+
+def document_filename(kind: str, customer: str = "", reference: str = "",
+                      extension: str = "xlsx", stamp: str = "") -> str:
+    """Readable, safe name for newly generated documents without changing templates."""
+    def clean(value, limit):
+        value = unicodedata.normalize("NFC", str(value or "")).strip()
+        value = re.sub(r'[\\/:*?"<>|\x00-\x1f]', "_", value)
+        value = re.sub(r"\s+", "_", value)
+        return value.strip(" ._")[:limit].rstrip(" ._")
+
+    parts = [clean(kind, 35), clean(customer, 45), clean(reference, 45)]
+    parts = [part for part in parts if part]
+    parts.append(stamp or datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+    ext = re.sub(r"[^a-zA-Z0-9]", "", extension)
+    return "_".join(parts) + "." + ext

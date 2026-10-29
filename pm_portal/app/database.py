@@ -536,7 +536,6 @@ def seed_database():
 def scan_and_index_documents(conn: sqlite3.Connection):
     """Scans all folders under E:\\Working and indexes their documents with contracts."""
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM documents")  # Refresh index
 
     # Mapping contract codes to contract_id
     cursor.execute("SELECT id, contract_code FROM contracts")
@@ -553,13 +552,23 @@ def scan_and_index_documents(conn: sqlite3.Connection):
         (WORKING_DIR / "Ho So Du An" / "Bao Gia", "BAO_GIA", "Bảng báo giá thiết bị"),
         # Hồ sơ dự án - Hợp đồng
         (WORKING_DIR / "Ho So Du An" / "Hop Dong", "HOP_DONG", "Hợp đồng mua bán"),
+        (WORKING_DIR / "Ho So Du An" / "Don Xin Thanh Toan", "DON_XIN_THANH_TOAN", "Đơn xin thanh toán"),
+        (WORKING_DIR / "Ho So Du An" / "Nhac Nho", "NHAC_NHO", "Nhắc nhở và đính kèm"),
     ]
+
+    company_root = WORKING_DIR / "Ho So Du An" / "Cong Ty"
+    if company_root.is_dir():
+        legacy_roots = list(scan_directories)
+        for company_dir in company_root.iterdir():
+            if company_dir.is_dir():
+                for legacy_path, doc_type, description in legacy_roots:
+                    scan_directories.append((company_dir / legacy_path.name, doc_type, description))
 
     for folder_path, doc_type, default_desc in scan_directories:
         if not folder_path.exists():
             continue
 
-        for p in folder_path.glob("*.*"):
+        for p in folder_path.rglob("*.*"):
             if p.is_dir() or p.name.startswith("~$") or p.suffix.lower() not in (".docx", ".xlsx", ".pdf", ".json", ".doc"):
                 continue
 
@@ -568,26 +577,17 @@ def scan_and_index_documents(conn: sqlite3.Connection):
             file_size = p.stat().st_size
             file_format = p.suffix.lower().replace(".", "")
 
-            # Heuristic detection of contract code
-            matched_code = None
-            for code in contract_id_map.keys():
-                if code.lower() in file_name.lower():
-                    matched_code = code
-                    break
-            
-            # Detect by customer keywords if not matched by code
-            if not matched_code:
-                fn_lower = file_name.lower()
-                if "cx" in fn_lower and "nghiem_thu" in fn_lower:
-                    matched_code = "HMV151020250001"
-                elif "cx" in fn_lower and "thanh toán" in fn_lower:
-                    matched_code = "HMV151020250001"
-                elif "phieu_xuat_kho" in fn_lower:
-                    matched_code = "HMV021020260001"
-                elif "hop_dong" in fn_lower and "bieu mau" not in str(p).lower():
-                    matched_code = "HMV021020260001"
-
+            # Never infer a contract from generic customer or document keywords.
+            # An exact, unambiguous contract code in the filename is the only
+            # automatic association; existing explicit associations are retained.
+            matches = [code for code in contract_id_map if code and code.lower() in file_name.lower()]
+            matched_code = matches[0] if len(matches) == 1 else None
             contract_id = contract_id_map.get(matched_code) if matched_code else None
+            existing = cursor.execute(
+                "SELECT id FROM documents WHERE file_path = ?", (file_path_str,)
+            ).fetchone()
+            if existing:
+                continue
 
             # Generate friendly document name
             doc_name = file_name.replace("_", " ").rsplit(".", 1)[0]
@@ -1052,7 +1052,14 @@ def index_single_document(
         if r:
             contract_id = r["id"]
 
-    cursor.execute("DELETE FROM documents WHERE contract_code = ? AND file_name = ?", (contract_code, file_name))
+    existing = cursor.execute("SELECT id FROM documents WHERE file_path = ?", (file_path,)).fetchone()
+    if existing:
+        cursor.execute("""UPDATE documents SET contract_id=?, contract_code=?, doc_type=?,
+            doc_name=?, file_name=?, file_size=?, file_format=?, description=? WHERE id=?""",
+            (contract_id, contract_code, doc_type, doc_name, file_name, file_size, file_format, description, existing["id"]))
+        conn.commit()
+        conn.close()
+        return existing["id"]
     cursor.execute("""
         INSERT INTO documents (
             contract_id, contract_code, doc_type, doc_name, file_name,

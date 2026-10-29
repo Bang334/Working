@@ -1,0 +1,142 @@
+[
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\fill_dfv_repair_form.py",
+    "new": "scripts\\thiet_bi_dfv\\dien_phieu_sua_chua_dfv.py",
+    "sha256": "4fba7b302cc69c510267a985cdccba5048cdd83593cb3f57012f803b98ba4041"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\fill_template.py",
+    "new": "scripts\\thiet_bi_dfv\\dien_bieu_mau_sua_chua_dfv.py",
+    "sha256": "99e67850c6869f092197d7d269e20952c07a0c87abbcf939327cf65ed39f8058"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\generate_device_excel.py",
+    "new": "scripts\\thiet_bi_dfv\\tao_danh_sach_thiet_bi_dfv.py",
+    "sha256": "21bf6d813f8fb94c4d1fa2627022c47250761b7f9c0a5a35ad29976a8842defc"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\update_battery_excel.py",
+    "new": "scripts\\thiet_bi_dfv\\cap_nhat_anh_pin_dfv.py",
+    "sha256": "75ce90d03273bc8c2958e305c8e58acdf4a2a05de74d6e89f94fdffc01b3c4da"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx",
+    "sha256": "2f55029ecbac912c835cd4b8e7f8013587af24d5ac759cd615606f9b5d4ae705"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\Tham_Khao_Giao_Nhan_Sua_Chua_Phan_Cung_20260820.xlsx",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Tham_Khao_Giao_Nhan_Sua_Chua_Phan_Cung_20260820.xlsx",
+    "sha256": "ea343ed14289eb2efdedbc987f269744b6081ac1b8ec3a2a58703f696499188e"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\batteries\\bat_1_C629B2309000251.jpg",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Anh_Pin\\bat_1_C629B2309000251.jpg",
+    "sha256": "12418f0da61637357c0ac16455c0f6caa0ea3c1913e6e3fbf515d4305a583d03"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\batteries\\bat_2_C629B2309000613.jpg",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Anh_Pin\\bat_2_C629B2309000613.jpg",
+    "sha256": "d3c43aae653655fe093542f6a183a063be53771a607c4f23228961c4ae08fa48"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\batteries\\bat_3_C629B2309001047.jpg",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Anh_Pin\\bat_3_C629B2309001047.jpg",
+    "sha256": "2e3021742e34e57afa8abd7f25bcae05adeb44d6343d6c6c4a8b1154fb8078d0"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\batteries\\bat_4_C629B2309000337.jpg",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Anh_Pin\\bat_4_C629B2309000337.jpg",
+    "sha256": "89564841f0423459323444addabae88ea57b11b61eea77a8b91f0aadd47cdee1"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\batteries\\bat_5_C629B2309001215.jpg",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Anh_Pin\\bat_5_C629B2309001215.jpg",
+    "sha256": "8b0da9394dbd107120f5990ba607d73b7d1d4a647afa36cdc8b6527e184758ac"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\batteries\\bat_6_C629B2309000561.jpg",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Anh_Pin\\bat_6_C629B2309000561.jpg",
+    "sha256": "85ee6fb622cd841f593abc6bb3df2ac73726a6c18b5ecdc57d594a070776417f"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\batteries\\bat_7_C629B2309001198.jpg",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Anh_Pin\\bat_7_C629B2309001198.jpg",
+    "sha256": "a7df613a12de3d561aca9ae2691e30b9f059b2368ac3e21d01a016453988929b"
+  },
+  {
+    "old": "Bieu Mau\\26 10 Làm file liệt kê thiết bị\\batteries\\bat_8_C629B2305001525.jpg",
+    "new": "Ho So Du An\\Thiet Bi\\DFV_Darfon\\Anh_Pin\\bat_8_C629B2305001525.jpg",
+    "sha256": "1e4b541078905c6a4d3972f53a085a343518d665566a100072e96cd33725819e"
+  },
+  {
+    "old": "Bieu Mau\\Bao Cao Tuan\\HMV-BANG-20261019-20261024.pptx",
+    "new": "Ho So Du An\\Bao Cao\\Tuan\\Bao_Cao_Tuan_BANG_20261019-20261024.pptx",
+    "sha256": "3b47904b9b8beba4d7fea5874e15ca9859e17b0f8e26f1599cb87242e0eeebd5"
+  },
+  {
+    "old": "Bieu Mau\\Bao Cao Tuan\\HMV005-TRANG-20261005-20261010_ORIGINAL.pptx",
+    "new": "Ho So Du An\\Bao Cao\\Tuan\\Bao_Cao_Tuan_HMV005_TRANG_20261005-20261010_Ban_Goc.pptx",
+    "sha256": "5f489d76922c221047d9e6e427b93633f33fd443a8b31c570dde03feabcfd955"
+  },
+  {
+    "old": "Bieu Mau\\Tham_Khao_Bao_Gia_Sua_Loi_RFID_CX_202609_V1.1.xlsx",
+    "new": "Ho So Du An\\Tham Khao\\Tham_Khao_Bao_Gia_Sua_Loi_RFID_CX_202609_V1.1.xlsx",
+    "sha256": "dfe6be664a56b82652921ebdef031915f67b17657924a6c23cda3ac09ad6a0da"
+  },
+  {
+    "old": "Bieu Mau\\Tham_Khao_Bien_Ban_Giao_Nhan_CX_13700000_VND.xlsx",
+    "new": "Ho So Du An\\Tham Khao\\Tham_Khao_Bien_Ban_Giao_Nhan_CX_13700000_VND.xlsx",
+    "sha256": "7f7b1294f151cb4be15e8f2807ffc95062ae6c13035f744c9eddee4fa02b1c9e"
+  },
+  {
+    "old": "Bieu Mau\\Tham_Khao_Hop_Dong_CX_HMV220820260001_157000000_VND.docx",
+    "new": "Ho So Du An\\Tham Khao\\Tham_Khao_Hop_Dong_CX_HMV220820260001_157000000_VND.docx",
+    "sha256": "303a9ef550dd98e5c4db05f3b6ba1bf6d0df67954ee9a595407902928587ee69"
+  },
+  {
+    "old": "Bieu Mau\\Tham_Khao_Nghiem_Thu_Sua_Chua_HDSC-HMV06032026001_Hoan_Tat.xlsx",
+    "new": "Ho So Du An\\Tham Khao\\Tham_Khao_Nghiem_Thu_Sua_Chua_HDSC-HMV06032026001_Hoan_Tat.xlsx",
+    "sha256": "84734e6737c85648b7c90dab0abd50baf2ed6a3024a4d82f01755dd531a45705"
+  },
+  {
+    "old": "Bieu Mau\\Du_Phong_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx",
+    "new": "database\\du_phong_bieu_mau\\Ban_Phu\\Du_Phong_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx",
+    "sha256": "afa1d0f8f060577a83ecc2b3e4a2c64d5101d5ac60c40cd3a24fff15820a4c55"
+  },
+  {
+    "old": "Bieu Mau\\Du_Phong_De_Nghi_Thanh_Toan_NCC.xlsx",
+    "new": "database\\du_phong_bieu_mau\\Ban_Phu\\Du_Phong_De_Nghi_Thanh_Toan_NCC.xlsx",
+    "sha256": "f3c7e8db0943415b7a5954922b79a8ab6f882d2b2450b9e244b92089e3e1eddf"
+  },
+  {
+    "old": "Bieu Mau\\Du_Phong_Don_Xin_Thanh_Toan.xlsx",
+    "new": "database\\du_phong_bieu_mau\\Ban_Phu\\Du_Phong_Don_Xin_Thanh_Toan.xlsx",
+    "sha256": "650e73a8392c29a654e82cfe138f1df0a81e4853ec36031ad20e506e9a915c9c"
+  },
+  {
+    "old": "Bieu Mau\\zip\\Du_Phong_De_Nghi_Thanh_Toan_NCC.docx",
+    "new": "database\\du_phong_bieu_mau\\Ban_Luu_Tru\\Du_Phong_De_Nghi_Thanh_Toan_NCC.docx",
+    "sha256": "6615b9c3e98d3d68ca8fe29d24eff81480570615bfb7a5a0499f88846b6cd1c8"
+  },
+  {
+    "old": "Bieu Mau\\zip\\Du_Phong_De_Nghi_Thanh_Toan_NCC.xlsx",
+    "new": "database\\du_phong_bieu_mau\\Ban_Luu_Tru\\Du_Phong_De_Nghi_Thanh_Toan_NCC.xlsx",
+    "sha256": "f3c7e8db0943415b7a5954922b79a8ab6f882d2b2450b9e244b92089e3e1eddf"
+  },
+  {
+    "old": "Bieu Mau\\zip\\Du_Phong_Hop_Dong_Mua_Ban.docx",
+    "new": "database\\du_phong_bieu_mau\\Ban_Luu_Tru\\Du_Phong_Hop_Dong_Mua_Ban.docx",
+    "sha256": "8b86b8993d1473d7a3c6bbb2eadc10b6877069aea25e67e3b3c7c851265f785e"
+  },
+  {
+    "old": "Bieu Mau\\zip\\Du_Phong_Nghiem_Thu_Sua_Chua.xlsx",
+    "new": "database\\du_phong_bieu_mau\\Ban_Luu_Tru\\Du_Phong_Nghiem_Thu_Sua_Chua.xlsx",
+    "sha256": "a9761c67ed5a8e911a269580b241ad22b5852a45cfda72ab06201ec3dd8c034f"
+  },
+  {
+    "old": "Bieu Mau\\signatures\\signature_bang.png",
+    "new": "pm_portal\\app\\static\\img\\signatures\\signature_bang_du_phong.png",
+    "sha256": "997230d9548847453d3bcde555e2baa3ac8f8ed34c242044d80de7d1f2af62e9"
+  }
+]

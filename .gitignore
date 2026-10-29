@@ -20,4 +20,5 @@ pm_portal/template_full_details.txt
 *.bak
 *_backup.*
 scratch/
-
+Taskbar-Aurora/
+.vscode/

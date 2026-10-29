@@ -125,8 +125,11 @@ def save_quotation_service(data: Dict[str, Any]) -> Dict[str, Any]:
         )
 
     # 2. Generate active Word & Excel files
-    word_res = generate_quotation_word(data)
-    excel_res = generate_quotation_excel(data)
+    # Share one identifier so the Word and Excel files form an obvious pair.
+    generation_data = dict(data)
+    generation_data["_file_timestamp"] = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    word_res = generate_quotation_word(generation_data)
+    excel_res = generate_quotation_excel(generation_data)
 
     docx_name = word_res.get("file_name", "")
     docx_path = word_res.get("file_path", "")

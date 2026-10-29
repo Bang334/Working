@@ -13,7 +13,7 @@ import openpyxl
 from app.config import WORKING_DIR
 
 
-PAYMENT_FORM_PATH = WORKING_DIR / "Bieu Mau" / "đơn yêu cầu NCC thanh toán-Gốc.xlsx"
+PAYMENT_FORM_PATH = WORKING_DIR / "Bieu Mau" / "Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx"
 _PERCENT_RE = re.compile(r"(?<!\d)(\d+(?:[.,]\d+)?)\s*%")
 _PAYMENT_RE = re.compile(
     r"thanh\s*to[aá]n\s+(?:tạm\s*ứng\s+)?(\d+(?:[.,]\d+)?)\s*%",
@@ -99,7 +99,7 @@ def load_payment_templates(path: Path | str = PAYMENT_FORM_PATH) -> List[Dict[st
     template_path = Path(path)
     if not template_path.exists():
         candidates = [
-            WORKING_DIR / "Bieu Mau" / "đơn yêu cầu NCC thanh toán-Gốc.xlsx",
+            WORKING_DIR / "Bieu Mau" / "Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx",
             WORKING_DIR / "đơn yêu cầu thanh toán - CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN) - HMV151020250001.xlsx",
             WORKING_DIR / "đơn yêu cầu thanh toán - CÔNG TY TNHH CÔNG NGHỆ JINXUN VIỆT NAM - HD-20261013-001.xlsx",
         ]

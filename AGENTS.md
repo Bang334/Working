@@ -50,7 +50,7 @@ Tài liệu này định nghĩa bối cảnh doanh nghiệp, vai trò trách nhi
      3. *Nhận diện linh hoạt mọi định dạng placeholder:* Tự động quét và khớp chính xác các vị trí cần thay đổi dù người dùng gắn thẻ bằng `{{TÊN_TRƯỜNG}}`, `[TÊN_TRƯỜNG]`, tô nền màu vàng (Highlight) hay chữ màu đỏ trong file Word/Excel.
      4. *Bảo toàn định dạng văn bản Word (Run-Level Preservation):* Khi cập nhật file Word `.docx`, bắt buộc sử dụng script bảo toàn style từng khối chữ (`runs`) như `fill_contract_docx.py`, giải quyết triệt để vấn đề placeholder bị ngắt quãng giữa các runs, đảm bảo văn bản sau khi điền giữ nguyên 100% format gốc của vị trí đó.
 8. **Quy chuẩn Biểu mẫu Báo Giá ECO PRIME (ECO PRIME 報價單):**
-   - **File phôi mẫu gốc bất biến:** `E:\Working\Bieu Mau\ECO PRIME_Báo Giá Đồng Hồ Điện_Mẫu Gốc.xlsx` (nhân bản từ `ECO PRIME_BHT Báo Giá Đồng Hồ Điện_24-07-2026.xlsx`).
+   - **File phôi mẫu gốc bất biến:** `E:\Working\Bieu Mau\Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx` (nhân bản từ `ECO PRIME_BHT Báo Giá Đồng Hồ Điện_24-07-2026.xlsx`).
    - **Script tạo tự động 1:1 cố định:** `E:\Working\scripts\generate_eco_prime_quotation.py` (đồng bộ tại `hongming-pm-hub/scripts/generate_eco_prime_quotation.py`).
    - **Quy tắc bắt buộc khi tạo báo giá ECO PRIME:**
      1. *Thiết bị phần cứng:* Bóc tách chính xác từ sơ đồ kỹ thuật, TUYỆT ĐỐI KHÔNG tự ý bịa thêm chi phí thi công nếu đề bài không yêu cầu.
@@ -66,3 +66,6 @@ Tài liệu này định nghĩa bối cảnh doanh nghiệp, vai trò trách nhi
      5. *Bám sát 100% bản vẽ sơ đồ nguyên lý (Zero Deviation from Schematic Drawing):* Phân tích chính xác số lượng thiết bị từ sơ đồ đơn tuyến, TUYỆT ĐỐI KHÔNG tự suy diễn hoặc tùy tiện tăng giảm số lượng (ví dụ: trên bản vẽ vẽ 1 Gateway kết nối 4 trạm biến áp qua vòng RS485 thì bóc tách đúng 1 Gateway, không tự ý sửa thành 2). Mọi prompt AI và code bóc tách phải trung thành tuyệt đối với bản vẽ.
      6. *Gộp bộ nguồn PW vào Gateway CC2051 (Hardware Bundle Rule):* Bộ nguồn 24VDC (電源供應器) chỉ cần 1 cái và **BẮT BUỘC ĐƯỢC GỘP CHUNG VÀO DÒNG GATEWAY CC2051** vì được bán kèm trọn gói (`Gateway thu thập dữ liệu CC2051 (kèm bộ nguồn 24VDC) / CC2051 工業級資料收集閘道器 (含24VDC電源供應器)`). Nhờ đó, toàn bộ danh mục gồm thiết bị, vật tư phụ và thi công có đúng **7 hạng mục**, khớp chính xác 1:1 với 7 dòng (`Row 13:19`) của mẫu gốc, bảng tổng tiền tại `Row 21:23`, vùng in `$A$1:$H$27`.
 
+
+## 9. GHI NHỚ LỖI KỸ THUẬT
+- Khi viết, sửa, chạy hoặc kiểm thử mã/script, áp dụng skill `error-memory` tại `C:\Users\BANG\.codex\skills\error-memory\SKILL.md`. Tra cứu có chọn lọc các lỗi liên quan trước khi làm; khi gặp lỗi có ích cho lần sau, cập nhật nhật ký theo skill, ghi rõ môi trường, cách xử lý và kết quả xác minh; không lưu bí mật hoặc dữ liệu khách hàng.

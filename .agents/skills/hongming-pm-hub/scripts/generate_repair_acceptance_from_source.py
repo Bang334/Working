@@ -31,7 +31,7 @@ from openpyxl import load_workbook
 
 LOGGER = logging.getLogger("repair_acceptance_notes")
 DEFAULT_SOURCE = Path(r"E:\Working\Bieu Mau\Biên bản sữa chữa.xlsx")
-DEFAULT_TARGET = Path(r"E:\Working\Bieu Mau\Biên Bản Nghiệm Thu.xlsx")
+DEFAULT_TARGET = Path(r"E:\Working\Bieu Mau\Mau_Goc_Nghiem_Thu_Sua_Chua.xlsx")
 
 NOTE_LABELS = ("ghi chú", "備註")
 STOP_MARKERS = (

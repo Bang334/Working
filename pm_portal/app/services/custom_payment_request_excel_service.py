@@ -14,7 +14,7 @@ from typing import Any, Dict
 
 from app.config import WORKING_DIR
 
-TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "đơn yêu cầu NCC thanh toán-Gốc.xlsx"
+TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx"
 OUTPUT_DIR = WORKING_DIR / "Ho So Du An" / "Yeu Cau Thanh Toan"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -123,24 +123,17 @@ def generate_payment_request_from_extracted_data(data: Dict[str, Any]) -> Dict[s
 
     # Lưu file
     safe_cust = _safe_filename(cust_vi)[:30]
-    file_name = f"{form_no}_Phiếu_Yêu_Cầu_Thanh_Toán_{safe_cust}_{c_code}.xlsx"
+    from app.utils.file_helper import document_filename
+    file_name = document_filename("De_Nghi_Thanh_Toan", cust_vi, c_code or form_no)
     out_path = OUTPUT_DIR / file_name
 
     try:
         wb.save(str(out_path))
     except PermissionError:
-        file_name = f"{form_no}_Phiếu_Yêu_Cầu_Thanh_Toán_{safe_cust}_{c_code}_v2.xlsx"
+        file_name = f"{out_path.stem}_v2.xlsx"
         out_path = OUTPUT_DIR / file_name
         wb.save(str(out_path))
 
-    # Lưu thêm 1 bản dự phòng trong thư mục Downloads của người dùng nếu có thể
-    user_downloads = Path.home() / "Downloads"
-    if user_downloads.exists():
-        try:
-            import shutil
-            shutil.copy2(str(out_path), str(user_downloads / file_name))
-        except Exception:
-            pass
 
     return {
         "status": "success",

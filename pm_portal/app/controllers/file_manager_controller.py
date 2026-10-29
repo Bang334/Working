@@ -144,6 +144,8 @@ def delete_file_controller(file_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(fnf))
     except PermissionError as perm:
         raise HTTPException(status_code=403, detail=str(perm))
+    except ValueError as val:
+        raise HTTPException(status_code=400, detail=str(val))
     except Exception as exc:
         logger.exception("Error deleting file: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
@@ -168,13 +170,15 @@ def rename_file_controller(payload: Dict[str, Any]) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-async def upload_file_controller(file: UploadFile, category: str) -> Dict[str, Any]:
+async def upload_file_controller(file: UploadFile, category: str, company: str = "") -> Dict[str, Any]:
     """Upload new document file into specified category."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="Không tìm thấy tên file tải lên.")
     try:
         content = await file.read()
-        return upload_file_to_category(category, file.filename, content)
+        return upload_file_to_category(category, file.filename, content, company)
+    except ValueError as val:
+        raise HTTPException(status_code=400, detail=str(val))
     except Exception as exc:
         logger.exception("Error uploading file: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))

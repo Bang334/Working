@@ -79,7 +79,7 @@ def main() -> int:
     parser.add_argument(
         "--template",
         type=Path,
-        default=Path(r"E:\Working\Bieu Mau\đơn yêu cầu NCC thanh toán-Gốc.xlsx"),
+        default=Path(r"E:\Working\Bieu Mau\Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx"),
     )
     args = parser.parse_args()
     result = verify(args.template, args.output)

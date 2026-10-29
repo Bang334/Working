@@ -14,7 +14,7 @@ import shutil
 from pathlib import Path
 
 
-TEMPLATE = Path(r"E:\Working\Bieu Mau\đơn yêu cầu NCC thanh toán-Gốc.docx")
+TEMPLATE = Path(r"E:\Working\Bieu Mau\Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx")
 DEFAULT_OUTPUT = Path(r"E:\Working\Bieu Mau\đơn yêu cầu NCC thanh toán-Bản mới.docx")
 
 

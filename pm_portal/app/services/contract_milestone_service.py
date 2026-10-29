@@ -15,7 +15,7 @@ import openpyxl
 from app.config import WORKING_DIR
 
 TRACKER_EXCEL_PATH = WORKING_DIR / "DANH_SACH_THEO_DOI_DU_AN_HONG_MING.xlsx"
-TEMPLATE_EXCEL_PATH = WORKING_DIR / "Bieu Mau" / "đơn yêu cầu NCC thanh toán-Gốc.xlsx"
+TEMPLATE_EXCEL_PATH = WORKING_DIR / "Bieu Mau" / "Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx"
 GENERATED_CX_EXCEL = WORKING_DIR / "đơn yêu cầu thanh toán - CX Technology - HMV151020250001.xlsx"
 
 SIMULATED_TODAY = datetime.now()

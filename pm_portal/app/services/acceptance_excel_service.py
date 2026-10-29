@@ -560,7 +560,8 @@ def generate_acceptance_excel(raw_data: Dict[str, Any]) -> Dict[str, Any]:
 
     # Safe File Naming & Saving
     clean_so_hd = re.sub(r'[\\/*?:"<>|]', '_', data["so_hop_dong"]).strip()
-    file_name = f"Biên Bản Nghiệm Thu_維修設備驗收記錄_{clean_so_hd}.xlsx"
+    from app.utils.file_helper import document_filename
+    file_name = document_filename("Nghiem_Thu_Sua_Chua", data.get("ben_a", {}).get("ten_cong_ty", ""), clean_so_hd)
     target_dir = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
     target_dir.mkdir(parents=True, exist_ok=True)
     target_path = target_dir / file_name
@@ -570,7 +571,7 @@ def generate_acceptance_excel(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         wb.save(target_path)
     except PermissionError:
         date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_name = f"Biên Bản Nghiệm Thu_維修設備驗收記錄_{clean_so_hd}_{date_str}.xlsx"
+        file_name = f"{target_path.stem}_v2.xlsx"
         target_path = target_dir / file_name
         wb.save(target_path)
 

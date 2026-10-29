@@ -23,8 +23,8 @@ from app.utils.currency_helper import parse_positive_integer
 
 logger = logging.getLogger(__name__)
 
-TEMPLATE_MASTER = WORKING_DIR / "Bieu Mau" / "DON_XIN_THANH_TOAN_TEMPLATE.xlsx"
-FALLBACK_TEMPLATE = WORKING_DIR / "Bieu Mau" / "ĐƠN XIN THANH TOÁN.xlsx"
+TEMPLATE_MASTER = WORKING_DIR / "Bieu Mau" / "Mau_Goc_Don_Xin_Thanh_Toan.xlsx"
+FALLBACK_TEMPLATE = WORKING_DIR / "database" / "du_phong_bieu_mau" / "Ban_Phu" / "Du_Phong_Don_Xin_Thanh_Toan.xlsx"
 OUTPUT_DIR = WORKING_DIR / "Ho So Du An" / "Don Xin Thanh Toan"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -64,7 +64,7 @@ def _attach_signature(ws, signer_name: str) -> None:
         if "BANG" in norm or "BẰNG" in norm:
             sig_file = WORKING_DIR / "pm_portal" / "app" / "static" / "img" / "signatures" / "signature_bang.png"
             if not sig_file.exists():
-                sig_file = WORKING_DIR / "Bieu Mau" / "signatures" / "signature_bang.png"
+                sig_file = sig_file.with_name("signature_bang_du_phong.png")
             if not sig_file.exists():
                 return
 
@@ -365,7 +365,8 @@ def generate_payment_voucher_excel(payload: Dict[str, Any]) -> Dict[str, Any]:
     # 6. Lưu file an toàn
     clean_code = _sanitize_filename(report_code.replace("报单号：", "").replace("报单号", "").replace("报单", ""))
     clean_ben = _sanitize_filename(beneficiary_name)
-    base_file_name = f"Don_Xin_Thanh_Toan_{clean_code}_{clean_ben}.xlsx"
+    from app.utils.file_helper import document_filename
+    base_file_name = document_filename("Don_Xin_Thanh_Toan", beneficiary_name, clean_code)
     target_path = OUTPUT_DIR / base_file_name
 
     saved_path = None
@@ -375,7 +376,7 @@ def generate_payment_voucher_excel(payload: Dict[str, Any]) -> Dict[str, Any]:
             saved_path = target_path
             break
         except PermissionError:
-            target_path = OUTPUT_DIR / f"Don_Xin_Thanh_Toan_{clean_code}_{clean_ben}_v{attempt + 1}.xlsx"
+            target_path = OUTPUT_DIR / f"{Path(base_file_name).stem}_v{attempt + 1}.xlsx"
         except Exception as exc:
             logger.error("Error saving payment voucher excel: %s", exc)
             raise exc
