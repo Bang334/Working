@@ -25,7 +25,12 @@ from docx.oxml.ns import qn
 from lxml import etree
 
 
-DEFAULT_TEMPLATE = Path(r"E:\Working\Bieu Mau\Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx")
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
+DEFAULT_TEMPLATE = Path(_workspace_path('Bieu Mau\\Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx'))
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 
 

@@ -38,6 +38,7 @@ def get_status_label(code: str) -> str:
         "IN_TRANSIT": "Đang vận chuyển / 運輸中",
         "DELAYED": "Trễ hạn / 延遲",
         "PENDING": "Chờ xử lý / 待處理",
+        "PARTIAL": "Đã nhận một phần / 部分到貨",
     }
     return mapping.get(code, "Đang xử lý")
 

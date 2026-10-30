@@ -33,6 +33,11 @@
         <span id="togglePreviewText">👁️ Xem Trước Excel</span>
       </button>
 
+      <a href="/emails?source=voucher" class="btn btn-outline btn-sm" title="Mở Trung Tâm Soạn Thảo Email Trình Ký Sếp Tang Wei Li" style="color: #0284C7; border-color: #38BDF8; font-weight: 700; background: #F0F9FF;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>✉️ Soạn Email Trình Ký</span>
+      </a>
+
       <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.resetForm()" title="Làm mới form để nhập phiếu mới">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         <span>Làm Mới</span>
@@ -69,7 +74,7 @@
 
     <div class="form-group" style="margin-bottom: 0.65rem; position: relative;" id="voucherDropZone">
       <textarea id="aiVoucherPromptInput" class="form-control" rows="3" placeholder="Dán văn bản, nhấn Ctrl+V dán ảnh, kéo thả tệp Biên bản nghiệm thu Word (.docx), Hóa đơn điện tử (PDF/Ảnh), Hợp đồng, Bảng tính Excel... để AI tự động bóc tách & lập phiếu thanh toán"></textarea>
-      
+
       <div id="voucherDragOverlay" style="display: none; position: absolute; inset: 0; background: rgba(239, 246, 255, 0.94); border: 2px dashed #2563eb; border-radius: var(--radius-sm); align-items: center; justify-content: center; z-index: 10; pointer-events: none;">
         <span style="font-weight: 700; color: #1d4ed8; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
           📥 Thả file Biên bản nghiệm thu Word (.docx), Hóa đơn PDF/Ảnh hoặc Excel vào đây để AI phân tích
@@ -127,7 +132,7 @@
 
     <!-- Left Column: Interactive Form -->
     <div class="voucher-form-card">
-      
+
       <!-- Section 1: Beneficiary & Bank Info -->
       <div class="voucher-form-section-title">
         <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
@@ -501,7 +506,7 @@
       </div>
 
       <div class="hm-modal-body">
-        
+
         <!-- Add New Beneficiary Box -->
         <div style="background: rgba(0, 0, 0, 0.02); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1.25rem;">
           <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.65rem; color: var(--primary);">+ Thêm Tài Khoản Mới Vào Sổ Tay:</div>

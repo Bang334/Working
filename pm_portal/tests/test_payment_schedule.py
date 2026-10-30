@@ -28,7 +28,10 @@ class PaymentScheduleTests(unittest.TestCase):
         self.assertEqual(templates["712TR"]["deadlines"], [None, 15, 30])
         self.assertEqual(templates["chengfeng"]["percentages"], [30, 30, 30, 10])
         self.assertEqual(templates["HM27082026JI002"]["percentages"], [30, 55, 15])
-        self.assertEqual(templates["CX"]["percentages"], [100])
+        # The current CX software contract has three phases; the battery order
+        # is the separate CX (2) sheet. A customer's name is not a payment plan.
+        self.assertEqual(templates["CX"]["percentages"], [40, 40, 20])
+        self.assertEqual(templates["CX (2)"]["percentages"], [100])
 
     def test_four_phases_preserve_order_and_individual_deadlines(self):
         schedule = resolve_payment_schedule(

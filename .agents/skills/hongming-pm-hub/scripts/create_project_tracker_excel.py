@@ -8,6 +8,11 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 wb = openpyxl.Workbook()
 
 # Setup styles
@@ -296,6 +301,6 @@ ws3.column_dimensions['B'].width = 25
 ws3.column_dimensions['C'].width = 38
 ws3.column_dimensions['E'].width = 22
 
-output_file = r"e:\Working\DANH_SACH_THEO_DOI_DU_AN_HONG_MING.xlsx"
+output_file = _workspace_path('DANH_SACH_THEO_DOI_DU_AN_HONG_MING.xlsx')
 wb.save(output_file)
 print("Master Project Tracker Excel created successfully at: " + output_file)

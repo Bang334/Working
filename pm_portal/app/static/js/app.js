@@ -208,7 +208,7 @@ async function handleAIParse() {
       if (autoExportChk && autoExportChk.checked) {
         try {
           const exportDirInput = document.getElementById("txtExportDirectory");
-          const customExportDir = (exportDirInput ? exportDirInput.value.trim() : "") || "E:\\Working\\Ho So Du An\\Hop Dong\\";
+          const customExportDir = (exportDirInput ? exportDirInput.value.trim() : "") || (document.getElementById("txtExportDirectory")?.defaultValue || "");
           localStorage.setItem("pm_portal_contract_export_dir", customExportDir);
 
           const contractData = ContractEditor.collectFormData();
@@ -245,7 +245,7 @@ function showAutoExportSuccess(docxResult) {
   if (!banner) return;
 
   const exportDirInput = document.getElementById("txtExportDirectory");
-  const fallbackDir = (exportDirInput ? exportDirInput.value.trim() : "") || "E:\\Working\\Ho So Du An\\Hop Dong\\";
+  const fallbackDir = (exportDirInput ? exportDirInput.value.trim() : "") || (document.getElementById("txtExportDirectory")?.defaultValue || "");
 
   // Compute final path: file_path > folder_path + file_name > fallbackDir + file_name
   const targetPath = docxResult.file_path || (docxResult.folder_path && docxResult.file_name ? `${docxResult.folder_path.replace(/[\\\/]+$/, '')}\\${docxResult.file_name}` : (docxResult.file_name ? `${fallbackDir.replace(/[\\\/]+$/, '')}\\${docxResult.file_name}` : fallbackDir));
@@ -599,14 +599,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Load saved export directory from localStorage if available
-  const savedExportDir = localStorage.getItem("pm_portal_contract_export_dir");
+  let savedExportDir = localStorage.getItem("pm_portal_contract_export_dir");
   const exportDirInput = document.getElementById("txtExportDirectory");
   if (exportDirInput) {
+    const currentRoot = exportDirInput.defaultValue.replace(/Ho So Du An[\\/]Hop Dong[\\/]?$/i, "");
+    if (savedExportDir && /^[A-Za-z]:[\\/]Working(?:[\\/]|$)/i.test(savedExportDir)) {
+      savedExportDir = savedExportDir.replace(/^[A-Za-z]:[\\/]Working(?:[\\/]|$)/i, () => currentRoot);
+      localStorage.setItem("pm_portal_contract_export_dir", savedExportDir);
+    }
     if (savedExportDir && !savedExportDir.includes("outputs\\hop_dong") && !savedExportDir.includes("outputs/hop_dong")) {
       exportDirInput.value = savedExportDir;
     } else {
-      exportDirInput.value = "E:\\Working\\Ho So Du An\\Hop Dong\\";
-      localStorage.setItem("pm_portal_contract_export_dir", "E:\\Working\\Ho So Du An\\Hop Dong\\");
+      exportDirInput.value = (document.getElementById("txtExportDirectory")?.defaultValue || "");
+      localStorage.setItem("pm_portal_contract_export_dir", (document.getElementById("txtExportDirectory")?.defaultValue || ""));
     }
   }
 });

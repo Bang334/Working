@@ -5,18 +5,28 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from app.config import CANDIDATE_MODELS, DEFAULT_MODEL
+from app.config import CANDIDATE_MODELS, DEFAULT_MODEL, WORKING_DIR
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+templates.env.globals['contract_output_dir'] = str(WORKING_DIR / 'Ho So Du An' / 'Hop Dong')
 
 router = APIRouter(tags=["UI Views"])
+
+
+@router.get("/shipping-documents", response_class=HTMLResponse)
+async def shipping_documents_page(request: Request):
+    return templates.TemplateResponse(request, "shipping_documents_page.html", {
+        "request": request, "active_tab": "shipping_documents",
+        "page_title": "Invoice & Packing List",
+    })
 
 
 @router.get("/", response_class=HTMLResponse)
 async def index_view(request: Request):
     """Trang chủ hiển thị tổng quan danh mục dự án & dữ liệu vận hành."""
     return templates.TemplateResponse(
+        request,
         "tracker_page.html",
         {
             "request": request,
@@ -39,6 +49,7 @@ async def contracts_page(request: Request):
         contract_count = 0
 
     return templates.TemplateResponse(
+        request,
         "contract_page.html",
         {
             "request": request,
@@ -63,6 +74,7 @@ async def repair_contracts_page(request: Request):
         contract_count = 0
 
     return templates.TemplateResponse(
+        request,
         "repair_contract_page.html",
         {
             "request": request,
@@ -80,6 +92,7 @@ async def repair_contracts_page(request: Request):
 async def quotations_page(request: Request):
     """Quotation generator view."""
     return templates.TemplateResponse(
+        request,
         "quotation_page.html",
         {
             "request": request,
@@ -97,6 +110,7 @@ async def quotations_page(request: Request):
 async def eco_prime_quotation_page(request: Request):
     """ECO PRIME AI Schematic & Quotation Generator Page."""
     return templates.TemplateResponse(
+        request,
         "eco_prime_quotation_page.html",
         {
             "request": request,
@@ -113,6 +127,7 @@ async def eco_prime_quotation_page(request: Request):
 async def delivery_page(request: Request):
     """Stock-out and equipment handover minutes view."""
     return templates.TemplateResponse(
+        request,
         "delivery_page.html",
         {
             "request": request,
@@ -131,6 +146,7 @@ async def delivery_page(request: Request):
 async def purchase_orders_page(request: Request):
     """Theo Dõi Đơn Mua Hàng & Quản Lý Nhà Cung Cấp."""
     return templates.TemplateResponse(
+        request,
         "po_page.html",
         {
             "request": request,
@@ -148,6 +164,7 @@ async def purchase_orders_page(request: Request):
 async def receivables_page(request: Request):
     """Theo Dõi Công Nợ Dự Án & Quản Lý Dòng Tiền Phải Thu (AR)."""
     return templates.TemplateResponse(
+        request,
         "receivables_page.html",
         {
             "request": request,
@@ -163,6 +180,7 @@ async def receivables_page(request: Request):
 async def liquidation_page(request: Request):
     """Contract liquidation view."""
     return templates.TemplateResponse(
+        request,
         "liquidation_page.html",
         {
             "request": request,
@@ -178,6 +196,7 @@ async def liquidation_page(request: Request):
 async def tracker_page(request: Request):
     """Project lifecycle tracker & dashboard view."""
     return templates.TemplateResponse(
+        request,
         "tracker_page.html",
         {
             "request": request,
@@ -198,6 +217,7 @@ async def fonts_showcase_page(request: Request):
     active_font = get_active_font_setting()
     fonts = get_all_fonts()
     return templates.TemplateResponse(
+        request,
         "font_showcase.html",
         {
             "request": request,
@@ -215,6 +235,7 @@ async def fonts_showcase_page(request: Request):
 async def acceptance_page(request: Request):
     """Acceptance minutes & equipment inspection generator view."""
     return templates.TemplateResponse(
+        request,
         "acceptance_page.html",
         {
             "request": request,
@@ -230,6 +251,7 @@ async def acceptance_page(request: Request):
 async def reminders_page(request: Request):
     """Payment requests, customer AR reminders & Gmail/Drive integration view."""
     return templates.TemplateResponse(
+        request,
         "reminder_page.html",
         {
             "request": request,
@@ -266,6 +288,7 @@ async def payment_requests_page(request: Request):
         history = []
 
     return templates.TemplateResponse(
+        request,
         "payment_request_page.html",
         {
             "request": request,
@@ -286,6 +309,7 @@ async def file_manager_page(request: Request):
     """Trung tâm quản lý toàn bộ hồ sơ, chứng từ, báo giá, hợp đồng & file mẫu tập trung."""
     from app.services.file_manager_service import CATEGORY_CONFIG
     return templates.TemplateResponse(
+        request,
         "file_manager_page.html",
         {
             "request": request,
@@ -296,5 +320,3 @@ async def file_manager_page(request: Request):
             "category_config": CATEGORY_CONFIG,
         }
     )
-
-

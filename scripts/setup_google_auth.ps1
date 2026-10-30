@@ -4,8 +4,8 @@ Write-Host "========================================================" -Foregroun
 Write-Host ""
 
 Write-Host "[1/2] Đang mở trình duyệt để xác thực Google Drive..." -ForegroundColor Yellow
-$env:GDRIVE_OAUTH_PATH = "C:\Users\BANG\.gemini\credentials\gcp-oauth.keys.json"
-$env:GDRIVE_CREDENTIALS_PATH = "C:\Users\BANG\.gemini\credentials\gdrive-token.json"
+$env:GDRIVE_OAUTH_PATH = "$env:USERPROFILE\.gemini\credentials\gcp-oauth.keys.json"
+$env:GDRIVE_CREDENTIALS_PATH = "$env:USERPROFILE\.gemini\credentials\gdrive-token.json"
 npx -y @modelcontextprotocol/server-gdrive auth
 
 Write-Host ""

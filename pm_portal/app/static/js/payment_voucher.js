@@ -640,7 +640,7 @@ const PaymentVoucherApp = {
           if (sel) sel.value = d.beneficiary_id;
         }
 
-        const matchMsg = d._matched_from_directory 
+        const matchMsg = d._matched_from_directory
           ? `Đã nhận diện đơn vị thụ hưởng "${d.beneficiary_name}" từ Sổ tay!`
           : `Đã trích xuất xong thông tin cho "${d.beneficiary_name}".`;
         this.showToast(matchMsg, "success");
@@ -861,6 +861,9 @@ const PaymentVoucherApp = {
           <button type="button" class="btn btn-secondary btn-sm" onclick="PaymentVoucherApp.reloadVoucherToForm(${h.id})" style="padding: 2px 7px; font-size: 0.74rem;" title="Nạp lại dữ liệu phiếu này lên form">
             📝 Nạp
           </button>
+          <a href="/emails?source=voucher&id=${h.id}" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 0.74rem; color: #0284c7; border-color: #bae6fd; font-weight: 600;" title="✉️ Soạn Email Trình Ký Sếp Tang Wei Li">
+            ✉️ Email
+          </a>
           <button type="button" class="btn btn-outline btn-sm" onclick="PaymentVoucherApp.deleteHistoryItem(${h.id})" style="padding: 2px 6px; font-size: 0.74rem; color: #dc2626; border-color: #fca5a5;" title="Xóa đơn này">
             🗑️
           </button>

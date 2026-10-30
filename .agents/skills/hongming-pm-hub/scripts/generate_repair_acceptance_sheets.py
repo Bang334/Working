@@ -13,6 +13,11 @@ import openpyxl
 import os
 import sys
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 if sys.stdout.encoding != 'utf-8':
     try:
         sys.stdout.reconfigure(encoding='utf-8')
@@ -218,7 +223,7 @@ def complete_repair_acceptance_workbook(file_path):
     # Lưu lại file
     completed_name = "Biên Bản Nghiệm Thu_維修設備驗收記錄_HDSC-HMV06032026001_HOAN_TAT.xlsx"
     downloads_completed = os.path.join(os.path.dirname(file_path), completed_name)
-    working_copy = os.path.join(r"e:\Working", completed_name)
+    working_copy = os.path.join(_workspace_path(''), completed_name)
 
     # 1. Lưu file chính đã hoàn tất
     wb.save(downloads_completed)
@@ -237,5 +242,5 @@ def complete_repair_acceptance_workbook(file_path):
         print("Note: File gốc đang mở trong Excel/WPS. Bản hoàn tất được lưu an toàn tại '_HOAN_TAT.xlsx'.")
 
 if __name__ == "__main__":
-    target = r"C:\Users\BANG\Downloads\Biên Bản Nghiệm Thu_維修設備驗收記錄_HDSC-HMV06032026001.xlsx"
+    target = str(__import__('pathlib').Path.home() / 'Downloads/Biên Bản Nghiệm Thu_維修設備驗收記錄_HDSC-HMV06032026001.xlsx')
     complete_repair_acceptance_workbook(target)

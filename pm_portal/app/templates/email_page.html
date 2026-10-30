@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/email_center.css?v=2.0">
+
+{% endblock %}
+
+{% block content %}
+<div class="email-center-container">
+  <div class="safe-mode-banner"><div><strong>Trình ký, bản scan và gửi Outlook thật</strong><p>Thực hiện theo từng bước trong Việc cần làm. Mục này chỉ lưu nội dung nháp và mô phỏng.</p></div><a class="btn btn-outline" id="emailWorkflowLink" href="/workflows">Mở việc cần làm →</a></div>
+
+  <!-- Banner Cam Kết An Toàn (Safe Simulation Mode) -->
+  <div class="safe-mode-banner">
+    <div class="safe-mode-badge">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>CHẾ ĐỘ MÔ PHỎNG AN TOÀN (SAFE PREVIEW MODE) ĐANG BẬT</span>
+    </div>
+    <div class="safe-mode-note">
+      🛡️ Hệ thống cam kết: Tuyệt đối <strong>KHÔNG gửi thật</strong> ra bên ngoài đến khách hàng. Mọi thao tác lưu và gửi đều ở chế độ mô phỏng / bản nháp nội bộ.
+    </div>
+  </div>
+
+  <!-- Thanh công cụ hành động nhanh (Quick Action Bar) -->
+  <div class="email-quickbar">
+    <div class="email-quickbar-left">
+      <span class="badge-pill blue">Trung Tâm Soạn Thảo Mail</span>
+      <span class="badge-pill green">Song Ngữ Việt - Trung Phồn Thể</span>
+      <span style="font-size: 0.85rem; color: var(--text-muted);">
+        Kho mẫu mail chuẩn hóa từ Outlook thực tế của Hong Ming Global.
+      </span>
+    </div>
+
+    <div class="email-quickbar-right">
+      <button type="button" class="btn btn-outline btn-sm" onclick="EmailApp.openHistoryModal()" title="Xem lịch sử email đã soạn và gửi mô phỏng">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>📑 Lịch Sử Email</span>
+      </button>
+
+      <button type="button" class="btn btn-outline btn-sm" onclick="EmailApp.handleSaveDraft()" title="Lưu email này vào danh sách bản nháp CSDL">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>💾 Lưu Bản Nháp</span>
+      </button>
+
+      <button type="button" class="btn btn-copy-rich btn-sm" onclick="EmailApp.copyRichText()" title="Sao chép nội dung chuẩn Rich Text để dán trực tiếp vào Outlook (Ctrl+V)">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>📋 Sao Chép Cho Outlook</span>
+      </button>
+
+      <button type="button" class="btn btn-simulate-send btn-sm" onclick="EmailApp.handleSimulateSend()" title="Thử nghiệm quy trình gửi email an toàn vào hệ thống (không gửi thật đến khách hàng)">
+        <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span>🚀 Mô Phỏng Gửi An Toàn</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Bố cục 2 cột (Split Workspace) -->
+  <div class="email-grid">
+
+    <!-- CỘT TRÁI: FORM SOẠN THẢO & THIẾT LẬP THÔNG MINH -->
+    <div class="email-card">
+      <div class="email-card-header">
+        <div class="email-card-title">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <span>1. Thiết Lập & Dữ Liệu Email</span>
+        </div>
+        <span class="badge-pill blue" id="connectionStatusBadge" style="font-size: 0.75rem;">10 Mẫu Chuẩn Hóa</span>
+      </div>
+
+      <div class="email-card-body">
+        <!-- Nguồn Dữ Liệu Kết Nối Trực Tiếp Từ Toàn Bộ Hệ Thống -->
+        <div class="data-source-nav-box" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+            <label class="preset-selector-label" style="margin: 0; font-weight: 700; color: #1e293b; font-size: 0.84rem;">
+              <svg class="icon" viewBox="0 0 24 24" width="15" height="15" style="color: #0284c7;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <span>Nguồn Dữ Liệu Kết Nối Tự Động:</span>
+            </label>
+            <div id="activeLinkIndicator" style="display: none; align-items: center; gap: 0.4rem; font-size: 0.76rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
+              <span id="activeLinkText">🔗 Đang liên kết: ...</span>
+              <button type="button" onclick="EmailApp.resetConnection()" style="border: none; background: none; color: #0284c7; cursor: pointer; font-size: 0.9rem; padding: 0;" title="Bỏ liên kết để soạn tự do">✕</button>
+            </div>
+          </div>
+
+          <!-- Tabs chọn Module nguồn -->
+          <div class="source-pills-bar" style="display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.65rem;">
+            <button type="button" class="source-pill-btn active" data-source="presets" onclick="EmailApp.switchSourceTab('presets')">🌟 Mẫu Thường Dùng (10)</button>
+            <button type="button" class="source-pill-btn" data-source="receivables" onclick="EmailApp.switchSourceTab('receivables')">📊 Công Nợ (AR)</button>
+            <button type="button" class="source-pill-btn" data-source="contracts" onclick="EmailApp.switchSourceTab('contracts')">📑 Hợp Đồng</button>
+            <button type="button" class="source-pill-btn" data-source="procurements" onclick="EmailApp.switchSourceTab('procurements')">🛒 Mua Hàng (PO)</button>
+            <button type="button" class="source-pill-btn" data-source="payment_vouchers" onclick="EmailApp.switchSourceTab('payment_vouchers')">💵 Đơn Xin TT</button>
+            <button type="button" class="source-pill-btn" data-source="quotations" onclick="EmailApp.switchSourceTab('quotations')">📈 Báo Giá</button>
+            <button type="button" class="source-pill-btn" data-source="acceptance" onclick="EmailApp.switchSourceTab('acceptance')">🤝 Nghiệm Thu</button>
+          </div>
+
+          <!-- Dropdown chọn đối tượng cụ thể từ Module nguồn -->
+          <div style="position: relative;">
+            <select id="sourceEntitySelect" class="email-form-select" onchange="EmailApp.onEntitySelectChange(this.value)" style="width: 100%; font-weight: 600; color: #0f172a; border-color: #38bdf8;">
+              {% for p in presets %}
+                <option value="preset:{{ p.id }}">{{ p.name }} ({{ p.customer }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <input type="hidden" id="emailSourceModule" value="preset">
+        <input type="hidden" id="emailSourceId" value="">
+
+        <!-- Thông tin người nhận -->
+        <div class="email-form-row">
+          <div class="email-form-group">
+            <label class="email-form-label" for="emailCustomer">Khách Hàng / Đối Tác</label>
+            <input type="text" id="emailCustomer" class="email-form-input" placeholder="Tên công ty khách hàng" oninput="EmailApp.updateLivePreview()">
+          </div>
+          <div class="email-form-group">
+            <label class="email-form-label" for="emailRecipient">Người Nhận (TO) *</label>
+            <input type="email" id="emailRecipient" class="email-form-input" placeholder="email@khachhang.com" oninput="EmailApp.updateLivePreview()">
+          </div>
+        </div>
+
+        <div class="email-form-group">
+          <label class="email-form-label" for="emailCc">Gửi Kèm Theo Dõi (CC)</label>
+          <input type="text" id="emailCc" class="email-form-input" placeholder="sales@hongming-global.com; pm02@hongming-global.com" oninput="EmailApp.updateLivePreview()">
+        </div>
+
+        <div class="email-form-group">
+          <label class="email-form-label" for="emailSubject">Tiêu Đề Thư (Subject - Song Ngữ Việt - Trung) *</label>
+          <input type="text" id="emailSubject" class="email-form-input" placeholder="Tiêu đề email song ngữ" oninput="EmailApp.updateLivePreview()">
+        </div>
+
+        <!-- Dữ liệu hạt nhân hợp đồng & số tiền -->
+        <div class="email-form-row">
+          <div class="email-form-group">
+            <label class="email-form-label" for="emailContract">Số Hợp Đồng / Tham Chiếu</label>
+            <input type="text" id="emailContract" class="email-form-input" placeholder="HMV021020260001" oninput="EmailApp.updateLivePreview()">
+          </div>
+          <div class="email-form-group">
+            <label class="email-form-label" for="emailAmount">Số Tiền (VNĐ)</label>
+            <input type="text" id="emailAmount" class="email-form-input" placeholder="300.000.000" oninput="EmailApp.updateLivePreview()">
+          </div>
+        </div>
+
+        <div class="email-form-group">
+          <label class="email-form-label" for="emailDueDate">Hạn Thanh Toán / Phản Hồi</label>
+          <input type="date" id="emailDueDate" class="email-form-input" oninput="EmailApp.updateLivePreview()">
+        </div>
+
+        <!-- Danh mục tệp đính kèm -->
+        <div class="email-form-group">
+          <label class="email-form-label">Tệp Đính Kèm Nghiệp Vụ (Attachments)</label>
+          <div class="attachments-wrapper">
+            <div id="attachmentsContainer" style="display: flex; flex-wrap: wrap; gap: 0.4rem;"></div>
+            <div id="attachmentsWarningBox" class="attachment-warning" style="display: none;">
+              <svg class="icon" viewBox="0 0 24 24" width="16" height="16"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span><strong>Quy chuẩn bắt buộc:</strong> <span id="warningRulesText"></span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thân thư soạn thảo -->
+        <div class="email-form-group">
+          <label class="email-form-label" for="emailBody">Nội Dung Thư (Soạn Thảo / Tùy Chỉnh Thêm) *</label>
+          <textarea id="emailBody" class="email-form-textarea" oninput="EmailApp.updateLivePreview()"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- CỘT PHẢI: LIVE PREVIEW THEO CHUẨN OUTLOOK / GMAIL -->
+    <div class="email-card">
+      <div class="email-card-header">
+        <div class="email-card-title">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>2. Bản Xem Trước Trực Quan (Outlook Live Preview)</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="EmailApp.copyRichText()" title="Copy nhanh nội dung">
+          <span>📋 Copy Nhanh (Ctrl+C)</span>
+        </button>
+      </div>
+
+      <div class="email-card-body" style="padding: 1rem;">
+        <div class="outlook-preview-wrapper">
+          <!-- Outlook Meta Header -->
+          <div class="outlook-header-meta">
+            <div class="outlook-meta-subject" id="previewSubject">Tiêu đề thư...</div>
+            <div class="outlook-meta-row">
+              <span class="outlook-meta-label">Từ (From):</span>
+              <span class="outlook-meta-value">sales@hongming-global.com (CÔNG TY TNHH TOÀN CẦU HONG MING)</span>
+            </div>
+            <div class="outlook-meta-row">
+              <span class="outlook-meta-label">Tới (To):</span>
+              <span class="outlook-meta-value" id="previewTo">nguoinhan@khachhang.com</span>
+            </div>
+            <div class="outlook-meta-row">
+              <span class="outlook-meta-label">CC:</span>
+              <span class="outlook-meta-value" id="previewCc">sales@hongming-global.com; pm02@hongming-global.com</span>
+            </div>
+          </div>
+
+          <!-- Outlook Message Body -->
+          <div class="outlook-body-content" id="previewBody">
+            Nội dung email sẽ hiển thị tại đây...
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Lịch Sử Email -->
+<div id="emailHistoryModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+  <div style="background: #fff; width: 90%; max-width: 900px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 85vh; display: flex; flex-direction: column;">
+    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">📑 Lịch Sử Soạn Thảo & Mô Phỏng Gửi Email</h3>
+      <button type="button" onclick="EmailApp.closeHistoryModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+    <div style="padding: 1rem; overflow-y: auto; flex: 1;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="border-bottom: 2px solid #e2e8f0; text-align: left; font-size: 0.82rem; color: #64748b;">
+            <th style="padding: 0.5rem;">Mã Email</th>
+            <th style="padding: 0.5rem;">Khách Hàng</th>
+            <th style="padding: 0.5rem;">Tiêu Đề</th>
+            <th style="padding: 0.5rem; text-align: right;">Số Tiền</th>
+            <th style="padding: 0.5rem;">Trạng Thái</th>
+            <th style="padding: 0.5rem;">Thời Gian</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+    </div>
+    <div style="padding: 0.75rem 1.25rem; border-top: 1px solid #e5e7eb; text-align: right; background: #f8fafc;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="EmailApp.closeHistoryModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/email_center.js?v=1.0"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const rawPresets = {{ presets | tojson }};
+    EmailApp.init(rawPresets);
+  });
+</script>
+{% endblock %}

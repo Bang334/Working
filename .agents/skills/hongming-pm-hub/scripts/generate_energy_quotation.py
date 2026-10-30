@@ -13,6 +13,11 @@ import math
 import os
 import sys
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 def compute_cell_lines(text, col_width_chars):
     if not text:
         return 1
@@ -54,7 +59,7 @@ def generate_perfect_energy_quotation(json_path, output_excel_path):
     with open(json_path, 'r', encoding='utf-8') as jf:
         data = json.load(jf)
         
-    template_path = r'e:\Working\HM浤詺資訊_Vonmax弘聲 機聯網暨工廠節能 第二階段 硬體報價單_202603_V1.5.xlsx'
+    template_path = _workspace_path('HM浤詺資訊_Vonmax弘聲 機聯網暨工廠節能 第二階段 硬體報價單_202603_V1.5.xlsx')
     wb = openpyxl.load_workbook(template_path)
     
     # Keep only the target sheet '節能專案報價'
@@ -374,8 +379,8 @@ def generate_perfect_energy_quotation(json_path, output_excel_path):
     print(f"Perfect 1:1 quotation excel generated at: {output_excel_path}")
 
 if __name__ == "__main__":
-    json_in = r"e:\Working\du_lieu_bao_gia_mau.json"
-    excel_out = r"e:\Working\BAO_GIA_THIET_BI_HAN_QUOC_EMS.xlsx"
+    json_in = _workspace_path('du_lieu_bao_gia_mau.json')
+    excel_out = _workspace_path('BAO_GIA_THIET_BI_HAN_QUOC_EMS.xlsx')
     if len(sys.argv) > 1:
         json_in = sys.argv[1]
     if len(sys.argv) > 2:

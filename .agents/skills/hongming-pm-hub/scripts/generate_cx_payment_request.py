@@ -17,14 +17,19 @@ import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from pathlib import Path
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 
 def generate_cx_payment_request(
-    template_path: str = r"C:\Users\BANG\Downloads\đơn yêu cầu NCC thanh toán (1).xlsx",
-    output_dir: str = r"C:\Users\BANG\Downloads",
-    workspace_dir: str = r"E:\Working\Ho So Du An\Don Xin Thanh Toan"
+    template_path: str = str(__import__('pathlib').Path.home() / 'Downloads/đơn yêu cầu NCC thanh toán (1).xlsx'),
+    output_dir: str = str(__import__('pathlib').Path.home() / 'Downloads'),
+    workspace_dir: str = _workspace_path('Ho So Du An\\Don Xin Thanh Toan')
 ):
     print("=" * 70)
     print("Khởi tạo Phiếu yêu cầu thanh toán (請款單) cho CX TECHNOLOGY...")

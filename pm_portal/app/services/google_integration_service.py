@@ -16,15 +16,16 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import mimetypes
+from app.config import WORKING_DIR
 
 logger = logging.getLogger(__name__)
 
 # Credential Paths
-GMAIL_CREDENTIALS_FILE = Path(r"C:\Users\BANG\.gmail-mcp\credentials.json")
-GMAIL_CLIENT_SECRETS_FILE = Path(r"C:\Users\BANG\.gmail-mcp\gcp-oauth.keys.json")
+GMAIL_CREDENTIALS_FILE = Path.home() / '.gmail-mcp' / 'credentials.json'
+GMAIL_CLIENT_SECRETS_FILE = Path.home() / '.gmail-mcp' / 'gcp-oauth.keys.json'
 
-GDRIVE_CREDENTIALS_FILE = Path(r"C:\Users\BANG\.gemini\credentials\gdrive-token.json")
-GDRIVE_CLIENT_SECRETS_FILE = Path(r"C:\Users\BANG\.gemini\credentials\gcp-oauth.keys.json")
+GDRIVE_CREDENTIALS_FILE = Path.home() / '.gemini' / 'credentials' / 'gdrive-token.json'
+GDRIVE_CLIENT_SECRETS_FILE = Path.home() / '.gemini' / 'credentials' / 'gcp-oauth.keys.json'
 
 
 def _refresh_oauth_token(credentials_path: Path, client_secrets_path: Path) -> str:
@@ -111,7 +112,7 @@ def _resolve_attachment_path(file_path_str: str) -> Optional[Path]:
         return p
 
     # Search in Working Directory subfolders
-    working_dir = Path(r"E:\Working")
+    working_dir = WORKING_DIR
     candidates = [
         working_dir / p.name,
         working_dir / "Ho So Du An" / "Yeu Cau Thanh Toan" / p.name,

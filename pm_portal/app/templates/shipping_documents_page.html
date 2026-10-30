@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block head %}<link rel="stylesheet" href="/static/css/shipping_documents.css?v=1.0">{% endblock %}
+{% block content %}
+<div class="ship-page" id="shippingWorkspace">
+  <div class="ship-intro"><div><p class="ship-eyebrow">HỒ SƠ GIAO HÀNG · 出貨文件</p><h2>Invoice & Packing List</h2><p>Gom tài liệu và ghi chú, kiểm tra dữ liệu AI trích xuất, rồi xuất hai file Excel.</p></div><span class="ship-chip">Theo mẫu Hong Ming</span></div>
+  <section class="ship-card" aria-labelledby="shipInputHeading">
+    <div class="ship-section-title"><h3 id="shipInputHeading">1. Thêm tài liệu & nội dung</h3><span>Excel · Word · PDF · Ảnh · Văn bản</span></div>
+    <label class="ship-drop" id="shipDrop"><strong>Chọn hoặc kéo thả nhiều file vào đây</strong><span>Mỗi file tối đa 10 MB · Tối đa 20 file, tổng 25 MB</span><input id="shipFiles" type="file" multiple accept=".xlsx,.docx,.pdf,.png,.jpg,.jpeg,.webp,.txt,.csv,.tsv"></label>
+    <div id="shipFileList" class="ship-file-list"></div>
+    <p class="ship-hint">Chọn “Mẫu / tham khảo” cho hồ sơ cũ. Số lượng và giá của mẫu cũ không được dùng làm dữ liệu đơn hàng mới.</p>
+    <div id="shipNotes"></div>
+    <div class="ship-actions"><button type="button" class="ship-btn secondary" id="shipAddNote">+ Thêm đoạn nội dung</button><button type="button" class="ship-btn primary" id="shipAnalyze">Phân tích bằng AI</button><span id="shipProgress" role="status" aria-live="polite"></span></div>
+    <div id="shipError" class="ship-error" role="alert" hidden></div>
+  </section>
+  <section class="ship-card" id="shipReview" hidden aria-labelledby="shipReviewHeading">
+    <div class="ship-section-title"><h3 id="shipReviewHeading">2. Kiểm tra & chỉnh sửa</h3><button type="button" class="ship-btn secondary" id="shipAddItem">+ Thêm hạng mục</button></div>
+    <div id="shipWarnings" class="ship-warnings" role="status"></div>
+    <div class="ship-fields" id="shipFields"></div>
+    <details class="ship-seller"><summary>Thông tin bên bán & thông tin bổ sung</summary><div class="ship-fields" id="shipSellerFields"></div></details>
+    <p class="ship-hint">Đơn giá theo cùng đơn vị số lượng. Ví dụ 1 lô 350 m: số lượng 1, đơn vị “LÔ (350 m)”. Cân nặng chưa biết để trống; dịch vụ không đưa vào Packing List.</p>
+    <div class="ship-table-scroll"><table class="ship-table"><thead><tr><th>STT</th><th>Hàng hóa / mô tả</th><th>Nhóm & loại</th><th>Số lượng / đơn vị</th><th>Đơn giá</th><th>Khối lượng (kg)</th><th>Nguồn / xuất xứ</th><th>PKL</th><th></th></tr></thead><tbody id="shipItems"></tbody></table></div>
+    <div class="ship-summary" id="shipSummary"></div>
+    <div class="ship-actions"><button type="button" class="ship-btn primary" id="shipGenerate">Tạo Invoice & Packing List</button><span id="shipExportProgress" role="status" aria-live="polite"></span></div>
+    <div class="ship-downloads" id="shipDownloads" hidden><strong>3. Hai file đã sẵn sàng</strong><a id="shipInvoiceLink" class="ship-btn secondary" download>Tải Invoice</a><a id="shipPackingLink" class="ship-btn secondary" download>Tải Packing List</a><span>Có thể quay lại bổ sung cân nặng và tạo bộ file mới.</span></div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/shipping_documents.js?v=1.0"></script>{% endblock %}

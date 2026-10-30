@@ -7,16 +7,19 @@ cho đối tác DFV (Darfon Việt Nam).
 """
 
 import os
+from pathlib import Path
+
+WORKING_DIR = Path(__file__).resolve().parents[2]
 import sys
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-TEMPLATE_PATH = r"C:\Users\BANG\Downloads\Copy of danh sach sua lot 3 (1).xlsx"
-SOURCE_PATH = r"E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi\Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx"
+TEMPLATE_PATH = str(Path.home() / "Downloads" / 'Copy of danh sach sua lot 3 (1).xlsx')
+SOURCE_PATH = str(WORKING_DIR / 'Ho So Du An/Cong Ty/DFV_Darfon/Thiet Bi/Tham_Khao_Danh_Sach_Thiet_Bi_Sua_Chua_DFV_Darfon.xlsx')
 
-OUT_PATH_WORKING = r"E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi\PHIEU_GUI_SUA_CHUA_THIET_BI_DFV_DARFON.xlsx"
-OUT_PATH_DOWNLOADS = r"C:\Users\BANG\Downloads\PHIEU_GUI_SUA_CHUA_THIET_BI_DFV_DARFON.xlsx"
+OUT_PATH_WORKING = str(WORKING_DIR / 'Ho So Du An/Cong Ty/DFV_Darfon/Thiet Bi/PHIEU_GUI_SUA_CHUA_THIET_BI_DFV_DARFON.xlsx')
+OUT_PATH_DOWNLOADS = str(Path.home() / "Downloads" / 'PHIEU_GUI_SUA_CHUA_THIET_BI_DFV_DARFON.xlsx')
 
 # 19 thiết bị chi tiết
 ITEMS = [
@@ -182,97 +185,97 @@ def build_dfv_form():
     wb = openpyxl.load_workbook(TEMPLATE_PATH)
     ws = wb.active
     ws.title = "Phiếu Gửi Sửa Chữa DFV"
-    
+
     # 1. Cập nhật thông tin bên mua (Bên gửi sửa: DFV - Darfon Việt Nam)
     ws["H2"] = "Công ty TNHH Điện tử Darfon (Việt Nam) / 達方電子 (越南) 有限公司"
     ws["H3"] = "Jessica (碧娟 - 台灣採購&財務主管) / Bộ phận tiếp nhận DFV"
     ws["H4"] = "Liên hệ qua Jessica / Đại diện DFV"
     ws["H6"] = "KCN Darfon Electronics Vietnam"
     ws["H7"] = "Đồng bộ qua Jessica (達方採購部)"
-    
+
     # 2. Cập nhật ngày yêu cầu tại A10
     ws["A10"] = "Ngày yêu cầu.要求日期：26/10/2026"
     ws["A10"].font = Font(name="微軟正黑體", size=14, bold=True)
-    
+
     # Định dạng cell
     font_content = Font(name="微軟正黑體", size=11, color="111111")
     font_content_bold = Font(name="微軟正黑體", size=11, bold=True, color="111111")
     font_sn = Font(name="Consolas", size=10.5, bold=True, color="002060")
     font_summary = Font(name="微軟正黑體", size=13, bold=True, color="000000")
-    
+
     bd_thin = Side(border_style="thin", color="000000")
     border_cell = Border(left=bd_thin, right=bd_thin, top=bd_thin, bottom=bd_thin)
-    
+
     fill_zebra_1 = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
     fill_zebra_2 = PatternFill(start_color="F9FAFB", end_color="F9FAFB", fill_type="solid")
     fill_header_qty = PatternFill(start_color="EAECEE", end_color="EAECEE", fill_type="solid")
-    
+
     align_center = Alignment(horizontal="center", vertical="center", wrap_text=True)
     align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
     align_right = Alignment(horizontal="right", vertical="center", wrap_text=True)
-    
+
     # Hủy gộp các ô từ dòng 12 trở xuống của mẫu cũ để không bị lỗi MergedCell
     for rng in list(ws.merged_cells.ranges):
         min_c, min_r, max_c, max_r = rng.bounds
         if min_r >= 12:
             ws.unmerge_cells(start_row=min_r, start_column=min_c, end_row=max_r, end_column=max_c)
-            
+
     # 3. Đổ dữ liệu 19 thiết bị từ Hàng 12 đến Hàng 30
     start_row = 12
     for i, item in enumerate(ITEMS):
         row = start_row + i
         ws.row_dimensions[row].height = 42
         fill_row = fill_zebra_2 if (i % 2 == 1) else fill_zebra_1
-        
+
         # Col A: STT
         cA = ws.cell(row=row, column=1, value=item["stt"])
         cA.alignment = align_center
         cA.font = font_content_bold
         cA.fill = fill_row
         cA.border = border_cell
-        
+
         # Col B: Tên Sản Phẩm
         cB = ws.cell(row=row, column=2, value=item["name"])
         cB.alignment = align_left
         cB.font = font_content_bold
         cB.fill = fill_row
         cB.border = border_cell
-        
+
         # Col C: Hạng Mục
         cC = ws.cell(row=row, column=3, value=item["category"])
         cC.alignment = align_center
         cC.font = font_content
         cC.fill = fill_row
         cC.border = border_cell
-        
+
         # Col D: Nội Dung Sản Phẩm (Model, S/N, lỗi)
         cD = ws.cell(row=row, column=4, value=item["detail"])
         cD.alignment = align_left
         cD.font = font_content
         cD.fill = fill_row
         cD.border = border_cell
-        
+
         # Col E: Bộ phận gửi sửa
         cE = ws.cell(row=row, column=5, value=item["dept"])
         cE.alignment = align_center
         cE.font = font_content
         cE.fill = fill_row
         cE.border = border_cell
-        
+
         # Col F: Số lượng
         cF = ws.cell(row=row, column=6, value=item["qty"])
         cF.alignment = align_center
         cF.font = font_content_bold
         cF.fill = fill_row
         cF.border = border_cell
-        
+
         # Col G: Thời gian hoàn thành (để trống)
         cG = ws.cell(row=row, column=7, value="")
         cG.alignment = align_center
         cG.font = font_content
         cG.fill = fill_row
         cG.border = border_cell
-        
+
         # Col H: Đơn Giá (Sếp tự điền)
         cH = ws.cell(row=row, column=8, value=None)
         cH.alignment = align_right
@@ -280,7 +283,7 @@ def build_dfv_form():
         cH.fill = fill_row
         cH.border = border_cell
         cH.number_format = "#,##0"
-        
+
         # Col I: Tổng Giá (Công thức sống = F*H)
         cI = ws.cell(row=row, column=9, value=f"=IF(H{row}>0, F{row}*H{row}, \"\")")
         cI.alignment = align_right
@@ -290,7 +293,7 @@ def build_dfv_form():
         cI.number_format = "#,##0"
 
     end_data_row = start_row + len(ITEMS) - 1 # Row 30
-    
+
     # 4. Hàng "Chỗ trống sau đây" (以下空白) tại Row 31
     blank_row = end_data_row + 1 # Row 31
     ws.row_dimensions[blank_row].height = 24
@@ -300,14 +303,14 @@ def build_dfv_form():
     c_blank.font = Font(name="微軟正黑體", size=11, italic=True, color="555555")
     for col in range(1, 10):
         ws.cell(row=blank_row, column=col).border = border_cell
-        
+
     # 5. Hàng Tổng cộng tại Row 32
     sum_row = blank_row + 1 # Row 32
     ws.row_dimensions[sum_row].height = 36
     ws.merge_cells(f"A{sum_row}:E{sum_row}")
     c_to = ws.cell(
-        row=sum_row, 
-        column=1, 
+        row=sum_row,
+        column=1,
         value="此致\n         Công ty TNHH Điện tử Darfon (Việt Nam) / 達方電子 (越南) 有限公司"
     )
     c_to.alignment = align_left
@@ -315,39 +318,39 @@ def build_dfv_form():
     c_to.border = border_cell
     for col in range(2, 6):
         ws.cell(row=sum_row, column=col).border = border_cell
-        
+
     # Tổng số lượng tại cột F
     c_sum_qty = ws.cell(row=sum_row, column=6, value=f"=SUM(F{start_row}:F{end_data_row})")
     c_sum_qty.alignment = align_center
     c_sum_qty.font = font_summary
     c_sum_qty.fill = fill_header_qty
     c_sum_qty.border = border_cell
-    
+
     # Col G trống
     ws.cell(row=sum_row, column=7, value="").border = border_cell
-    
+
     # Col H: TỔNG THÀNH TIỀN
     c_sum_lbl = ws.cell(row=sum_row, column=8, value="TỔNG THÀNH TIỀN \n總價")
     c_sum_lbl.alignment = align_center
     c_sum_lbl.font = font_summary
     c_sum_lbl.border = border_cell
-    
+
     # Col I: Tổng thành tiền (SUM)
     c_sum_val = ws.cell(row=sum_row, column=9, value=f"=SUM(I{start_row}:I{end_data_row})")
     c_sum_val.alignment = align_right
     c_sum_val.font = font_summary
     c_sum_val.border = border_cell
     c_sum_val.number_format = "#,##0"
-    
+
     # 6. Khối chữ ký xác nhận của khách hàng DFV tại Row 33 & 34
     sig_row_1 = sum_row + 1 # Row 33
     ws.row_dimensions[sig_row_1].height = 24
     ws.cell(row=sig_row_1, column=1, value="※客戶確認 Xác nhận khách hàng").font = Font(name="微軟正黑體", size=12, bold=True)
-    
+
     sig_row_2 = sig_row_1 + 1 # Row 34
     ws.row_dimensions[sig_row_2].height = 24
     ws.cell(row=sig_row_2, column=1, value="(請簽名用印 Vui lòng ký tên và đóng dấu)").font = Font(name="微軟正黑體", size=11, italic=True)
-    
+
     # Thiết lập độ rộng cột tối ưu
     ws.column_dimensions["A"].width = 7
     ws.column_dimensions["B"].width = 32
@@ -358,12 +361,12 @@ def build_dfv_form():
     ws.column_dimensions["G"].width = 20
     ws.column_dimensions["H"].width = 20
     ws.column_dimensions["I"].width = 24
-    
+
     # -----------------------------------------------------------------
     # SHEET 2: BẢNG GỘP NHÓM (4 CHỦNG LOẠI TỔNG HỢP CHO SẾP CHỌN BÁO GIÁ)
     # -----------------------------------------------------------------
     ws2 = wb.create_sheet(title="Bảng Gộp 4 Nhóm Báo Giá")
-    
+
     from copy import copy
     # Sao chép header thông tin công ty sang Sheet 2
     for r in range(1, 8):
@@ -375,20 +378,20 @@ def build_dfv_form():
                     ws2.cell(r, c).font = copy(ws.cell(r, c).font)
                 if ws.cell(r, c).alignment:
                     ws2.cell(r, c).alignment = copy(ws.cell(r, c).alignment)
-                
+
     for rng in list(ws.merged_cells.ranges):
         min_c, min_r, max_c, max_r = rng.bounds
         if max_r <= 7:
             ws2.merge_cells(start_row=min_r, start_column=min_c, end_row=max_r, end_column=max_c)
-            
+
     ws2["A9"] = "Phiếu yêu cầu sửa chữa phần cứng (Bảng tổng hợp theo chủng loại)\n硬體維修申請單 (依設備類別匯總表)"
     if ws["A9"].font: ws2["A9"].font = copy(ws["A9"].font)
     ws2.row_dimensions[9].height = ws.row_dimensions[9].height
-    
+
     ws2["A10"] = "Ngày yêu cầu.要求日期：26/10/2026"
     if ws["A10"].font: ws2["A10"].font = copy(ws["A10"].font)
     ws2.row_dimensions[10].height = ws.row_dimensions[10].height
-    
+
     # Copy header cột
     ws2.row_dimensions[11].height = ws.row_dimensions[11].height
     for c in range(1, 10):
@@ -400,7 +403,7 @@ def build_dfv_form():
         if c_src.border: c_dst.border = copy(c_src.border)
         col_letter = get_column_letter(c)
         ws2.column_dimensions[col_letter].width = ws.column_dimensions[col_letter].width
-        
+
     GROUP_ITEMS = [
         {
             "stt": 1,
@@ -435,58 +438,58 @@ def build_dfv_form():
             "qty": 8
         }
     ]
-    
+
     for i, g in enumerate(GROUP_ITEMS):
         r = 12 + i
         ws2.row_dimensions[r].height = 55
         fill_row = fill_zebra_2 if (i % 2 == 1) else fill_zebra_1
-        
+
         cA = ws2.cell(row=r, column=1, value=g["stt"])
         cA.alignment = align_center
         cA.font = font_content_bold
         cA.fill = fill_row
         cA.border = border_cell
-        
+
         cB = ws2.cell(row=r, column=2, value=g["name"])
         cB.alignment = align_left
         cB.font = font_content_bold
         cB.fill = fill_row
         cB.border = border_cell
-        
+
         cC = ws2.cell(row=r, column=3, value=g["category"])
         cC.alignment = align_center
         cC.font = font_content
         cC.fill = fill_row
         cC.border = border_cell
-        
+
         cD = ws2.cell(row=r, column=4, value=g["detail"])
         cD.alignment = align_left
         cD.font = font_content
         cD.fill = fill_row
         cD.border = border_cell
-        
+
         cE = ws2.cell(row=r, column=5, value=g["dept"])
         cE.alignment = align_center
         cE.font = font_content
         cE.fill = fill_row
         cE.border = border_cell
-        
+
         cF = ws2.cell(row=r, column=6, value=g["qty"])
         cF.alignment = align_center
         cF.font = font_content_bold
         cF.fill = fill_row
         cF.border = border_cell
-        
+
         cG = ws2.cell(row=r, column=7, value="")
         cG.border = border_cell
-        
+
         cH = ws2.cell(row=r, column=8, value=None)
         cH.alignment = align_right
         cH.font = font_content_bold
         cH.fill = fill_row
         cH.border = border_cell
         cH.number_format = "#,##0"
-        
+
         cI = ws2.cell(row=r, column=9, value=f"=IF(H{r}>0, F{r}*H{r}, \"\")")
         cI.alignment = align_right
         cI.font = font_content_bold
@@ -501,7 +504,7 @@ def build_dfv_form():
     ws2["A16"].font = Font(name="微軟正黑體", size=11, italic=True, color="555555")
     for col in range(1, 10):
         ws2.cell(row=16, column=col).border = border_cell
-        
+
     ws2.row_dimensions[17].height = 36
     ws2.merge_cells("A17:E17")
     ws2["A17"] = "此致\n         Công ty TNHH Điện tử Darfon (Việt Nam) / 達方電子 (越南) 有限公司"
@@ -509,31 +512,31 @@ def build_dfv_form():
     ws2["A17"].font = Font(name="微軟正黑體", size=12, bold=True)
     for col in range(1, 6):
         ws2.cell(row=17, column=col).border = border_cell
-        
+
     ws2["F17"] = "=SUM(F12:F15)"
     ws2["F17"].alignment = align_center
     ws2["F17"].font = font_summary
     ws2["F17"].fill = fill_header_qty
     ws2["F17"].border = border_cell
-    
+
     ws2["G17"] = ""
     ws2["G17"].border = border_cell
-    
+
     ws2["H17"] = "TỔNG THÀNH TIỀN \n總價"
     ws2["H17"].alignment = align_center
     ws2["H17"].font = font_summary
     ws2["H17"].border = border_cell
-    
+
     ws2["I17"] = "=SUM(I12:I15)"
     ws2["I17"].alignment = align_right
     ws2["I17"].font = font_summary
     ws2["I17"].border = border_cell
     ws2.cell(row=17, column=9).number_format = "#,##0"
-    
+
     ws2.row_dimensions[18].height = 24
     ws2["A18"] = "※客戶確認 Xác nhận khách hàng"
     ws2["A18"].font = Font(name="微軟正黑體", size=12, bold=True)
-    
+
     ws2.row_dimensions[19].height = 24
     ws2["A19"] = "(請簽名用印 Vui lòng ký tên và đóng dấu)"
     ws2["A19"].font = Font(name="微軟正黑體", size=11, italic=True)

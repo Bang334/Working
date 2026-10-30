@@ -17,6 +17,9 @@
       <p>Theo dõi tiến độ triển khai, giá trị hợp đồng và các mốc công nợ cần xử lý trên toàn hệ thống Hong Ming.</p>
     </div>
     <div class="dashboard-actions" aria-label="Thao tác dashboard">
+      <a class="btn btn-outline dashboard-action" href="/workflows" title="Theo dõi việc tiếp theo, hồ sơ trình ký, bản scan và thu tiền">
+        <span>Việc cần làm · Quy trình & Thu tiền →</span>
+      </a>
       <button type="button" class="btn btn-outline dashboard-action" onclick="refreshDashboard()" title="Cập nhật số liệu mới nhất">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         <span>Làm mới</span>
@@ -29,6 +32,10 @@
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         <span>Xuất Excel</span>
       </button>
+      <a href="/emails" class="btn btn-outline dashboard-action dashboard-action-email" title="Mở Trung Tâm Soạn Thảo & Gửi Email B2B Song Ngữ">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Soạn & Gửi Email</span>
+      </a>
       <a href="/contracts" class="btn btn-primary dashboard-action">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         <span>Thêm hợp đồng</span>
@@ -239,7 +246,7 @@
       <div class="dossier-summary-box" id="modalSummaryBox">
         <!-- Rendered dynamically -->
       </div>
-      
+
       <div style="margin-top: 1rem;">
         <h4 style="font-size: 0.82rem; font-weight: 750; margin-bottom: 0.5rem; color: #1e293b;">
           Tài liệu & Chứng từ liên kết (<span id="modalDocsCount">0</span>)

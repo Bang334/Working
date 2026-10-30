@@ -1,7 +1,8 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/receivables_tracker.css?v=5.5">
+<link rel="stylesheet" href="/static/css/receivables_tracker.css?v=7.0">
+<link rel="stylesheet" href="/static/css/contract_schedule_editor.css?v=6.7">
 {% endblock %}
 
 {% block content %}
@@ -59,7 +60,10 @@
         <span>Xuất PPT (Sếp)</span>
       </button>
 
-
+      <a href="/emails?source=receivable" class="btn btn-outline btn-sm" title="Mở Trung Tâm Soạn Thảo Email Nhắc Nợ B2B Song Ngữ Việt - Đài Loan" style="color: #0284C7; border-color: #38BDF8; font-weight: 700; background: #F0F9FF;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>✉️ Soạn Email Nhắc Nợ</span>
+      </a>
     </div>
   </div>
 
@@ -372,7 +376,7 @@
             </th>
             <th class="col-notes" style="min-width: 180px;">
               <div class="th-header-cell">
-                <span class="th-title">Ghi Chú Tiến Độ<br><span class="zh">備註 (Nhấp để sửa)</span></span>
+                <span class="th-title">Ghi Chú Tiến Độ<br><span class="zh">備註 (Nhấp để xem thêm)</span></span>
                 <input type="text" id="thArFilterNotes" class="th-filter-input" placeholder="Lọc ghi chú..." oninput="applyHeaderFiltersAr()">
               </div>
             </th>
@@ -823,25 +827,26 @@
 
 <!-- Modal 4: Biểu Đồ So Sánh Thu Hồi Công Nợ Tuần (Full Màn Hình 100vw x 100vh) -->
 <div class="weekly-comparison-fullscreen-modal" id="modalWeeklyComparisonFullscreen" style="display: none;">
-  <!-- Slim Top Bar (Chủ yếu nhường 94% diện tích cho 2 biểu đồ) -->
+  <!-- Slim Top Bar (Gọn gàng 2 hàng mỏng, nền sáng trang nhã, nhường tối đa diện tích cho 2 biểu đồ) -->
   <div class="weekly-comp-header">
+    <!-- Hàng 1: Tiêu đề + Chuyển chế độ + Chú giải màu + Nút thao tác -->
     <div class="weekly-comp-header-top">
       <div class="weekly-comp-header-left">
         <div class="weekly-comp-brand-badge">
-          <svg class="icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
             <rect x="3" y="3" width="7" height="18" rx="1"/>
             <rect x="14" y="9" width="7" height="12" rx="1"/>
           </svg>
-          <span id="compHeaderBrandTitle">SO SÁNH THU HỒI CÔNG NỢ TUẦN <span style="font-size: 0.8rem; font-weight: 500; color: #94A3B8;">· 每週應收帳款回收對比</span></span>
+          <span id="compHeaderBrandTitle">SO SÁNH THU HỒI CÔNG NỢ TUẦN <span style="font-size: 0.76rem; font-weight: 600; color: #64748B;">· 每週應收帳款回收對比</span></span>
         </div>
 
         <!-- Mode Switcher: Tuần Trước vs Tuần Này  HOẶC  Tuần Này vs Kế Hoạch Tuần Tới -->
         <div class="comp-mode-switch-group">
-          <button type="button" class="btn btn-mode-toggle active" id="btnModePastToCurr" onclick="switchWeeklyCompMode('past_to_curr')" title="So sánh thu hồi cuối tuần trước và cuối tuần này">
-            ◀ Tuần Trước vs Tuần Này <span style="font-size:0.75rem; opacity:0.85;">(上週 vs 本週)</span>
+          <button type="button" class="btn-mode-toggle active" id="btnModePastToCurr" onclick="switchWeeklyCompMode('past_to_curr')" title="So sánh thu hồi cuối tuần trước và cuối tuần này">
+            ◀ Tuần Trước vs Tuần Này <span style="font-size:0.7rem; opacity:0.85;">(上週 vs 本週)</span>
           </button>
-          <button type="button" class="btn btn-mode-toggle" id="btnModeCurrToNext" onclick="switchWeeklyCompMode('curr_to_next')" title="Xem thống kê và kế hoạch các khoản sẽ thu trong tuần tới so với tuần này">
-            🔮 Kế Hoạch Tuần Tới <span style="font-size:0.75rem; opacity:0.85;">(下週計劃)</span> ▶
+          <button type="button" class="btn-mode-toggle" id="btnModeCurrToNext" onclick="switchWeeklyCompMode('curr_to_next')" title="Xem thống kê và kế hoạch các khoản sẽ thu trong tuần tới so với tuần này">
+            🔮 Kế Hoạch Tuần Tới <span style="font-size:0.7rem; opacity:0.85;">(下週計劃)</span> ▶
           </button>
         </div>
 
@@ -867,35 +872,35 @@
 
       <!-- Action Buttons đưa lên góc trên bên phải cùng hàng -->
       <div class="comp-actions-group">
-        <button type="button" class="btn btn-outline btn-xs" onclick="saveWeeklySnapshotPrompt()" title="Lưu chốt số liệu hiện tại">
+        <button type="button" class="btn-comp-snapshot" onclick="saveWeeklySnapshotPrompt()" title="Lưu chốt số liệu hiện tại">
           <span>📸 Chốt Tuần</span>
         </button>
-        <button type="button" class="btn btn-danger btn-xs btn-comp-close" onclick="closeWeeklyComparisonFullscreen()" title="Đóng toàn màn hình (Phím tắt: Esc)">
+        <button type="button" class="btn-comp-close" onclick="closeWeeklyComparisonFullscreen()" title="Đóng toàn màn hình (Phím tắt: Esc)">
           <span>✕ Đóng (Esc)</span>
         </button>
       </div>
     </div>
 
-    <!-- Hàng 2: Bộ lọc ngày tháng, khách hàng, biến động và bộ chuyển nguồn dữ liệu -->
+    <!-- Hàng 2: Bộ lọc ngày tháng, khách hàng, biến động, ô tìm kiếm và nguồn dữ liệu trên cùng 1 dòng gọn gàng -->
     <div class="weekly-comp-header-controls">
       <div class="comp-control-group">
         <label for="compDatePrev" id="lblDatePrev">Tuần trước (上週):</label>
-        <input type="date" id="compDatePrev" class="form-control form-control-xs" onchange="onWeeklyCompDateChange()">
+        <input type="date" id="compDatePrev" class="comp-input-compact" onchange="onWeeklyCompDateChange()">
       </div>
 
       <div class="comp-control-group">
         <label for="compDateCurr" id="lblDateCurr">Tuần này (本週):</label>
-        <input type="date" id="compDateCurr" class="form-control form-control-xs" onchange="onWeeklyCompDateChange()">
+        <input type="date" id="compDateCurr" class="comp-input-compact" onchange="onWeeklyCompDateChange()">
       </div>
 
       <div class="comp-control-group">
-        <select id="compFilterCustomer" class="form-select form-select-xs" onchange="onWeeklyCompFilterChange()" title="Lọc theo khách hàng">
+        <select id="compFilterCustomer" class="comp-select-compact" onchange="onWeeklyCompFilterChange()" title="Lọc theo khách hàng">
           <option value="all">Tất cả khách hàng (全部客戶)</option>
         </select>
       </div>
 
       <div class="comp-control-group">
-        <select id="compFilterChanges" class="form-select form-select-xs" onchange="onFilterChangesDropdownChange()" title="Lọc hiển thị hợp đồng">
+        <select id="compFilterChanges" class="comp-select-compact comp-select-focus" onchange="onFilterChangesDropdownChange()" title="Lọc hiển thị hợp đồng">
           <optgroup label="─── TIÊU ĐIỂM ƯU TIÊN ───">
             <option value="active_only" selected>⚡ Cần chú ý (Biến động/Đến hạn/Quá hạn) / 需關注專案</option>
             <option value="all">🌐 Tất cả dự án (全部專案)</option>
@@ -916,13 +921,13 @@
         </select>
       </div>
 
-      <!-- Bộ chọn Nguồn Dữ Liệu: Gốc (DB) vs Dữ Liệu Mẫu (Demo) vs File Riêng (Upload) -->
+      <input type="search" id="compSearch" class="comp-chart-search"
+             placeholder="Tìm dự án, khách hàng, mã HĐ..."
+             aria-label="Tìm dự án, khách hàng, mã hợp đồng" oninput="filterComparisonItems()">
+
       <div class="comp-source-switch-group">
         <button type="button" class="btn-source-toggle active" id="btnSourceDb" onclick="switchDataSource('db')" title="Dữ liệu gốc từ hệ thống cơ sở dữ liệu (系統原始數據)">
           <span>📊 Dữ Liệu Gốc</span>
-        </button>
-        <button type="button" class="btn-source-toggle" id="btnSourceSample" onclick="switchDataSource('sample')" title="Dữ liệu mẫu chuẩn hóa minh họa tiến độ các giai đoạn (標準示範數據)">
-          <span>🧪 Dữ Liệu Mẫu</span>
         </button>
         <button type="button" class="btn-source-upload" id="btnSourceUpload" onclick="triggerCustomFileUpload()" title="Tải lên file Excel (.xlsx/.xls) hoặc JSON riêng từ bộ phận khác để phân tích độc lập (上傳獨立檔案)">
           <span>📂 File Riêng</span>
@@ -936,7 +941,7 @@
   <div class="weekly-comp-custom-file-banner" id="weeklyCompCustomFileBanner" style="display: none;">
     <div class="custom-file-banner-content">
       <span class="custom-file-icon">📂</span>
-      <span><strong>CHẾ ĐỘ XEM FILE ĐỘC LẬP · 獨立檔案分析模式：</strong> Đang phân tích biểu đồ từ file <strong id="customFileLoadedName" style="color: #38BDF8;">...</strong> (<span id="customFileLoadedItems">0</span> mốc thanh toán). <em>Dữ liệu này chỉ dùng hiển thị biểu đồ, hoàn toàn không làm thay đổi hay ghi đè cơ sở dữ liệu chính của bạn! (不修改主資料庫)</em></span>
+      <span><strong>CHẾ ĐỘ XEM FILE ĐỘC LẬP · 獨立檔案分析模式：</strong> Đang phân tích biểu đồ từ file <strong id="customFileLoadedName" style="color: #0284C7;">...</strong> (<span id="customFileLoadedItems">0</span> mốc thanh toán). <em>Dữ liệu này chỉ dùng hiển thị biểu đồ, hoàn toàn không làm thay đổi hay ghi đè cơ sở dữ liệu chính của bạn! (不修改主資料庫)</em></span>
     </div>
     <div class="custom-file-banner-actions">
       <button type="button" class="btn btn-outline btn-xs btn-custom-file-reupload" onclick="triggerCustomFileUpload()" title="Tải file khác lên (上傳其他檔案)">
@@ -948,22 +953,11 @@
     </div>
   </div>
 
-  <!-- Sample Data Mode Banner (Active when data_source is 'sample') -->
-  <div class="weekly-comp-sample-banner" id="weeklyCompSampleBanner" style="display: none;">
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <span class="sample-banner-icon">🧪</span>
-      <span><strong>CHẾ ĐỘ DỮ LIỆU MẪU CHUẨN HÓA · 示範數據模式：</strong> Đang hiển thị bộ dữ liệu mẫu demo đã được chuẩn hóa liên kết các giai đoạn và hạn thanh toán.</span>
-    </div>
-    <button type="button" class="btn btn-outline btn-xs" onclick="switchDataSource('db')" title="Quay lại dữ liệu gốc (返回原始數據)">
-      Quay lại Dữ Liệu Gốc (回原始數據)
-    </button>
-  </div>
-
   <!-- Plan Announcement Banner for Next Week (Active when in curr_to_next mode) -->
   <div class="weekly-comp-plan-banner" id="weeklyCompPlanBanner" style="display: none;">
     <div class="plan-banner-icon">🎯</div>
     <div class="plan-banner-content">
-      <strong>KẾ HOẠCH THU HỒI TUẦN TỚI:</strong> Dự kiến có <strong id="planBannerCount" style="color: #FACC15;">3 đợt thanh toán</strong> chạm hạn / hẹn trả với tổng số tiền cần đôn đốc: <strong id="planBannerAmount" style="color: #38BDF8;">424.953.000 ₫</strong>. Hãy ưu tiên liên hệ các khách hàng được đánh dấu mục tiêu bên biểu đồ bên phải!
+      <strong>KẾ HOẠCH THU HỒI TUẦN TỚI:</strong> Dự kiến có <strong id="planBannerCount" style="color: #B45309;">3 đợt thanh toán</strong> chạm hạn / hẹn trả với tổng số tiền cần đôn đốc: <strong id="planBannerAmount" style="color: #0284C7;">424.953.000 ₫</strong>. Hãy ưu tiên liên hệ các khách hàng được đánh dấu mục tiêu bên biểu đồ bên phải!
     </div>
     <button type="button" class="btn btn-outline btn-xs btn-plan-switchback" onclick="switchWeeklyCompMode('past_to_curr')" title="Quay lại xem so sánh tuần trước vs tuần này">
       Quay lại Tuần Trước
@@ -995,7 +989,7 @@
             <span>Tên dự án / HĐ · 專案名稱</span>
             <span class="axis-arrow-up" title="Trục đứng: Tên dự án / Hợp đồng">▲</span>
           </div>
-          <div class="plot-header-hint" id="leftPlotHeaderHint">Mỗi thanh ngang = 100% HĐ · Chuột trái: Chi tiết | Chuột phải: Sửa đợt</div>
+          <div class="plot-header-hint" id="leftPlotHeaderHint">Bấm tên để sửa hợp đồng · Rê chuột trên thanh để xem từng đợt</div>
         </div>
 
         <div class="coord-bars-scroll-area" id="leftBarsScrollArea">
@@ -1043,7 +1037,7 @@
             <span>Tiến độ Tuần Này · 本週進度</span>
             <span class="axis-arrow-up" title="Trục đứng: Tiến độ hợp đồng tuần này">▲</span>
           </div>
-          <div class="plot-header-hint" id="rightPlotHeaderHint">Đổi sang Xanh = Đã thu, Đỏ = Quá hạn · Chuột phải: Sửa đợt nhanh</div>
+          <div class="plot-header-hint" id="rightPlotHeaderHint">Bấm tên để sửa hợp đồng · Rê chuột trên thanh để xem từng đợt</div>
         </div>
 
         <div class="coord-bars-scroll-area" id="rightBarsScrollArea">
@@ -1094,10 +1088,15 @@
         <!-- Injected via JavaScript -->
       </div>
 
-      <div class="modal-footer" style="background: #1E293B; border-top: 1px solid #334155; padding: 0.75rem 1.4rem; display: flex; justify-content: space-between; align-items: center;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="copySegmentBilingualSummary()" style="border-color: #38BDF8; color: #38BDF8; background: rgba(56, 189, 248, 0.1);">
-          <span>📋 Sao chép tóm tắt gửi Sếp (複製進度摘要)</span>
-        </button>
+      <div class="modal-footer" style="background: #1E293B; border-top: 1px solid #334155; padding: 0.75rem 1.4rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="copySegmentBilingualSummary()" style="border-color: #38BDF8; color: #38BDF8; background: rgba(56, 189, 248, 0.1);">
+            <span>📋 Sao chép tóm tắt gửi Sếp (複製進度摘要)</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnSegmentGoEmail" onclick="goToEmailFromSegmentDetail()" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #0284c7; font-weight: 700;">
+            <span>✉️ Soạn Email Nhắc Nợ (發送催款信)</span>
+          </button>
+        </div>
         <button type="button" class="btn btn-secondary btn-sm" onclick="closeSegmentBilingualModal()" style="background: #334155; border: none;">
           <span>✕ 關閉 · Đóng (Esc)</span>
         </button>
@@ -1106,11 +1105,37 @@
   </div>
 </div>
 
+<div id="projectDetailBackdrop" class="project-detail-backdrop" onclick="hideProjectHoverCard()" style="display: none;"></div>
+<section id="projectDetailHoverCard" class="project-hover-card project-detail-card" role="dialog" aria-labelledby="projCardTitle" tabindex="-1" style="display: none;">
+  <header class="phc-header">
+    <button type="button" class="project-detail-close" onclick="hideProjectHoverCard()" aria-label="Đóng chi tiết dự án">✕</button>
+    <div class="phc-title" id="projCardTitle"></div>
+    <div class="phc-cust" id="projCardCustomer"></div>
+    <div id="projCardContract" style="font-family: monospace; font-size: 0.76rem; color: #64748B; margin-top: 2px;"></div>
+  </header>
+  <div class="phc-grid">
+    <span>Giá trị HĐ (gồm VAT) / 合約含稅金額:</span><strong id="projCardGross"></strong>
+    <span>Đã thu / 已收:</span><strong id="projCardReceived" style="color: #059669;"></strong>
+    <span>Còn nợ / 未收:</span><strong id="projCardDebt" style="color: #DC2626;"></strong>
+    <span>Tỷ lệ đã thu / 收款率:</span><strong id="projCardRate" style="color: #0284C7;"></strong>
+  </div>
+  <div style="font-size: 0.78rem; font-weight: 700; color: #1E293B; margin: 0.5rem 0 0.35rem; display: flex; justify-content: space-between; align-items: center;">
+    <span>Danh Sách Các Đợt Thanh Toán (期款清單):</span>
+  </div>
+  <div id="projCardMilestonesList" class="phc-milestones-list" style="max-height: 280px; overflow-y: auto;"></div>
+  <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end;">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="hideProjectHoverCard()" style="font-size: 0.78rem; padding: 0.3rem 0.85rem; border-radius: 6px;">
+      ✕ Đóng (Esc)
+    </button>
+  </div>
+</section>
+
 <!-- Toast Notification -->
 <div id="toastNotification" class="toast-notification"></div>
 
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/receivables_tracker.js?v=5.5"></script>
+<script src="/static/js/receivables_tracker.js?v=7.0"></script>
+<script src="/static/js/contract_schedule_editor.js?v=6.7"></script>
 {% endblock %}

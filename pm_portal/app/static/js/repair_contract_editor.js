@@ -383,7 +383,7 @@ const RepairContractEditor = {
 
   collectFormData() {
     const exportDirInput = document.getElementById("txtRepairExportDirectory");
-    const customExportDir = (exportDirInput ? exportDirInput.value.trim() : "") || "E:\\Working\\Ho So Du An\\Hop Dong\\";
+    const customExportDir = (exportDirInput ? exportDirInput.value.trim() : "") || (document.getElementById("txtRepairExportDirectory")?.defaultValue || "");
 
     return {
       so_hop_dong: document.getElementById("fieldRepairContractNo")?.value.trim() || "HDSC-20261019-001",
@@ -644,7 +644,7 @@ async function handleAIRepairParse() {
       if (autoExportChk && autoExportChk.checked) {
         try {
           const exportDirInput = document.getElementById("txtRepairExportDirectory");
-          const customExportDir = (exportDirInput ? exportDirInput.value.trim() : "") || "E:\\Working\\Ho So Du An\\Hop Dong\\";
+          const customExportDir = (exportDirInput ? exportDirInput.value.trim() : "") || (document.getElementById("txtRepairExportDirectory")?.defaultValue || "");
           const contractData = RepairContractEditor.collectFormData();
           contractData.custom_output_dir = customExportDir;
 

@@ -10,6 +10,11 @@ from copy import copy
 import math
 import os
 import sys
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 sys.stdout.reconfigure(encoding='utf-8')
 
 def compute_cell_lines(text, col_width_chars):
@@ -455,10 +460,10 @@ def create_pouhui_quotation(template_path, output_path):
         print(f"File gốc đang mở, đã lưu dự phòng tại: {alt_path}")
 
 if __name__ == "__main__":
-    tmpl = r"E:\Working\ChuaHieu\ECO PRIME_BHT Báo Giá Đồng Hồ Điện_24-07-2026.xlsx"
-    out1 = r"E:\Working\ChuaHieu\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx"
+    tmpl = _workspace_path('ChuaHieu\\ECO PRIME_BHT Báo Giá Đồng Hồ Điện_24-07-2026.xlsx')
+    out1 = _workspace_path('ChuaHieu\\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx')
     create_pouhui_quotation(tmpl, out1)
     
     # Đồng bộ 1 bản ra thư mục gốc E:\Working
-    out2 = r"E:\Working\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx"
+    out2 = _workspace_path('ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx')
     create_pouhui_quotation(tmpl, out2)

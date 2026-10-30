@@ -22,8 +22,13 @@ from openpyxl.formula.translate import Translator
 from openpyxl.utils import get_column_letter, range_boundaries
 
 
-DEFAULT_TEMPLATE = Path(r"E:\Working\Bieu Mau\Biên bản sữa chữa.xlsx")
-DEFAULT_OUTPUT = Path(r"E:\Working\Bieu Mau\Biên bản sữa chữa_TEST_14_BAN_GHI.xlsx")
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
+DEFAULT_TEMPLATE = Path(_workspace_path('Bieu Mau\\Biên bản sữa chữa.xlsx'))
+DEFAULT_OUTPUT = Path(_workspace_path('Bieu Mau\\Biên bản sữa chữa_TEST_14_BAN_GHI.xlsx'))
 
 ITEMS: List[Dict[str, Any]] = [
     {

@@ -7,36 +7,37 @@
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
     <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
       <span class="badge-pill blue">Biểu Mẫu Pre-Sales Song Ngữ</span>
-      <span class="badge-pill green">Hỗ Trợ AI & Quản Lý Phiên Bản</span>
-      <span style="font-size: 0.82rem; color: var(--text-muted);">Soạn thảo, bóc tách bằng Gemini AI, xuất Word/Excel và tự động sao lưu bản cũ khi lưu bản mới.</span>
+      <span class="badge-pill green">Chuẩn Mẫu BaoGiaGoc.xlsx (9 Cột)</span>
+      <span class="badge-pill yellow">Tích Hợp Outlook & Gemini AI</span>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Bóc tách dữ liệu AI, nạp mẫu thực tế từ Outlook, xuất Excel bảo toàn 100% phôi gốc.</span>
     </div>
 
     <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
-      <a href="/fonts" class="btn btn-outline btn-sm" style="color: #2563eb; border-color: #bfdbfe;">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-        <span>Kho 100 Kiểu Chữ (Fonts)</span>
+      <button type="button" class="btn btn-outline btn-sm" onclick="loadPreset('baogiagoc')" title="Nạp phôi chuẩn 1:1 từ D:\Working\Bieu Mau\BaoGiaGoc.xlsx">
+        ⚡ Mẫu Thẻ RFID (Mẫu Gốc)
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="loadPreset('pouhui')" title="Nạp dữ liệu báo giá Pou Hui 4 trạm biến áp (ECO PRIME / DAE)">
+        ⚡ Mẫu Pou Hui EMS
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="loadPreset('cxrepair')" title="Nạp dữ liệu sửa chữa đầu đọc Bluebird RFR900 cho CX Technology">
+        ⚡ Mẫu CX RFID Sửa Chữa
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="loadPreset('daeusd')" title="Nạp bảng giá đại lý phân phối thiết bị DAE bằng USD">
+        ⚡ Mẫu Báo Giá DAE (USD)
+      </button>
+      <a href="/emails?source=quotation" class="btn btn-outline btn-sm" title="Soạn Email B2B gửi Báo Giá" style="color: #0284C7; border-color: #38BDF8; font-weight: 700; background: #F0F9FF;">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>✉️ Soạn Email Báo Giá</span>
       </a>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="simulateAIParseQuotation()">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>
-        <span>Điền Mẫu Thử Nghiệm</span>
-      </button>
-      <button type="button" id="btnTopSaveQuote" class="btn btn-ai btn-sm" onclick="saveQuotation()" title="Lưu báo giá: Bản mới sẽ thay bản cũ và tự động sao lưu bản cũ vào lịch sử">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        <span>💾 Lưu Báo Giá (Phiên Bản Mới)</span>
-      </button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="switchTab('tabQuotationList')">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span>Danh Sách Đã Tạo (<span id="topQuotationCount">0</span>)</span>
-      </button>
     </div>
   </div>
 
-  <!-- Card 1: AI Prompt Input (Full Width & Clean) -->
+  <!-- Card 1: AI Prompt & File Upload Input (Full Width & Clean) -->
   <div class="card ai-prompt-box">
     <div class="card-header">
       <div class="card-title">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
-        <span>Bóc Tách Yêu Cầu & Bảng Thiết Bị Bằng Gemini AI</span>
+        <span>Bóc Tách Dữ Liệu Báo Giá Tự Động Bằng Gemini AI (Văn Bản & Tệp Đính Kèm)</span>
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <span style="font-size: 0.75rem; color: var(--text-muted);">Model:</span>
@@ -49,13 +50,28 @@
     </div>
 
     <div class="form-group" style="margin-bottom: 0.85rem;">
-      <textarea id="aiPromptInput" class="form-control" rows="3" placeholder="Dán danh sách thiết bị từ email khách hàng, chat WeChat hoặc bảng tính khảo sát nhà máy vào đây (ví dụ: Báo giá 6 bộ Edge Gateway IoT-200, 4 cuộn cáp RS485 cho nhà máy Vonmax...)..."></textarea>
+      <textarea id="aiPromptInput" class="form-control" rows="3" placeholder="Dán văn bản email yêu cầu báo giá, chat WeChat/Zalo hoặc danh mục thiết bị từ bảng tính khảo sát... AI sẽ tự động phân tích và điền vào bảng 9 cột chuẩn BaoGiaGoc.xlsx."></textarea>
     </div>
 
+    <!-- Upload File & Action Bar -->
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.65rem;">
-      <div style="font-size: 0.78rem; color: #64748b;">
-        💡 <em>Mẹo: AI tự động nhận diện tên khách hàng (Việt - Trung), MST, tên thiết bị, số lượng và tính toán tiền.</em>
+      <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+        <input type="file" id="aiQuoteFileInput" accept=".xlsx,.xls,.pdf,.docx,.txt,.csv,.png,.jpg,.jpeg" style="display: none;" onchange="handleQuotationFileUpload(this)">
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('aiQuoteFileInput').click()" title="Chọn file Excel, PDF, Word hoặc ảnh báo giá để AI bóc tách trực tiếp">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" width="14" height="14"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          <span>📎 Tải Tệp Lên (Excel / PDF / Ảnh)</span>
+        </button>
+
+        <span id="aiUploadedFileBadge" class="badge-pill green" style="display: none; align-items: center; gap: 0.4rem;">
+          <span id="aiUploadedFileName"></span>
+          <button type="button" onclick="clearUploadedFile()" style="background: none; border: none; color: #166534; font-weight: 800; cursor: pointer; padding: 0 2px;">×</button>
+        </span>
+
+        <span style="font-size: 0.78rem; color: #64748b;">
+          💡 AI tự động bóc tách 9 cột: Tên, Hạng mục, Nội dung, Số lượng, Thời gian, Đơn giá, Thành tiền & 5 Điều khoản.
+        </span>
       </div>
+
       <div style="display: flex; gap: 0.5rem;">
         <button type="button" id="btnCallQuotationAI" class="btn btn-ai" onclick="callQuotationAI()">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
@@ -70,46 +86,54 @@
     <div class="tabs-nav">
       <button type="button" class="tab-btn active" data-tab="tabQuotationItems">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-9 5-9-5 9-5 9 5z"/><path d="m3 8 9 5 9-5M3 12l9 5 9-5M3 16l9 5 9-5"/></svg>
-        <span>Bảng Danh Mục Thiết Bị & Giá</span>
+        <span>Bảng Danh Mục 9 Cột (Chuẩn BaoGiaGoc.xlsx)</span>
       </button>
       <button type="button" class="tab-btn" data-tab="tabQuotationGeneral">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
-        <span>Thông Tin Khách Hàng & Dự Án</span>
+        <span>Thông Tin Khách Hàng (Bên Mua 買方資訊)</span>
       </button>
       <button type="button" class="tab-btn" data-tab="tabQuotationTerms">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>
-        <span>Điều Khoản Thương Mại & Bảo Hành</span>
+        <span>5 Điều Khoản Thương Mại (◆ 報價特別聲明)</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="tabOutlookFiles" onclick="loadOutlookQuotationFiles()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>📁 Hồ Sơ Báo Giá Outlook (<span id="outlookFilesBadge">5</span>)</span>
       </button>
       <button type="button" class="tab-btn" data-tab="tabQuotationList" onclick="loadQuotationFilesList()">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span>已建立報價單清單 / Danh Sách Báo Giá Đã Tạo (<span id="quotationListBadge">0</span>)</span>
+        <span>Danh Sách Đã Tạo & Lịch Sử (<span id="quotationListBadge">0</span>)</span>
       </button>
     </div>
 
-    <!-- Tab 1: Items Table (Full Width Modern Table) -->
+    <!-- Tab 1: Items Table (Full Width 9-column Table matching BaoGiaGoc.xlsx) -->
     <div class="tab-content active" id="tabQuotationItems">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
         <div>
-          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Chi tiết danh mục chào giá (品項明細與價格)</span>
-          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">(Phần cứng IoT, Vật tư phụ và Chi phí thi công hiện trường)</span>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Chi Tiết Danh Mục Chào Giá Theo Biểu Mẫu Gốc (BaoGiaGoc.xlsx)</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">Cột A: STT | B: Tên Sản Phẩm | C-D: Hạng Mục | E: Nội Dung | F: SL | G: Thời Gian | H: Đơn Giá | I: Tổng Giá</span>
         </div>
-        <button type="button" class="btn btn-outline btn-sm" onclick="addQuotationRow()">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Thêm Hạng Mục Thiết Bị</span>
-        </button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="addQuotationRow()">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Thêm Dòng Thiết Bị</span>
+          </button>
+        </div>
       </div>
 
-      <div class="modern-table-card">
-        <table class="modern-table quotation-table" style="min-width: 1000px;">
+      <div class="modern-table-card" style="overflow-x: auto;">
+        <table class="modern-table quotation-table" style="min-width: 1180px;">
           <thead>
             <tr>
-              <th style="width: 50px; text-align: center;">STT</th>
-              <th style="min-width: 320px;">Tên Thiết Bị / Quy Cách / Dịch Vụ (品名規格)</th>
-              <th style="width: 110px; text-align: center;">Đơn Vị Tính</th>
-              <th style="width: 100px; text-align: center;">Số Lượng</th>
-              <th style="width: 180px; text-align: right;">Đơn Giá (VND)</th>
-              <th style="width: 200px; text-align: right;">Thành Tiền (VND)</th>
-              <th style="width: 60px; text-align: center;">Xóa</th>
+              <th style="width: 45px; text-align: center;">STT</th>
+              <th style="min-width: 220px;">Tên Sản Phẩm<br><span style="font-size:0.75rem; font-weight:normal;">(產品名稱)</span></th>
+              <th style="min-width: 260px;">Hạng Mục / Quy Cách Kỹ Thuật<br><span style="font-size:0.75rem; font-weight:normal;">(項目類別 - Cột C & D Gộp)</span></th>
+              <th style="min-width: 200px;">Nội Dung Sản Phẩm<br><span style="font-size:0.75rem; font-weight:normal;">(產品內容 / Model)</span></th>
+              <th style="width: 85px; text-align: center;">Số Lượng<br><span style="font-size:0.75rem; font-weight:normal;">(數量)</span></th>
+              <th style="width: 120px; text-align: center;">Thời Gian<br><span style="font-size:0.75rem; font-weight:normal;">(完成時間)</span></th>
+              <th style="width: 140px; text-align: right;">Đơn Giá<br><span style="font-size:0.75rem; font-weight:normal;" id="headerPriceCurrency">(VND)</span></th>
+              <th style="width: 160px; text-align: right;">Tổng Giá<br><span style="font-size:0.75rem; font-weight:normal;" id="headerTotalCurrency">(VND)</span></th>
+              <th style="width: 50px; text-align: center;">Xóa</th>
             </tr>
           </thead>
           <tbody id="quoteItemsTableBody">
@@ -119,106 +143,183 @@
       </div>
 
       <!-- KPI Summary Cards Grid -->
-      <div class="summary-cards-grid">
+      <div class="summary-cards-grid" style="margin-top: 1.25rem;">
         <div class="summary-stat-card">
           <span class="stat-label">Tổng Hạng Mục</span>
-          <span class="stat-value" id="statItemCount">4 Thiết bị</span>
-          <span class="stat-subtext">Đã bóc tách đủ danh mục</span>
+          <span class="stat-value" id="statItemCount">1 Thiết bị</span>
+          <span class="stat-subtext">Khớp cấu trúc BaoGiaGoc.xlsx</span>
         </div>
 
         <div class="summary-stat-card">
           <span class="stat-label">Tổng Tiền Chưa Thuế</span>
           <span class="stat-value" id="statSubtotal">0 VND</span>
-          <span class="stat-subtext">Chưa bao gồm thuế VAT</span>
+          <span class="stat-subtext">Công thức =SUM(I12:I...)</span>
         </div>
 
         <div class="summary-stat-card warning">
-          <span class="stat-label">Thuế Suất VAT (10%)</span>
+          <span class="stat-label" id="statVatLabel">Thuế Suất GTGT (VAT)</span>
           <span class="stat-value" id="statVat">0 VND</span>
-          <span class="stat-subtext">Thuế giá trị gia tăng</span>
+          <span class="stat-subtext">Áp dụng theo điều khoản số 4</span>
         </div>
 
         <div class="summary-stat-card success">
-          <span class="stat-label">TỔNG CỘNG THANH TOÁN</span>
+          <span class="stat-label">TỔNG THÀNH TIỀN (總價)</span>
           <span class="stat-value" id="statGrandTotal" style="color: #047857;">0 VND</span>
-          <span class="stat-subtext">Đã bao gồm VAT 10%</span>
+          <span class="stat-subtext">Giá trị xuất trên bản in Excel</span>
         </div>
       </div>
     </div>
 
-    <!-- Tab 2: General Info -->
+    <!-- Tab 2: General Info (Buyer Info F2:H7 in BaoGiaGoc.xlsx) -->
     <div class="tab-content" id="tabQuotationGeneral">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem 1.15rem; margin-bottom: 1.25rem; font-size: 0.82rem; color: #475569;">
+        ℹ️ <strong>Thông Tin Bên Mua (買方資訊):</strong> Dữ liệu tại tab này sẽ được điền chuẩn xác vào các ô <code>F2:H7</code> của file <code>BaoGiaGoc.xlsx</code>, trong khi thông tin Hong Ming Global tại <code>C1:D7</code> và Logo tại <code>A1:B6</code> được bảo toàn 100%.
+      </div>
+
       <div class="form-grid-2" style="margin-bottom: 1.25rem;">
         <div class="form-group">
-          <label class="form-label">Tên Pháp Nhân Khách Hàng (Tiếng Việt) <span class="badge-req">*</span></label>
-          <input type="text" id="quoteCustomerName" class="form-control" value="CÔNG TY TNHH CX TECHNOLOGY (VIỆT NAM)">
+          <label class="form-label">Tên Pháp Nhân Khách Hàng (Tiếng Việt - H2) <span class="badge-req">*</span></label>
+          <input type="text" id="quoteCustomerName" class="form-control" value="CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)">
         </div>
         <div class="form-group">
-          <label class="form-label">Tên Pháp Nhân Khách Hàng (Tiếng Trung) <span class="badge-req">*</span></label>
+          <label class="form-label">Tên Pháp Nhân Khách Hàng (Tiếng Trung - H2)</label>
           <input type="text" id="quoteCustomerNameCn" class="form-control" value="台灣精星科技(越南)有限公司">
         </div>
       </div>
 
       <div class="form-grid-3" style="margin-bottom: 1.25rem;">
         <div class="form-group">
+          <label class="form-label">Người Liên Lạc / Phòng Ban (H3)</label>
+          <input type="text" id="quoteContactPerson" class="form-control" value="採購部 - 阮金銀">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Điện Thoại Liên Lạc (H4)</label>
+          <input type="text" id="quotePhone" class="form-control" value="+84-28-3770-1025~26 Ext: 226">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail Điện Tử (H7)</label>
+          <input type="text" id="quoteEmail" class="form-control" value="pur02_vn@mail.cxtechnology.com">
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Địa Chỉ Liên Lạc (H6)</label>
+          <input type="text" id="quoteAddress" class="form-control" value="Tan Thuan E.P.Z, Tan Thuan Street, Tan Thuan Dong Ward, District 7, Ho Chi Minh">
+        </div>
+        <div class="form-group">
           <label class="form-label">Mã Số Thuế (MST)</label>
           <input type="text" id="quoteTaxCode" class="form-control" value="0301445789">
         </div>
+      </div>
+
+      <div class="form-grid-3">
         <div class="form-group">
-          <label class="form-label">Số Báo Giá / 報價編號 <span class="badge-req">*</span></label>
-          <input type="text" id="quoteNo" class="form-control" value="HM-QT-202610-001">
+          <label class="form-label">Tiêu Đề Dự Án / Báo Giá (A9) <span class="badge-req">*</span></label>
+          <input type="text" id="quoteProjectName" class="form-control" value="THẺ RFID SILICON / 硅膠型RFID標籤">
         </div>
         <div class="form-group">
-          <label class="form-label">Ngày Phát Hành Báo Giá</label>
-          <input type="text" id="quoteDate" class="form-control" value="16/10/2026">
+          <label class="form-label">Số Báo Giá / 報價編號 <span class="badge-req">*</span></label>
+          <input type="text" id="quoteNo" class="form-control" value="HM-QT-CX-RFID-202609">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày Báo Giá / 報價日期 (A10)</label>
+          <input type="text" id="quoteDate" class="form-control" value="21/09/2026">
         </div>
       </div>
 
-      <div class="form-grid-2">
+      <div class="form-grid-3" style="margin-top: 1.25rem;">
         <div class="form-group">
-          <label class="form-label">Tên Dự Án Triển Khai</label>
-          <input type="text" id="quoteProjectName" class="form-control" value="Hệ Thống Tiết Kiệm Năng Lượng EMS & Giám Sát Điện Năng Giai Đoạn 2">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Người Tiếp Nhận / Phòng Ban</label>
-          <input type="text" id="quoteContactPerson" class="form-control" value="Phòng Cơ Điện & Bảo Trì / 採購處">
+          <label class="form-label">Đơn Vị Tiền Tệ (Currency)</label>
+          <select id="quoteCurrency" class="form-control" onchange="handleCurrencyChange()">
+            <option value="VND" selected>VND - Đồng Việt Nam ([$VND] #,##0)</option>
+            <option value="USD">USD - Đô la Mỹ ($#,##0.00)</option>
+          </select>
         </div>
       </div>
     </div>
 
-    <!-- Tab 3: Commercial Terms -->
+    <!-- Tab 3: Commercial Terms (5 terms in BaoGiaGoc.xlsx) -->
     <div class="tab-content" id="tabQuotationTerms">
-      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
-        <div class="form-group">
-          <label class="form-label">Thời Hạn Hiệu Lực Báo Giá</label>
-          <input type="text" id="quoteValidity" class="form-control" value="30 ngày kể từ ngày phát hành">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Thời Gian Giao Hàng (Lead Time)</label>
-          <input type="text" id="quoteLeadTime" class="form-control" value="60 - 80 ngày sau khi nhận đủ tiền đặt cọc">
-        </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem 1.15rem; margin-bottom: 1.25rem; font-size: 0.82rem; color: #475569;">
+        ℹ️ <strong>5 Điều Khoản Tuyên Bố Đặc Biệt (◆ 報價特別聲明):</strong> Khớp chuẩn 100% phôi gốc <code>BaoGiaGoc.xlsx</code> (Font 微軟正黑體 12pt, Điều 4 chữ đỏ, Điều 5 chữ xanh, chiều cao dòng 316pt).
       </div>
 
-      <div class="form-grid-2" style="margin-bottom: 1.25rem;">
-        <div class="form-group">
-          <label class="form-label">Thời Hạn Bảo Hành Phần Cứng</label>
-          <input type="text" id="quoteWarranty" class="form-control" value="12 tháng chính hãng kể từ ngày nghiệm thu">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Điều Kiện Thanh Toán Đề Xuất</label>
-          <input type="text" id="quotePaymentTerms" class="form-control" value="Tạm ứng 50%, Giao hàng 40%, Nghiệm thu 10%">
-        </div>
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label">1. Thời Gian Giao Hàng (以上報價交期)</label>
+        <input type="text" id="quoteLeadTime" class="form-control" value="Trong vòng 60 ngày kể từ ngày nhận được thanh toán (自收到付款之日起60天內交貨)">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label">2. Thời Hạn Hiệu Lực Báo Giá (報價有效期限)</label>
+        <input type="text" id="quoteValidity" class="form-control" value="Báo giá có hiệu lực đến hết ngày 05/10/2026 (報價單有效期限至2026/10/05)">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label">3. Thời Hạn Bảo Hành Phần Cứng (保固條款)</label>
+        <input type="text" id="quoteWarranty" class="form-control" value="Bảo hành sáu tháng kể từ ngày giao hàng (自交貨日起保固六個月)">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label" style="color: #dc2626; font-weight: 700;">4. Thuế Suất Giá Trị Gia Tăng (增值稅 VAT 條款 - CHỮ ĐỎ MẪU GỐC)</label>
+        <textarea id="quoteVatTerms" class="form-control" rows="2" style="color: #dc2626; font-weight: 600;" readonly>4.以上報價不含增值稅 VAT，稅率則按當時發票開出時之規定。
+Giá trên chưa bao gồm VAT. Thuế suất sẽ áp dụng theo quy định tại thời điểm xuất hóa đơn.</textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label" style="color: #2563eb; font-weight: 700;">5. Điều Kiện Thanh Toán & Nghiệm Thu (付款方式及驗收條件 - CHỮ XANH MẪU GỐC)</label>
+        <textarea id="quotePaymentTerms" class="form-control" rows="9" style="color: #1d4ed8; font-family: monospace; font-size: 0.82rem; line-height: 1.5;">5. 一、付款方式：
+訂單總金額超過 30,000,000 越南盾（VND 30,000,000）時，甲方須於訂購前支付訂單總金額之 50% 作為預付款；剩餘 50% 應於收到貨物之日起 10 日內，以銀行轉帳方式支付予乙方。
+Đối với đơn hàng có tổng giá trị ttừ 30.000.000 VNĐ trở lên. : Bên A thanh toán trước 50% tổng giá trị đơn hàng trước khi đặt hàng. 50% còn lại được thanh toán bằng hình thức chuyển khoản ngân hàng trong vòng 10 ngày kể từ ngày Bên A nhận hàng.
+訂單總金額低於 30,000,000 越南盾（VND 30,000,000）時，甲方應於收到貨物之日起 10 日內，以銀行轉帳方式支付訂單總金額之 100%。
+Đối với đơn hàng có tổng giá trị dưới 30.000.000 VNĐ: Bên A thanh toán 100% tổng giá trị đơn hàng bằng hình thức chuyển khoản ngân hàng trong vòng 10 ngày kể từ ngày nhận hàng.
+二、驗收條款：
+甲方應於收到貨物之日起 7 日內完成檢查及驗收。如甲方於上述期限內未就產品品質、數量或規格提出書面異議，則視為貨物已完成交付並驗收合格。
+Bên A có trách nhiệm kiểm tra và nghiệm thu hàng hóa trong vòng 07 ngày kể từ ngày nhận hàng. Nếu trong thời hạn nêu trên, Bên A không có bất kỳ khiếu nại hoặc ý kiến phản hồi bằng văn bản nào liên quan đến chất lượng, số lượng hoặc quy cách sản phẩm, hàng hóa được xem là đã bàn giao và nghiệm thu thành công
+甲方應依本合約約定之付款條件履行付款義務，不得以未另行簽署驗收文件或未提出驗收確認為由延遲付款。
+Bên A có trách nhiệm thực hiện thanh toán đúng theo điều kiện thanh toán đã thỏa thuận trong hợp đồng, không được trì hoãn thanh toán với lý do chưa ký biên bản nghiệm thu riêng hoặc chưa xác nhận nghiệm thu.</textarea>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Ghi Chú Kỹ Thuật Bổ Sung</label>
-        <textarea id="quoteNotes" class="form-control" rows="3">Báo giá đã bao gồm tài liệu hướng dẫn sử dụng, biên bản kiểm thử xuất xưởng từ nhà sản xuất. Không bao gồm chi phí cải tạo lưới điện tổng của nhà máy.</textarea>
+        <label class="form-label">Ghi Chú Kỹ Thuật Bổ Sung (備註)</label>
+        <textarea id="quoteNotes" class="form-control" rows="2" placeholder="Ghi chú kỹ thuật bổ sung (nếu có)..."></textarea>
       </div>
     </div>
 
-    <!-- Tab 4: Danh Sách Báo Giá Đã Tạo -->
+    <!-- Tab 4: Outlook Files (Actual Quotation Files downloaded from sales@hongming-global.com) -->
+    <div class="tab-content" id="tabOutlookFiles">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Tài Liệu Báo Giá Thực Tế Từ Hộp Thư Outlook (sales@hongming-global.com)</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">Đã quét 220 Inbox + 46 Sent items. Bạn có thể bấm "⚡ Nạp Form" để nạp ngay dữ liệu vào bảng!</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="loadOutlookQuotationFiles()">
+          <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span>↻ Quét Lại Outlook</span>
+        </button>
+      </div>
+
+      <div class="modern-table-card">
+        <table class="modern-table" style="min-width: 1050px;">
+          <thead>
+            <tr>
+              <th style="width: 45px; text-align: center;">STT</th>
+              <th style="width: 90px; text-align: center;">Định Dạng</th>
+              <th style="min-width: 320px;">Tên Tệp Báo Giá / Tiêu Đề Outlook</th>
+              <th style="width: 180px;">Đối Tác / Dự Án</th>
+              <th style="width: 110px; text-align: right;">Dung Lượng</th>
+              <th style="width: 220px; text-align: center;">Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody id="outlookQuotationFilesTableBody">
+            <!-- Dynamically populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 5: Danh Sách Báo Giá Đã Tạo -->
     <div class="tab-content" id="tabQuotationList">
-      <!-- Header Toolbar -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
         <div>
           <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Danh Sách Báo Giá Đã Lưu & Tệp Xuất (Word / Excel)</span>
@@ -255,9 +356,9 @@
         </div>
       </div>
 
-      <!-- Bảng 1: Báo Giá Đã Lưu (Active Quotations with Versioning & History) -->
+      <!-- Bảng 1: Báo Giá Đã Lưu Hiện Hành -->
       <div style="margin-bottom: 1.5rem;">
-        <div style="font-size: 0.88rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+        <div style="font-size: 0.88rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;">
           <span>📋 Danh Sách Báo Giá Hiện Hành (Phiên Bản Mới Nhất)</span>
         </div>
         <div class="modern-table-card">
@@ -268,7 +369,7 @@
                 <th style="width: 170px;">Số Báo Giá & Phiên Bản</th>
                 <th style="min-width: 250px;">Khách Hàng (買方)</th>
                 <th style="min-width: 220px;">Dự Án</th>
-                <th style="width: 150px; text-align: right;">Tổng Tiền (VND)</th>
+                <th style="width: 150px; text-align: right;">Tổng Tiền</th>
                 <th style="width: 140px; text-align: center;">Lịch Sử Bản Cũ</th>
                 <th style="width: 210px; text-align: center;">Thao Tác</th>
               </tr>
@@ -280,7 +381,7 @@
         </div>
       </div>
 
-      <!-- Bảng 2: Tất Cả Tệp Báo Giá Trên Ổ Đĩa (Physical Files) -->
+      <!-- Bảng 2: Tất Cả Tệp Xuất -->
       <div>
         <div style="font-size: 0.88rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">
           <span>📂 Tất Cả Tệp Xuất Word & Excel Trong Thư Mục Dự Án</span>
@@ -318,9 +419,9 @@
   <!-- Bottom Action Footer -->
   <div class="action-footer-bar">
     <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <span class="badge-pill green">Bảo toàn 100% bố cục Song ngữ</span>
+      <span class="badge-pill green">Bảo toàn 100% bố cục BaoGiaGoc.xlsx</span>
       <span style="font-size: 0.8rem; color: var(--text-muted);">
-        Khi lưu bản mới: Hệ thống tự động thay thế bản hiện hành và sao lưu an toàn bản cũ vào thư mục Lịch Sử (Lich_Su).
+        Khi xuất Excel: Nạp trực tiếp phôi gốc, bảo toàn Logo PNG, công thức sống =SUM(), 9 cột và 5 điều khoản.
       </span>
     </div>
     <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
@@ -332,9 +433,9 @@
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
         <span>📄 Xuất File Word (.docx)</span>
       </button>
-      <button type="button" id="btnExportExcel" class="btn btn-outline" style="border-color: #16a34a; color: #15803d; font-weight: 700;" onclick="exportQuotationExcel()">
+      <button type="button" id="btnExportExcel" class="btn btn-ai" style="font-weight: 700;" onclick="exportQuotationExcel()">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-        <span>📊 Xuất File Excel (.xlsx)</span>
+        <span>📊 Xuất Excel (Chuẩn Mẫu BaoGiaGoc)</span>
       </button>
       <button type="button" id="btnSaveQuotationBottom" class="btn btn-primary" style="font-weight: 700;" onclick="saveQuotation()">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -385,18 +486,17 @@
     </div>
   </div>
 
-  <!-- Modal 2: Lịch Sử Phiên Bản Báo Giá (Version History & Backups) -->
+  <!-- Modal 2: Lịch Sử Phiên Bản Báo Giá -->
   <div id="quotationHistoryModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 1.25rem;">
     <div style="background: #ffffff; border-radius: 14px; max-width: 860px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); border: 1.5px solid #bfdbfe; animation: fadeIn 0.2s ease;">
-      <!-- Modal Header -->
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.4rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc; border-top-left-radius: 13px; border-top-right-radius: 13px;">
         <div style="display: flex; align-items: center; gap: 0.65rem;">
           <div style="width: 38px; height: 38px; border-radius: 8px; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 1.25rem;">
             🕒
           </div>
           <div>
-            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Lịch Sử Các Bản Báo Giá Đã Lưu (Quotation History)</h3>
-            <p style="margin: 0.15rem 0 0 0; font-size: 0.76rem; color: #64748b;">Mã báo giá: <strong id="historyModalQuoteNo" style="color: #1d4ed8;"></strong> - Bạn có thể xem lại, tải về hoặc nạp lại bản cũ phòng khi cần đối chiếu.</p>
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Lịch Sử Các Bản Báo Giá Đã Lưu</h3>
+            <p style="margin: 0.15rem 0 0 0; font-size: 0.76rem; color: #64748b;">Mã báo giá: <strong id="historyModalQuoteNo" style="color: #1d4ed8;"></strong></p>
           </div>
         </div>
         <button type="button" class="btn btn-outline btn-xs" onclick="closeQuotationHistoryModal()" style="font-size: 1.2rem; padding: 2px 9px; color: #64748b; line-height: 1; border-color: #cbd5e1; background: #ffffff;">
@@ -404,7 +504,6 @@
         </button>
       </div>
 
-      <!-- Modal Body (Scrollable Table) -->
       <div style="padding: 1.25rem 1.4rem; overflow-y: auto; flex: 1;">
         <table class="modern-table" style="width: 100%; font-size: 0.85rem;">
           <thead>
@@ -423,7 +522,6 @@
         </table>
       </div>
 
-      <!-- Modal Footer -->
       <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.65rem; padding: 0.85rem 1.4rem; border-top: 1px solid #e2e8f0; background: #f8fafc; border-bottom-left-radius: 13px; border-bottom-right-radius: 13px;">
         <button type="button" class="btn btn-outline" onclick="closeQuotationHistoryModal()">Đóng</button>
       </div>
@@ -435,42 +533,67 @@
 
 {% block scripts %}
 <script>
+// Default items based on BaoGiaGoc.xlsx
 let quotationItems = [
-  { name: "Đồng Hồ Đo Điện Đa Mạch Tử Ngoại PM2100-3-B", unit: "Bộ", qty: 4, price: 18500000 },
-  { name: "Biến Dòng Cảm Ứng Đo Dòng CT Split-core 200A/5A", unit: "Cái", qty: 12, price: 1200000 },
-  { name: "Tủ Lá Chắn Điện Xanh EMS Thông Minh & Cáp Kết Nối", unit: "Hệ", qty: 1, price: 35000000 },
-  { name: "Nhân Công Thi Công Đấu Nối Hiện Trường & Kiểm Thử", unit: "Gói", qty: 1, price: 15000000 }
+  {
+    stt: 1,
+    name: "THẺ RFID làm bằng silicon\n硅膠型RFID標籤",
+    category: "THẺ RFID SILICON (KHÔNG KHÁNG KIM LOẠI) 90x18mm, NXP UCODE 8 BLACK (Mã: PO F601-0700) OPP9018",
+    content: "OPP9018 (D0010121 ~ D0010620)",
+    qty: 500,
+    lead_time: "60天內",
+    price: 39000
+  }
 ];
 
 let allQuotationFiles = [];
 let allActiveQuotations = [];
+let uploadedFileBase64 = null;
+let uploadedFileName = null;
+let uploadedFileMime = null;
 
 function renderQuotationTable() {
   const tbody = document.getElementById("quoteItemsTableBody");
+  if (!tbody) return;
   tbody.innerHTML = "";
-  let subtotal = 0;
+
+  const currency = (document.getElementById("quoteCurrency")?.value || "VND").toUpperCase();
+  const curSymbol = currency === "USD" ? "USD" : "VND";
+
+  const hdrPrice = document.getElementById("headerPriceCurrency");
+  const hdrTotal = document.getElementById("headerTotalCurrency");
+  if (hdrPrice) hdrPrice.textContent = `(${curSymbol})`;
+  if (hdrTotal) hdrTotal.textContent = `(${curSymbol})`;
 
   quotationItems.forEach((item, index) => {
-    const rowTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
-    subtotal += rowTotal;
+    item.stt = index + 1;
+    const qty = Number(item.qty) || 1;
+    const price = Number(item.price) || 0;
+    const rowTotal = qty * price;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${index + 1}</td>
       <td>
-        <input type="text" class="table-input" value="${item.name || ''}" placeholder="Tên sản phẩm, quy cách kỹ thuật" oninput="quotationItems[${index}].name = this.value;">
+        <textarea class="table-input" rows="2" style="font-weight: 600; min-width: 200px;" placeholder="Tên sản phẩm (Việt - Trung)" oninput="quotationItems[${index}].name = this.value;">${item.name || ''}</textarea>
+      </td>
+      <td>
+        <textarea class="table-input" rows="2" style="min-width: 240px;" placeholder="Hạng mục / Quy cách kỹ thuật" oninput="quotationItems[${index}].category = this.value;">${item.category || item.unit || ''}</textarea>
+      </td>
+      <td>
+        <textarea class="table-input" rows="2" style="min-width: 180px;" placeholder="Nội dung / Model / Serial" oninput="quotationItems[${index}].content = this.value;">${item.content || ''}</textarea>
       </td>
       <td style="text-align: center;">
-        <input type="text" class="table-input" style="text-align: center;" value="${item.unit || 'Bộ'}" oninput="quotationItems[${index}].unit = this.value;">
+        <input type="number" class="table-input" style="text-align: center; width: 75px;" value="${qty}" min="1" oninput="quotationItems[${index}].qty = Number(this.value); updateCalculations();">
       </td>
       <td style="text-align: center;">
-        <input type="number" class="table-input" style="text-align: center;" value="${item.qty}" min="1" oninput="quotationItems[${index}].qty = Number(this.value); updateCalculations();">
+        <input type="text" class="table-input" style="text-align: center; width: 105px;" value="${item.lead_time || '30天內'}" placeholder="Thời gian" oninput="quotationItems[${index}].lead_time = this.value;">
       </td>
       <td style="text-align: right;">
-        <input type="number" class="table-input" style="text-align: right;" value="${item.price}" oninput="quotationItems[${index}].price = Number(this.value); updateCalculations();">
+        <input type="number" class="table-input" style="text-align: right; width: 120px;" value="${price}" oninput="quotationItems[${index}].price = Number(this.value); updateCalculations();">
       </td>
       <td style="text-align: right; font-weight: 700; color: #1e293b; font-size: 0.9rem;" id="rowTotal_${index}">
-        ${rowTotal.toLocaleString("vi-VN")} VND
+        ${formatCurrencyValue(rowTotal, currency)}
       </td>
       <td style="text-align: center;">
         <button type="button" class="btn-delete-row" title="Xóa dòng" onclick="removeQuotationRow(${index})">
@@ -484,14 +607,25 @@ function renderQuotationTable() {
   updateCalculations();
 }
 
+function formatCurrencyValue(val, currency) {
+  if (currency === "USD") {
+    return "$" + Number(val || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " USD";
+  }
+  return Number(val || 0).toLocaleString("vi-VN") + " VND";
+}
+
 function updateCalculations() {
+  const currency = (document.getElementById("quoteCurrency")?.value || "VND").toUpperCase();
   let subtotal = 0;
   quotationItems.forEach((item, index) => {
-    const rowTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
+    const qty = Number(item.qty) || 1;
+    const price = Number(item.price) || 0;
+    const rowTotal = qty * price;
     subtotal += rowTotal;
+
     const rowTotalEl = document.getElementById(`rowTotal_${index}`);
     if (rowTotalEl) {
-      rowTotalEl.textContent = rowTotal.toLocaleString("vi-VN") + " VND";
+      rowTotalEl.textContent = formatCurrencyValue(rowTotal, currency);
     }
   });
 
@@ -499,13 +633,26 @@ function updateCalculations() {
   const grandTotal = subtotal + vat;
 
   document.getElementById("statItemCount").textContent = quotationItems.length + " Hạng mục";
-  document.getElementById("statSubtotal").textContent = subtotal.toLocaleString("vi-VN") + " VND";
-  document.getElementById("statVat").textContent = vat.toLocaleString("vi-VN") + " VND";
-  document.getElementById("statGrandTotal").textContent = grandTotal.toLocaleString("vi-VN") + " VND";
+  document.getElementById("statSubtotal").textContent = formatCurrencyValue(subtotal, currency);
+  document.getElementById("statVat").textContent = formatCurrencyValue(vat, currency);
+  document.getElementById("statGrandTotal").textContent = formatCurrencyValue(subtotal, currency) + " (Chưa VAT)";
+}
+
+function handleCurrencyChange() {
+  renderQuotationTable();
+  updateCalculations();
 }
 
 function addQuotationRow() {
-  quotationItems.push({ name: "Hạng mục thiết bị mới", unit: "Bộ", qty: 1, price: 0 });
+  quotationItems.push({
+    stt: quotationItems.length + 1,
+    name: "Hạng mục thiết bị / Dịch vụ mới",
+    category: "Quy cách kỹ thuật / Tiêu chuẩn",
+    content: "Model / Thông số chi tiết",
+    qty: 1,
+    lead_time: "30天內",
+    price: 0
+  });
   renderQuotationTable();
 }
 
@@ -522,13 +669,17 @@ function collectQuotationData() {
   return {
     customer_name_vi: (document.getElementById("quoteCustomerName").value || "").trim(),
     customer_name_zh: (document.getElementById("quoteCustomerNameCn").value || "").trim(),
+    contact_person: (document.getElementById("quoteContactPerson").value || "").trim(),
+    phone: (document.getElementById("quotePhone").value || "").trim(),
+    email: (document.getElementById("quoteEmail").value || "").trim(),
+    address: (document.getElementById("quoteAddress").value || "").trim(),
     tax_code: (document.getElementById("quoteTaxCode").value || "").trim(),
+    project_name: (document.getElementById("quoteProjectName").value || "").trim(),
     quotation_no: (document.getElementById("quoteNo").value || "").trim(),
     quotation_date: (document.getElementById("quoteDate").value || "").trim(),
-    project_name: (document.getElementById("quoteProjectName").value || "").trim(),
-    contact_person: (document.getElementById("quoteContactPerson").value || "").trim(),
-    validity: (document.getElementById("quoteValidity").value || "").trim(),
+    currency: (document.getElementById("quoteCurrency").value || "VND").trim(),
     lead_time: (document.getElementById("quoteLeadTime").value || "").trim(),
+    validity: (document.getElementById("quoteValidity").value || "").trim(),
     warranty: (document.getElementById("quoteWarranty").value || "").trim(),
     payment_terms: (document.getElementById("quotePaymentTerms").value || "").trim(),
     notes: (document.getElementById("quoteNotes").value || "").trim(),
@@ -537,12 +688,44 @@ function collectQuotationData() {
 }
 
 // ----------------------------------------------------------------------------
+// File Upload Handling
+// ----------------------------------------------------------------------------
+function handleQuotationFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    uploadedFileBase64 = e.target.result;
+    uploadedFileName = file.name;
+    uploadedFileMime = file.type || "application/octet-stream";
+
+    const badge = document.getElementById("aiUploadedFileBadge");
+    if (badge) {
+      badge.style.display = "inline-flex";
+      document.getElementById("aiUploadedFileName").textContent = file.name + ` (${(file.size / 1024).toFixed(1)} KB)`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearUploadedFile() {
+  uploadedFileBase64 = null;
+  uploadedFileName = null;
+  uploadedFileMime = null;
+  const badge = document.getElementById("aiUploadedFileBadge");
+  if (badge) badge.style.display = "none";
+  const fileInput = document.getElementById("aiQuoteFileInput");
+  if (fileInput) fileInput.value = "";
+}
+
+// ----------------------------------------------------------------------------
 // 1. AI Parsing Integration (Gemini AI)
 // ----------------------------------------------------------------------------
 async function callQuotationAI() {
   const promptText = (document.getElementById("aiPromptInput").value || "").trim();
-  if (!promptText) {
-    alert("Vui lòng nhập văn bản yêu cầu báo giá từ email, chat hoặc ghi chú khảo sát vào ô bên trên.");
+  if (!promptText && !uploadedFileBase64) {
+    alert("Vui lòng nhập văn bản yêu cầu báo giá hoặc tải tệp lên (PDF / Excel / Ảnh) để Gemini AI bóc tách.");
     return;
   }
 
@@ -554,7 +737,7 @@ async function callQuotationAI() {
   const origText = btnText.textContent;
 
   btn.disabled = true;
-  btnText.textContent = "⏳ Gemini AI đang phân tích & bóc tách...";
+  btnText.textContent = "⏳ Gemini AI đang bóc tách dữ liệu theo form BaoGiaGoc.xlsx...";
 
   try {
     const res = await fetch("/api/v1/quotation/ai-parse", {
@@ -562,7 +745,10 @@ async function callQuotationAI() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         raw_text: promptText,
-        model_name: selectedModel
+        model_name: selectedModel,
+        file_base64: uploadedFileBase64,
+        file_name: uploadedFileName,
+        file_mime: uploadedFileMime
       })
     });
     const result = await res.json();
@@ -571,24 +757,36 @@ async function callQuotationAI() {
       const d = result.data;
       if (d.customer_name_vi) document.getElementById("quoteCustomerName").value = d.customer_name_vi;
       if (d.customer_name_zh) document.getElementById("quoteCustomerNameCn").value = d.customer_name_zh;
+      if (d.contact_person) document.getElementById("quoteContactPerson").value = d.contact_person;
+      if (d.phone) document.getElementById("quotePhone").value = d.phone;
+      if (d.email) document.getElementById("quoteEmail").value = d.email;
+      if (d.address) document.getElementById("quoteAddress").value = d.address;
       if (d.tax_code) document.getElementById("quoteTaxCode").value = d.tax_code;
+      if (d.quote_title || d.project_name) document.getElementById("quoteProjectName").value = d.quote_title || d.project_name;
       if (d.quotation_no) document.getElementById("quoteNo").value = d.quotation_no;
       if (d.quotation_date) document.getElementById("quoteDate").value = d.quotation_date;
-      if (d.project_name) document.getElementById("quoteProjectName").value = d.project_name;
-      if (d.contact_person) document.getElementById("quoteContactPerson").value = d.contact_person;
-      if (d.validity) document.getElementById("quoteValidity").value = d.validity;
-      if (d.lead_time) document.getElementById("quoteLeadTime").value = d.lead_time;
-      if (d.warranty) document.getElementById("quoteWarranty").value = d.warranty;
-      if (d.payment_terms) document.getElementById("quotePaymentTerms").value = d.payment_terms;
+
+      if (d.delivery_term || d.lead_time) document.getElementById("quoteLeadTime").value = d.delivery_term || d.lead_time;
+      if (d.validity_term || d.validity) document.getElementById("quoteValidity").value = d.validity_term || d.validity;
+      if (d.warranty_term || d.warranty) document.getElementById("quoteWarranty").value = d.warranty_term || d.warranty;
+      if (d.payment_term || d.payment_terms) document.getElementById("quotePaymentTerms").value = d.payment_term || d.payment_terms;
       if (d.notes) document.getElementById("quoteNotes").value = d.notes;
 
       if (Array.isArray(d.items) && d.items.length > 0) {
-        quotationItems = d.items;
+        quotationItems = d.items.map((it, idx) => ({
+          stt: idx + 1,
+          name: it.product_name || it.name || `Thiết bị ${idx + 1}`,
+          category: it.category || it.unit || "Thiết bị chính hãng",
+          content: it.content || it.model || "",
+          qty: Number(it.qty) || 1,
+          lead_time: it.lead_time || "30天內",
+          price: Number(it.price) || 0
+        }));
         renderQuotationTable();
       }
 
       switchTab("tabQuotationItems");
-      alert(`✨ ${result.message}\nModel thực thi: ${result.executed_model}`);
+      alert(`✨ ${result.message}\nModel: ${result.executed_model}`);
     } else {
       alert("Lỗi AI: " + (result.message || "Không thể phân tích dữ liệu."));
     }
@@ -600,21 +798,208 @@ async function callQuotationAI() {
   }
 }
 
-function simulateAIParseQuotation() {
-  document.getElementById("quoteCustomerName").value = "CÔNG TY TNHH VONMAX (VIỆT NAM)";
-  document.getElementById("quoteCustomerNameCn").value = "弘聲科技(越南)有限公司";
-  document.getElementById("quoteProjectName").value = "Kết Nối Mạng Máy Móc Dập Đầu SMB IoT Giai Đoạn 2";
-  document.getElementById("quoteNo").value = "HM-QT-VONMAX-002";
-  quotationItems = [
-    { name: "Cổng Giao Tiếp Thu Thập Dữ Liệu Edge Gateway IoT-200", unit: "Bộ", qty: 6, price: 16800000 },
-    { name: "Cáp Tín Hiệu Công Nghiệp Chống Nhiễu RS485 Shielded", unit: "Cuộn", qty: 4, price: 3200000 },
-    { name: "Chi Phí Khảo Sát, Lắp Đặt Hiện Trường & Tích Hợp Hệ Thống", unit: "Gói", qty: 1, price: 22000000 }
-  ];
+// ----------------------------------------------------------------------------
+// 2. Realistic Presets from Outlook Quotations & BaoGiaGoc.xlsx Standard
+// ----------------------------------------------------------------------------
+const DEFAULT_PAYMENT_TERMS_BAOGIAGOC = `5. 一、付款方式：
+訂單總金額超過 30,000,000 越南盾（VND 30,000,000）時，甲方須於訂購前支付訂單總金額之 50% 作為預付款；剩餘 50% 應於收到貨物之日起 10 日內，以銀行轉帳方式支付予乙方。
+Đối với đơn hàng có tổng giá trị ttừ 30.000.000 VNĐ trở lên. : Bên A thanh toán trước 50% tổng giá trị đơn hàng trước khi đặt hàng. 50% còn lại được thanh toán bằng hình thức chuyển khoản ngân hàng trong vòng 10 ngày kể từ ngày Bên A nhận hàng.
+訂單總金額低於 30,000,000 越南盾（VND 30,000,000）時，甲方應於收到貨物之日起 10 日內，以銀行轉帳方式支付訂單總金額之 100%。
+Đối với đơn hàng có tổng giá trị dưới 30.000.000 VNĐ: Bên A thanh toán 100% tổng giá trị đơn hàng bằng hình thức chuyển khoản ngân hàng trong vòng 10 ngày kể từ ngày nhận hàng.
+二、驗收條款：
+甲方應於收到貨物之日起 7 日內完成檢查及驗收。如甲方於上述期限內未就產品品質、數量或規格提出書面異議，則視為貨物已完成交付並驗收合格。
+Bên A có trách nhiệm kiểm tra và nghiệm thu hàng hóa trong vòng 07 ngày kể từ ngày nhận hàng. Nếu trong thời hạn nêu trên, Bên A không có bất kỳ khiếu nại hoặc ý kiến phản hồi bằng văn bản nào liên quan đến chất lượng, số lượng hoặc quy cách sản phẩm, hàng hóa được xem là đã bàn giao và nghiệm thu thành công
+甲方應依本合約約定之付款條件履行付款義務，不得以未另行簽署驗收文件或未提出驗收確認為由延遲付款。
+Bên A có trách nhiệm thực hiện thanh toán đúng theo điều kiện thanh toán đã thỏa thuận trong hợp đồng, không được trì hoãn thanh toán với lý do chưa ký biên bản nghiệm thu riêng hoặc chưa xác nhận nghiệm thu.`;
+
+function loadPreset(presetKey) {
+  if (presetKey === "baogiagoc") {
+    document.getElementById("quoteCustomerName").value = "CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)";
+    document.getElementById("quoteCustomerNameCn").value = "台灣精星科技(越南)有限公司";
+    document.getElementById("quoteContactPerson").value = "採購部 - 阮金銀";
+    document.getElementById("quotePhone").value = "+84-28-3770-1025~26 Ext: 226";
+    document.getElementById("quoteEmail").value = "pur02_vn@mail.cxtechnology.com";
+    document.getElementById("quoteAddress").value = "Tan Thuan E.P.Z, Tan Thuan Street, Tan Thuan Dong Ward, District 7, Ho Chi Minh";
+    document.getElementById("quoteCurrency").value = "VND";
+    document.getElementById("quoteProjectName").value = "THẺ RFID SILICON / 硅膠型RFID標籤";
+    document.getElementById("quoteNo").value = "HM-QT-CX-RFID-202609";
+    document.getElementById("quoteDate").value = "21/09/2026";
+    document.getElementById("quoteLeadTime").value = "Trong vòng 60 ngày kể từ ngày nhận được thanh toán (自收到付款之日起60天內交貨)";
+    document.getElementById("quoteValidity").value = "Báo giá có hiệu lực đến hết ngày 05/10/2026 (報價單有效期限至2026/10/05)";
+    document.getElementById("quoteWarranty").value = "Bảo hành sáu tháng kể từ ngày giao hàng (自交貨日起保固六個月)";
+    document.getElementById("quotePaymentTerms").value = DEFAULT_PAYMENT_TERMS_BAOGIAGOC;
+    document.getElementById("quoteNotes").value = "Đơn vị cung cấp: CÔNG TY TNHH TOÀN CẦU HONG MING.";
+    quotationItems = [
+      {
+        stt: 1,
+        name: "THẺ RFID làm bằng silicon\n硅膠型RFID標籤",
+        category: "THẺ RFID SILICON (KHÔNG KHÁNG KIM LOẠI) 90x18mm, NXP UCODE 8 BLACK (Mã: PO F601-0700) OPP9018",
+        content: "OPP9018 (D0010121 ~ D0010620)",
+        qty: 500,
+        lead_time: "60天內",
+        price: 39000
+      }
+    ];
+  } else if (presetKey === "pouhui") {
+    document.getElementById("quoteCustomerName").value = "CÔNG TY TNHH ECO PRIME (DỰ ÁN POU HUI)";
+    document.getElementById("quoteCustomerNameCn").value = "寶輝能源管理專案 (Pou Hui EMS)";
+    document.getElementById("quoteContactPerson").value = "Kỹ thuật / Cơ điện POU HUI";
+    document.getElementById("quotePhone").value = "+84-966-687-109";
+    document.getElementById("quoteEmail").value = "sales@hongming-global.com";
+    document.getElementById("quoteAddress").value = "KCN Pou Chen / Pou Hui, Đồng Nai";
+    document.getElementById("quoteCurrency").value = "VND";
+    document.getElementById("quoteProjectName").value = "HỆ THỐNG ĐỒNG HỒ ĐIỆN & GATEWAY CC2051 CHO 4 TRẠM BIẾN ÁP POU HUI";
+    document.getElementById("quoteNo").value = "HM-QT-POUHUI-EMS-202610";
+    document.getElementById("quoteDate").value = "21/10/2026";
+    document.getElementById("quoteLeadTime").value = "30-45天內 / Trong vòng 30-45 ngày";
+    document.getElementById("quoteValidity").value = "30天內 / 30 ngày kể từ ngày phát hành";
+    document.getElementById("quoteWarranty").value = "保固十二個月 / 12 tháng chính hãng DAE kể từ ngày nghiệm thu";
+    document.getElementById("quotePaymentTerms").value = DEFAULT_PAYMENT_TERMS_BAOGIAGOC;
+    document.getElementById("quoteNotes").value = "Đã gộp bộ nguồn 24VDC vào CC2051. Kết nối 4 trạm biến áp qua vòng RS485.";
+    quotationItems = [
+      {
+        stt: 1,
+        name: "Gateway thu thập dữ liệu CC2051 (kèm nguồn 24VDC)\nCC2051 工業級資料收集閘道器 (含24VDC電源供應器)",
+        category: "DAE CC2051 Gateway kết nối 4 Trạm biến áp qua vòng RS485 kèm nguồn Meanwell 24VDC",
+        content: "CC2051 Gateway (Modbus RTU to TCP/IP, kèm bộ nguồn Meanwell 24VDC)",
+        qty: 1,
+        lead_time: "30-45 ngày",
+        price: 18500000
+      },
+      {
+        stt: 2,
+        name: "Đồng hồ đo điện đa mạch PM2100-3-B\nPM2100-3-B 多迴路智慧型電表",
+        category: "Đồng hồ đo điện 3 pha đa mạch DAE PM2100-3-B chuẩn ISO 50001",
+        content: "Model PM2100-3-B (Đo 3 mạch 3 pha hoặc 9 mạch 1 pha)",
+        qty: 4,
+        lead_time: "30-45 ngày",
+        price: 24500000
+      },
+      {
+        stt: 3,
+        name: "Biến dòng hở Split-core CT 200A/5A\n開口式比流器 CT 200A/5A",
+        category: "Biến dòng cảm ứng lõi hở chuyên dụng DAE CT Split-core 200A/5A Class 0.5",
+        content: "CT-SC-200A/5A Class 0.5",
+        qty: 12,
+        lead_time: "30-45 ngày",
+        price: 1350000
+      },
+      {
+        stt: 4,
+        name: "Tủ Lá Chắn Điện Xanh EMS & Vật tư phụ\n綠電盾智能監控箱及配線耗材",
+        category: "Tủ điện IP65 chống bụi ẩm, bảo vệ quá áp, chống sét van, cáp RS485 Belden",
+        content: "Tủ lắp sẵn CB, chống sét, nguồn dự phòng và terminal đấu nối",
+        qty: 1,
+        lead_time: "15 ngày",
+        price: 28000000
+      },
+      {
+        stt: 5,
+        name: "Nhân công thi công đấu nối & Cấu hình\n現場配線施工、系統調校與ISO50001連線測試",
+        category: "Kéo cáp liên trạm biến áp, đấu nối CT, cấu hình Gateway và nghiệm thu",
+        content: "Đội ngũ kỹ sư hiện trường Hong Ming Global (bàn giao hoàn chỉnh)",
+        qty: 1,
+        lead_time: "7-10 ngày",
+        price: 18000000
+      }
+    ];
+  } else if (presetKey === "cxrepair") {
+    document.getElementById("quoteCustomerName").value = "CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN)";
+    document.getElementById("quoteCustomerNameCn").value = "台灣精星科技(越南)有限公司";
+    document.getElementById("quoteContactPerson").value = "張永吉 Jenson / 阮金銀";
+    document.getElementById("quotePhone").value = "+84-28-3770-1025~26 Ext: 226";
+    document.getElementById("quoteEmail").value = "pur02_vn@mail.cxtechnology.com";
+    document.getElementById("quoteAddress").value = "KCX Tân Thuận, Quận 7, TP.HCM";
+    document.getElementById("quoteCurrency").value = "VND";
+    document.getElementById("quoteProjectName").value = "DỊCH VỤ SỬA CHỮA & THAY THẾ LINH KIỆN THIẾT BỊ ĐỌC THẺ RFID RFR900";
+    document.getElementById("quoteNo").value = "HM-QT-CX-REPAIR-202609";
+    document.getElementById("quoteDate").value = "25/09/2026";
+    document.getElementById("quoteLeadTime").value = "07-10個工作日內 / Trong vòng 07-10 ngày làm việc";
+    document.getElementById("quoteValidity").value = "自發行之日起15天內有效 / Có hiệu lực trong vòng 15 ngày kể từ ngày phát hành";
+    document.getElementById("quoteWarranty").value = "保固三個月 / Bảo hành ba tháng cho linh kiện thay thế";
+    document.getElementById("quotePaymentTerms").value = DEFAULT_PAYMENT_TERMS_BAOGIAGOC;
+    document.getElementById("quoteNotes").value = "Đã kiểm tra bo mạch và pin. Khách hàng cung cấp thiết bị tại KCX Tân Thuận.";
+    quotationItems = [
+      {
+        stt: 1,
+        name: "Sửa chữa đầu đọc thẻ RFID Bluebird RFR900\nBluebird RFR900 RFID 讀卡機維修服務",
+        category: "Sửa lỗi mất kết nối Bluetooth, treo mainboard và thay thế IC sạc",
+        content: "Model: RFR900 (Serial: RFR900-VN-2024)",
+        qty: 2,
+        lead_time: "7-10 ngày",
+        price: 4500000
+      },
+      {
+        stt: 2,
+        name: "Pin thay thế dung lượng cao cho RFR900\n原廠高容量鋰電池 (RFR900專用)",
+        category: "Pin Li-ion chính hãng 3.7V 3000mAh cho Bluebird RFR900",
+        content: "BTR-RFR900-3000mAh",
+        qty: 2,
+        lead_time: "Có sẵn",
+        price: 1850000
+      },
+      {
+        stt: 3,
+        name: "Phí kiểm định & Hiệu chuẩn độ nhạy anten RFID\nRFID 天線讀取效能校準與現場測試",
+        category: "Đo kiểm khoảng cách đọc thẻ, tối ưu công suất phát UHF",
+        content: "Kiểm tra thực tế với thẻ RFID silicon tại chuyền sản xuất",
+        qty: 1,
+        lead_time: "3 ngày",
+        price: 1000000
+      }
+    ];
+  } else if (presetKey === "daeusd") {
+    document.getElementById("quoteCustomerName").value = "NHÀ MÁY ĐỐI TÁC FDI TẠI VIỆT NAM (BÁO GIÁ USD)";
+    document.getElementById("quoteCustomerNameCn").value = "越南外資製造工廠 (DAE 設備牌價)";
+    document.getElementById("quoteContactPerson").value = "Phòng Mua Hàng & Kỹ Thuật";
+    document.getElementById("quotePhone").value = "+84-966-687-109";
+    document.getElementById("quoteEmail").value = "sales@hongming-global.com";
+    document.getElementById("quoteAddress").value = "Khu Công Nghiệp Quế Võ / Hòa Phú, Bắc Ninh";
+    document.getElementById("quoteCurrency").value = "USD";
+    document.getElementById("quoteProjectName").value = "DAE ENERGY MONITORING HARDWARE DISTRIBUTION (USD PRICELIST)";
+    document.getElementById("quoteNo").value = "HM-QT-DAE-USD-2026";
+    document.getElementById("quoteDate").value = "27/10/2026";
+    document.getElementById("quoteLeadTime").value = "30-45 days ex-factory";
+    document.getElementById("quoteValidity").value = "30 days from quotation date";
+    document.getElementById("quoteWarranty").value = "12 months standard manufacturer warranty";
+    document.getElementById("quotePaymentTerms").value = "50% deposit with PO, 50% before dispatch T/T.";
+    document.getElementById("quoteNotes").value = "Prices in USD ex-works. Customs clearance & local delivery at buyer's cost.";
+    quotationItems = [
+      {
+        stt: 1,
+        name: "Gateway thu thập dữ liệu CC2051 (kèm nguồn 24VDC)\nCC2051 工業級資料收集閘道器 (含電源)",
+        category: "DAE CC2051 Data Collector Gateway (Modbus RTU / TCP)",
+        content: "CC2051 + 24VDC Industrial Power Supply Bundle",
+        qty: 2,
+        lead_time: "30 days",
+        price: 450
+      },
+      {
+        stt: 2,
+        name: "Đồng hồ đo điện 3 pha PM2100-3-B\nPM2100-3-B 多迴路數位智慧電表",
+        category: "Multi-circuit Power Meter PM2100-3-B (Class 0.5)",
+        content: "PM2100-3-B with RS485 Modbus RTU",
+        qty: 6,
+        lead_time: "30 days",
+        price: 680
+      },
+      {
+        stt: 3,
+        name: "Biến dòng Split-core CT-SC-200A\n開口式比流器 CT-SC-200A/5A",
+        category: "Split-core Current Transformer 200A/5A",
+        content: "DAE CT-SC-200A/5A Class 0.5",
+        qty: 18,
+        lead_time: "30 days",
+        price: 38
+      }
+    ];
+  }
   renderQuotationTable();
+  updateCalculations();
 }
 
 // ----------------------------------------------------------------------------
-// 2. Saving Quotation with Versioning & Backup
+// 3. Saving Quotation with Versioning & Backup
 // ----------------------------------------------------------------------------
 async function saveQuotation() {
   const payload = collectQuotationData();
@@ -624,9 +1009,7 @@ async function saveQuotation() {
   }
 
   const btnBottom = document.getElementById("btnSaveQuotationBottom");
-  const btnTop = document.getElementById("btnTopSaveQuote");
   if (btnBottom) btnBottom.disabled = true;
-  if (btnTop) btnTop.disabled = true;
 
   try {
     const res = await fetch("/api/v1/quotation/save", {
@@ -646,12 +1029,11 @@ async function saveQuotation() {
     alert("Lỗi kết nối khi lưu báo giá: " + err.message);
   } finally {
     if (btnBottom) btnBottom.disabled = false;
-    if (btnTop) btnTop.disabled = false;
   }
 }
 
 // ----------------------------------------------------------------------------
-// 3. Export Word & Excel
+// 4. Export Word & Excel
 // ----------------------------------------------------------------------------
 async function exportQuotationWord() {
   const btn = document.getElementById("btnExportWord");
@@ -686,7 +1068,7 @@ async function exportQuotationExcel() {
   const btn = document.getElementById("btnExportExcel");
   const origHtml = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = `⏳ Đang tạo Excel...`;
+  btn.innerHTML = `⏳ Đang xuất Excel chuẩn mẫu BaoGiaGoc...`;
 
   try {
     const payload = collectQuotationData();
@@ -712,7 +1094,7 @@ async function exportQuotationExcel() {
 }
 
 // ----------------------------------------------------------------------------
-// 4. Modals & History
+// 5. Modals & History
 // ----------------------------------------------------------------------------
 function showQuotationSuccessModal(result) {
   document.getElementById("modalQuoteTitle").textContent = `Lưu Báo Giá Thành Công (Phiên Bản v${result.version || 1})!`;
@@ -808,11 +1190,15 @@ async function loadQuotationDetailIntoForm(identifier) {
       const d = result.data;
       if (d.customer_name_vi) document.getElementById("quoteCustomerName").value = d.customer_name_vi;
       if (d.customer_name_zh) document.getElementById("quoteCustomerNameCn").value = d.customer_name_zh;
+      if (d.contact_person) document.getElementById("quoteContactPerson").value = d.contact_person;
+      if (d.phone) document.getElementById("quotePhone").value = d.phone;
+      if (d.email) document.getElementById("quoteEmail").value = d.email;
+      if (d.address) document.getElementById("quoteAddress").value = d.address;
       if (d.tax_code) document.getElementById("quoteTaxCode").value = d.tax_code;
       if (d.quotation_no) document.getElementById("quoteNo").value = d.quotation_no;
       if (d.created_at) document.getElementById("quoteDate").value = d.created_at.split(" ")[0];
       if (d.project_name) document.getElementById("quoteProjectName").value = d.project_name;
-      if (d.contact_person) document.getElementById("quoteContactPerson").value = d.contact_person;
+      if (d.currency) document.getElementById("quoteCurrency").value = d.currency;
       if (d.validity) document.getElementById("quoteValidity").value = d.validity;
       if (d.lead_time) document.getElementById("quoteLeadTime").value = d.lead_time;
       if (d.warranty) document.getElementById("quoteWarranty").value = d.warranty;
@@ -852,7 +1238,68 @@ async function openSystemPath(filePath) {
 }
 
 // ----------------------------------------------------------------------------
-// 5. Load and Render Tables
+// 6. Outlook Files List
+// ----------------------------------------------------------------------------
+async function loadOutlookQuotationFiles() {
+  const tbody = document.getElementById("outlookQuotationFilesTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">⏳ Đang đọc danh sách file báo giá thực tế từ Outlook...</td></tr>`;
+
+  try {
+    const res = await fetch("/api/v1/quotation/outlook-files");
+    const data = await res.json();
+    tbody.innerHTML = "";
+
+    if (data.status === "success" && Array.isArray(data.files) && data.files.length > 0) {
+      document.getElementById("outlookFilesBadge").textContent = data.files.length;
+      data.files.forEach((file, idx) => {
+        const isPdf = file.file_format === "pdf";
+        const badge = isPdf
+          ? `<span class="badge-pill blue" style="font-weight:700;">PDF</span>`
+          : `<span class="badge-pill green" style="font-weight:700;">Excel</span>`;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="text-align: center; font-weight: 600; color: #64748b;">${idx + 1}</td>
+          <td style="text-align: center;">${badge}</td>
+          <td>
+            <div style="font-weight: 700; color: #1e293b; font-size: 0.88rem;">${file.file_name}</div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">${file.title}</div>
+          </td>
+          <td>
+            <span class="badge-pill yellow" style="font-size: 0.76rem; font-weight: 600;">${file.partner}</span>
+          </td>
+          <td style="text-align: right; font-family: monospace; font-size: 0.82rem; color: #475569;">
+            ${file.file_size_formatted}
+          </td>
+          <td style="text-align: center;">
+            <div style="display: inline-flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap;">
+              ${file.preset_key ? `
+                <button type="button" class="btn btn-ai btn-xs" onclick="loadPreset('${file.preset_key}'); switchTab('tabQuotationItems');" title="Nạp dữ liệu báo giá mẫu này vào form soạn thảo">
+                  ⚡ Nạp Form
+                </button>
+              ` : ''}
+              <a href="${file.download_url}" download="${file.file_name}" class="btn btn-primary btn-xs" title="Tải tệp về máy tính" style="text-decoration: none;">
+                ⬇️ Tải
+              </a>
+              <button type="button" class="btn btn-outline btn-xs" onclick="openSystemPath('${file.file_path.replace(/\\/g, '\\\\')}')" title="Mở trực tiếp trên máy">
+                📂 Mở
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } else {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">Chưa tìm thấy tệp báo giá nào từ Outlook.</td></tr>`;
+    }
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#dc2626;">Lỗi tải danh sách file Outlook: ${err.message}</td></tr>`;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// 7. Load and Render Active Quotations & Files
 // ----------------------------------------------------------------------------
 async function loadQuotationFilesList() {
   try {
@@ -870,8 +1317,6 @@ async function loadQuotationFilesList() {
       const excelCount = allQuotationFiles.filter(f => f.file_format === "xlsx").length;
 
       document.getElementById("quotationListBadge").textContent = allActiveQuotations.length || totalFiles;
-      const topBadge = document.getElementById("topQuotationCount");
-      if (topBadge) topBadge.textContent = allActiveQuotations.length || totalFiles;
 
       document.getElementById("statTotalActiveQuotes").textContent = `${allActiveQuotations.length} báo giá`;
       document.getElementById("statTotalWordQuotes").textContent = `${wordCount} tệp`;
@@ -884,6 +1329,7 @@ async function loadQuotationFilesList() {
 
 function renderActiveQuotationsTable(quotes) {
   const tbody = document.getElementById("activeQuotationsTableBody");
+  if (!tbody) return;
   tbody.innerHTML = "";
 
   if (!quotes || quotes.length === 0) {
@@ -937,13 +1383,14 @@ function renderActiveQuotationsTable(quotes) {
 function renderQuotationFilesTable(files) {
   const tbody = document.getElementById("quotationListTableBody");
   const emptyState = document.getElementById("quotationEmptyState");
+  if (!tbody) return;
   tbody.innerHTML = "";
 
   if (!files || files.length === 0) {
-    emptyState.style.display = "block";
+    if (emptyState) emptyState.style.display = "block";
     return;
   }
-  emptyState.style.display = "none";
+  if (emptyState) emptyState.style.display = "none";
 
   files.forEach((f, idx) => {
     const isDocx = f.file_format === "docx";
@@ -1019,6 +1466,8 @@ function switchTab(tabId) {
 
   if (tabId === "tabQuotationList") {
     loadQuotationFilesList();
+  } else if (tabId === "tabOutlookFiles") {
+    loadOutlookQuotationFiles();
   }
 }
 
@@ -1037,6 +1486,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 document.addEventListener("DOMContentLoaded", () => {
   renderQuotationTable();
   loadQuotationFilesList();
+  loadOutlookQuotationFiles();
 });
 </script>
 {% endblock %}

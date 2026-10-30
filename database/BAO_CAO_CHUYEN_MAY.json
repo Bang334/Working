@@ -1,0 +1,66 @@
+{
+  "changed": [
+    {
+      "location": "documents[75].file_path",
+      "old": "E:\\Working\\Ho So Du An\\Nghiem Thu\\Bien_Ban_Nghiem_Thu_CX Technology貨物交接單,貨物價值為13,700,000越南盾(VND)_20261016_131050.xlsx",
+      "new": "D:\\Working\\Ho So Du An\\Nghiem Thu\\Bien_Ban_Nghiem_Thu_CX Technology貨物交接單,貨物價值為13,700,000越南盾(VND)_20261016_131050.xlsx"
+    },
+    {
+      "location": "documents[134].file_path",
+      "old": "E:\\Working\\Ho So Du An\\Bao Gia\\Bao_Gia_CÔNG_TY_TNHH_CX_TECHNOLOGY_(VIỆT_NAM)_HM-QT-202610-001_20261016_143922.docx",
+      "new": "D:\\Working\\Ho So Du An\\Bao Gia\\Bao_Gia_CÔNG_TY_TNHH_CX_TECHNOLOGY_(VIỆT_NAM)_HM-QT-202610-001_20261016_143922.docx"
+    },
+    {
+      "location": "documents[151].file_path",
+      "old": "E:\\Working\\Ho So Du An\\Hop Dong\\HOP_DONG_SEIYO_IIoT_NETWORK_Ver1.0.docx",
+      "new": "D:\\Working\\Ho So Du An\\Hop Dong\\HOP_DONG_SEIYO_IIoT_NETWORK_Ver1.0.docx"
+    },
+    {
+      "location": "documents[176].file_path",
+      "old": "E:\\Working\\Ho So Du An\\Yeu Cau Thanh Toan\\đơn yêu cầu thanh toán - CÔNG TY TRÁCH NHIỆM HỮU HẠN SEIYO VIỆT NAM - HMV22092026SY0001.xlsx",
+      "new": "D:\\Working\\Ho So Du An\\Yeu Cau Thanh Toan\\đơn yêu cầu thanh toán - CÔNG TY TRÁCH NHIỆM HỮU HẠN SEIYO VIỆT NAM - HMV22092026SY0001.xlsx"
+    },
+    {
+      "location": "documents[177].file_path",
+      "old": "E:\\Working\\Ho So Du An\\Yeu Cau Thanh Toan\\đơn yêu cầu thanh toán - CÔNG TY TRÁCH NHIỆM HỮU HẠN SEIYO VIỆT NAM - HMV22092026SY0001.docx",
+      "new": "D:\\Working\\Ho So Du An\\Yeu Cau Thanh Toan\\đơn yêu cầu thanh toán - CÔNG TY TRÁCH NHIỆM HỮU HẠN SEIYO VIỆT NAM - HMV22092026SY0001.docx"
+    },
+    {
+      "location": "documents[201].file_path",
+      "old": "E:\\Working\\Ho So Du An\\Nghiem Thu\\Bien_Ban_Nghiem_Thu_Lap_Dat_HMV151020250001.docx",
+      "new": "D:\\Working\\Ho So Du An\\Nghiem Thu\\Bien_Ban_Nghiem_Thu_Lap_Dat_HMV151020250001.docx"
+    },
+    {
+      "location": "custom_reminders[23].attachment_path",
+      "old": "E:\\Working\\Ho So Du An\\Nhac Nho\\reminder_23\\Screenshot 2026-10-21 161916.png",
+      "new": "D:\\Working\\Ho So Du An\\Nhac Nho\\reminder_23\\Screenshot 2026-10-21 161916.png"
+    },
+    {
+      "location": "custom_reminders[23].folder_path",
+      "old": "E:\\Working\\Ho So Du An\\Nhac Nho\\reminder_23",
+      "new": "D:\\Working\\Ho So Du An\\Nhac Nho\\reminder_23"
+    },
+    {
+      "location": "custom_reminders[23].attachments[0].path",
+      "old": "E:\\Working\\Ho So Du An\\Nhac Nho\\reminder_23\\Screenshot 2026-10-21 161916.png",
+      "new": "D:\\Working\\Ho So Du An\\Nhac Nho\\reminder_23\\Screenshot 2026-10-21 161916.png"
+    },
+    {
+      "location": "payment_voucher_requests[17].file_path",
+      "old": "E:\\Working\\Ho So Du An\\Don Xin Thanh Toan\\Don_Xin_Thanh_Toan_HVM007-20261022-2_CÔNG TY TNHH TM DV SX GLOBAL LINK.xlsx",
+      "new": "D:\\Working\\Ho So Du An\\Don Xin Thanh Toan\\Don_Xin_Thanh_Toan_HVM007-20261022-2_CÔNG TY TNHH TM DV SX GLOBAL LINK.xlsx"
+    }
+  ],
+  "missing": [
+    {
+      "location": "payment_voucher_requests[14].file_path",
+      "path": "E:\\Working\\Ho So Du An\\Don Xin Thanh Toan\\Don_Xin_Thanh_Toan_HVM007-20261021-1_CÔNG TY CỔ PHẦN CX TECHNOLOGY (VN).xlsx"
+    },
+    {
+      "location": "payment_voucher_requests[15].file_path",
+      "path": "E:\\Working\\Ho So Du An\\Don Xin Thanh Toan\\Don_Xin_Thanh_Toan_HVM007-20261021-2_CÔNG TY TNHH TOÀN CẦU HONG MING.xlsx"
+    }
+  ],
+  "backup": "D:\\Working\\database\\backups\\workspace_paths_20261029_160214_991931.db",
+  "verified_unchanged_document_files": 115
+}

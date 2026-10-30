@@ -40,6 +40,33 @@ from app.services.receivables_service import (
 router = APIRouter(prefix="/api/v1/receivables", tags=["Project Receivables & AR Tracker"])
 
 
+class ContractScheduleRequest(BaseModel):
+    revision: str
+    total_amount: float
+    vat_rate: Optional[float] = None
+    project_name: str
+    notes: str = ''
+    installments: List[Dict[str, Any]]
+
+
+@router.get('/contract-schedule/{item_id}')
+async def contract_schedule_get(item_id: int):
+    from app.services.contract_schedule_service import get_contract_schedule
+    try:
+        return {'status': 'success', **get_contract_schedule(item_id)}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.put('/contract-schedule/{item_id}')
+async def contract_schedule_save(item_id: int, payload: ContractScheduleRequest):
+    from app.services.contract_schedule_service import save_contract_schedule
+    try:
+        return {'status': 'success', **save_contract_schedule(item_id, payload.model_dump())}
+    except (ValueError, ArithmeticError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @router.get("")
 async def get_receivables_endpoint(
     customer: Optional[str] = Query(None, description="Lọc theo khách hàng"),

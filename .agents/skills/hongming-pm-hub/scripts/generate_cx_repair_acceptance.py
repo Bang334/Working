@@ -20,6 +20,11 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.worksheet.page import PageMargins
 from openpyxl.worksheet.properties import PageSetupProperties
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 if sys.stdout.encoding != 'utf-8':
     try:
         sys.stdout.reconfigure(encoding='utf-8')
@@ -477,10 +482,10 @@ def generate_acceptance_file():
         print(f"✓ Đã tạo Sheet chi tiết '{dev['serial']}' (Khung ảnh đều nhau 100%, độ rộng cố định).")
 
     # Đường dẫn xuất file
-    downloads_dir = r"C:\Users\BANG\Downloads"
+    downloads_dir = str(__import__('pathlib').Path.home() / 'Downloads')
     output_filename = f"Biên Bản Nghiệm Thu_維修設備驗收記錄_{CONTRACT_NO}.xlsx"
     out_path_downloads = os.path.join(downloads_dir, output_filename)
-    out_path_working = os.path.join(r"e:\Working", output_filename)
+    out_path_working = os.path.join(_workspace_path(''), output_filename)
 
     # Lưu file trước sang Workspace
     wb.save(out_path_working)

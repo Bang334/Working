@@ -10,7 +10,7 @@ function addDaysToDate(dateStr, days) {
   const d = parseInt(parts[2], 10);
   const date = new Date(y, m, d);
   date.setDate(date.getDate() + parseInt(days, 10));
-  
+
   const resY = date.getFullYear();
   const resM = String(date.getMonth() + 1).padStart(2, "0");
   const resD = String(date.getDate()).padStart(2, "0");
@@ -122,6 +122,12 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Format VND Currency
+function formatDateVN(value) {
+  if (!value || value === '-') return '-';
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:$|T)/.exec(String(value));
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : String(value);
+}
+
 function formatVND(amount) {
   if (amount === null || amount === undefined || isNaN(amount)) return "0 ₫";
   return Math.round(amount).toLocaleString("vi-VN") + " ₫";
@@ -381,14 +387,53 @@ function resetHeaderFiltersAr() {
   applyHeaderFiltersAr();
 }
 
+function receivableNotesKey(item) {
+  const code = String(item.contract_code || '').trim();
+  return code && code !== '-' && code !== 'None'
+    ? JSON.stringify([String(item.customer_name || '').trim(), code])
+    : `item:${item.id}`;
+}
+
+function contractNotesMap(items) {
+  const groups = new Map();
+  items.forEach(item => {
+    const key = receivableNotesKey(item);
+    if (!groups.has(key)) groups.set(key, []);
+    const note = String(item.notes || '').trim();
+    if (note && !groups.get(key).includes(note)) groups.get(key).push(note);
+  });
+  return new Map([...groups].map(([key, notes]) => [key, notes.join('\n\n')]));
+}
+
+function escapeNotesHtml(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderContractNote(itemId, note) {
+  return `<div class="notes-text notes-preview" role="button" tabindex="0" aria-expanded="false"
+    onclick="toggleContractNote(this)" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleContractNote(this); }"
+    title="Nhấp để xem toàn bộ ghi chú">${escapeNotesHtml(note) || '<em style="color:#94a3b8">Chưa có ghi chú</em>'}</div>
+    <div class="notes-actions">
+      <button type="button" class="notes-toggle" onclick="toggleContractNote(this.parentElement.previousElementSibling)">Xem thêm</button>
+      <button type="button" onclick="startEditingNotes(${itemId}, this.closest('.editable-notes-cell'))">Sửa ghi chú</button>
+    </div>`;
+}
+
+function toggleContractNote(preview) {
+  const expanded = preview.classList.toggle('notes-expanded');
+  preview.setAttribute('aria-expanded', String(expanded));
+  preview.title = expanded ? 'Nhấp để thu gọn' : 'Nhấp để xem toàn bộ ghi chú';
+  preview.nextElementSibling.querySelector('.notes-toggle').textContent = expanded ? 'Thu gọn' : 'Xem thêm';
+}
+
 // Render Table Rows with Interactive In-Place Editing
 function renderTable(items, isHeaderFiltered = false) {
   const tbody = document.getElementById("receivablesTableBody");
   const tfoot = document.getElementById("receivablesTableFoot");
   const counter = document.getElementById("tableItemCount");
   if (counter) {
-    counter.textContent = isHeaderFiltered 
-      ? `${items.length} / ${allReceivables.length} đợt` 
+    counter.textContent = isHeaderFiltered
+      ? `${items.length} / ${allReceivables.length} đợt`
       : `${items.length} đợt`;
   }
   if (!tbody) return;
@@ -413,7 +458,24 @@ function renderTable(items, isHeaderFiltered = false) {
   let sumRec = 0;
   let sumDebt = 0;
 
-  const rowsHtml = items.map((it, idx) => {
+  // Keep each contract contiguous so rowspan never covers another contract.
+  const grouped = new Map();
+  items.forEach(item => {
+    const key = receivableNotesKey(item);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(item);
+  });
+  const orderedItems = [...grouped.values()].flat();
+  const sharedNotes = contractNotesMap([...allReceivables, ...items]);
+  const rowsHtml = orderedItems.map((it, idx) => {
+    const key = receivableNotesKey(it);
+    const firstInContract = idx === 0 || receivableNotesKey(orderedItems[idx - 1]) !== key;
+    const notesCell = firstInContract ? `
+        <td class="col-notes" rowspan="${grouped.get(key).length}" style="vertical-align: top;">
+          <div class="editable-notes-cell">
+            ${renderContractNote(it.id, sharedNotes.get(key) || '')}
+          </div>
+        </td>` : '';
     sumContract += (it.total_contract_amount || 0);
     sumNet += (it.net_amount || 0);
     sumVat += (it.vat_amount || 0);
@@ -459,8 +521,8 @@ function renderTable(items, isHeaderFiltered = false) {
     // Customer Promised Date Picker
     const promisedDatePicker = `
       <div class="inline-date-picker-wrap">
-        <input type="date" class="inline-date-input" value="${it.customer_promised_date || ''}" 
-               onchange="updateReceivableInline(${it.id}, 'customer_promised_date', this.value)" 
+        <input type="date" class="inline-date-input" value="${it.customer_promised_date || ''}"
+               onchange="updateReceivableInline(${it.id}, 'customer_promised_date', this.value)"
                title="Chọn ngày KH cam kết thanh toán">
         ${it.customer_promised_date ? `<button type="button" class="btn-clear-date" onclick="clearDateInline(${it.id}, 'customer_promised_date', event)" title="Xóa ngày">×</button>` : ''}
       </div>
@@ -469,8 +531,8 @@ function renderTable(items, isHeaderFiltered = false) {
     // Due Date Picker
     const dueDatePicker = `
       <div class="inline-date-picker-wrap">
-        <input type="date" class="inline-date-input" value="${it.due_date || ''}" 
-               onchange="updateReceivableInline(${it.id}, 'due_date', this.value)" 
+        <input type="date" class="inline-date-input" value="${it.due_date || ''}"
+               onchange="updateReceivableInline(${it.id}, 'due_date', this.value)"
                title="Chọn hạn thanh toán">
         ${it.due_date ? `<button type="button" class="btn-clear-date" onclick="clearDateInline(${it.id}, 'due_date', event)" title="Xóa hạn TT">×</button>` : ''}
       </div>
@@ -480,8 +542,8 @@ function renderTable(items, isHeaderFiltered = false) {
     // Paid Date Picker
     const paidDatePicker = `
       <div class="inline-date-picker-wrap">
-        <input type="date" class="inline-date-input" value="${it.paid_date || ''}" 
-               onchange="updateReceivableInline(${it.id}, 'paid_date', this.value)" 
+        <input type="date" class="inline-date-input" value="${it.paid_date || ''}"
+               onchange="updateReceivableInline(${it.id}, 'paid_date', this.value)"
                title="Chọn ngày KH đã chuyển tiền">
         ${it.paid_date ? `<button type="button" class="btn-clear-date" onclick="clearDateInline(${it.id}, 'paid_date', event)" title="Xóa ngày TT">×</button>` : ''}
       </div>
@@ -508,7 +570,12 @@ function renderTable(items, isHeaderFiltered = false) {
     return `
       <tr data-id="${it.id}">
         <td class="text-center sticky-col col-1">${stt}</td>
-        <td class="sticky-col col-2" style="font-weight: 500;" title="${projName}">${projName}</td>
+        <td class="sticky-col col-2" style="font-weight: 500;" title="${projName}">
+          <div class="table-proj-click" onclick="handleTableProjectClick(event, ${it.id})" title="Nhấp chuột xem chi tiết dự án & các đợt" style="cursor: pointer; color: #0284C7; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <span>${projName}</span>
+            <span style="font-size: 0.72rem; opacity: 0.75;" aria-hidden="true">🔍</span>
+          </div>
+        </td>
         <td class="sticky-col col-3" style="font-weight: 600;" title="${custName}">${custName}</td>
         <td class="text-center" style="font-family: monospace;">${contractCode}</td>
         <td class="text-end">${formatVND(it.total_contract_amount)}</td>
@@ -523,16 +590,15 @@ function renderTable(items, isHeaderFiltered = false) {
         <td class="text-center">${paidDatePicker}</td>
         <td class="text-center">${docStatusCell}</td>
         <td class="text-center">${statusSelect}</td>
-        <td class="col-notes">
-          <div class="editable-notes-cell" onclick="startEditingNotes(${it.id}, this)" title="Nhấp để cập nhật ghi chú tiến độ">
-            <span class="notes-text">${it.notes || '<em style="color:#94a3b8">Chưa có ghi chú</em>'}</span>
-          </div>
-        </td>
+        ${notesCell}
         <td class="text-center">
           <div style="display: flex; gap: 0.25rem; justify-content: center; align-items: center;">
             <button type="button" class="btn-action-icon warning" onclick="openEditReceivableModal(${it.id})" title="Chỉnh sửa toàn bộ thông tin đợt này (Mở form)">
               <svg class="icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
+            <a href="/emails?source=receivable&id=${it.id}" class="btn-action-icon" style="color: #0284c7; font-weight: 700;" title="✉️ Soạn Email Nhắc Nợ B2B song ngữ cho đợt này">
+              ✉️
+            </a>
             <a href="/reminders" class="btn-action-icon primary" title="Tạo Thư Nhắc Nợ / Lịch nhắc cho đợt này">
               <svg class="icon" viewBox="0 0 24 24" width="13" height="13"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </a>
@@ -735,12 +801,13 @@ async function updateCollectionStatus(itemId, newStatus) {
 
 // Inline Edit Notes
 function startEditingNotes(itemId, cellElement) {
+  if (cellElement.querySelector('textarea')) return;
   const currentTextSpan = cellElement.querySelector(".notes-text");
-  const rawText = currentTextSpan.textContent.includes("Chưa có ghi chú") ? "" : currentTextSpan.textContent;
+  const rawText = currentTextSpan.querySelector('em') ? "" : currentTextSpan.textContent;
 
   // Replace with textarea
   cellElement.innerHTML = `
-    <textarea class="notes-editor-textarea" placeholder="Nhập ghi chú tiến độ...">${rawText}</textarea>
+    <textarea class="notes-editor-textarea" placeholder="Nhập ghi chú tiến độ chung của hợp đồng...">${escapeNotesHtml(rawText)}</textarea>
   `;
   const textarea = cellElement.querySelector("textarea");
   textarea.focus();
@@ -748,7 +815,7 @@ function startEditingNotes(itemId, cellElement) {
   // Save on blur or Ctrl/Shift+Enter
   const saveAction = async () => {
     const newNotes = textarea.value.trim();
-    cellElement.innerHTML = `<span class="notes-text">${newNotes || '<em style="color:#94a3b8">Chưa có ghi chú</em>'}</span>`;
+    cellElement.innerHTML = renderContractNote(itemId, newNotes);
 
     if (newNotes !== rawText) {
       try {
@@ -759,11 +826,17 @@ function startEditingNotes(itemId, cellElement) {
         });
         const data = await res.json();
         if (data.status === "success") {
+          const item = allReceivables.find(row => row.id === itemId);
+          if (item) allReceivables.forEach(row => {
+            if (receivableNotesKey(row) === receivableNotesKey(item)) row.notes = newNotes;
+          });
           showToast("Đã lưu ghi chú thành công!", "success");
         } else {
+          cellElement.innerHTML = renderContractNote(itemId, rawText);
           showToast(data.message || "Lỗi lưu ghi chú", "error");
         }
       } catch (e) {
+        cellElement.innerHTML = renderContractNote(itemId, rawText);
         showToast("Không thể lưu ghi chú.", "error");
       }
     }
@@ -1565,7 +1638,6 @@ async function saveAiExtractedReceivables() {
 let currentWeeklyData = null;
 let segmentLookupMap = {};
 let contractLookupMap = {};
-let isSyncingScroll = false;
 let currentCompMode = "past_to_curr"; // 'past_to_curr' | 'curr_to_next'
 let currentDataSource = "db"; // 'db' (Gốc), 'sample' (Mẫu), 'upload' (File Riêng)
 let currentUploadId = null;
@@ -1604,9 +1676,9 @@ function switchWeeklyCompMode(mode) {
   const brand = document.getElementById("compHeaderBrandTitle");
   if (brand) {
     if (mode === "curr_to_next") {
-      brand.innerHTML = `KẾ HOẠCH THU HỒI CÔNG NỢ TUẦN TỚI <span style="font-size: 0.8rem; font-weight: 500; color: #94A3B8;">· 下週應收帳款回收預估計劃</span>`;
+      brand.innerHTML = `KẾ HOẠCH THU HỒI CÔNG NỢ TUẦN TỚI <span style="font-size: 0.76rem; font-weight: 600; color: #64748B;">· 下週應收帳款回收預估計劃</span>`;
     } else {
-      brand.innerHTML = `SO SÁNH THU HỒI CÔNG NỢ TUẦN <span style="font-size: 0.8rem; font-weight: 500; color: #94A3B8;">· 每週應收帳款回收對比</span>`;
+      brand.innerHTML = `SO SÁNH THU HỒI CÔNG NỢ TUẦN <span style="font-size: 0.76rem; font-weight: 600; color: #64748B;">· 每週應收帳款回收對比</span>`;
     }
   }
 
@@ -1820,9 +1892,12 @@ function renderCoordinateChartSide(side, contracts) {
 
     // Xây dựng các khoản chia theo % trong thanh ngang 100% của hợp đồng
     const segsHtml = segments.map(s => {
+      if (s.is_missing_schedule) {
+        return `<div class="coord-seg schedule-data-gap" style="width: ${s.width_pct}%;" title="${s.width_pct}% HĐ: chưa có dữ liệu lịch sử, chưa xác định đã thu hay còn nợ"></div>`;
+      }
       const status = isCurr ? s.curr_status : s.prev_status;
       const colorClass = getStatusColorClass(status);
-      
+
       let extraClass = "";
       if (isCurr && !isPlanMode && s.change_type && s.change_type !== "UNCHANGED") {
         extraClass = "seg-changed-this-week";
@@ -1833,40 +1908,25 @@ function renderCoordinateChartSide(side, contracts) {
       }
 
       return `<div class="coord-seg ${colorClass} ${extraClass}"
-                   style="width: ${s.width_pct}%; cursor: pointer;"
+                   style="width: ${s.width_pct}%; cursor: default;"
                    data-seg-id="${s.id}"
                    data-contract-key="${cKey}"
-                   onclick="handleSegmentClick(event, '${s.id}', '${side}')"
-                   oncontextmenu="handleSegmentContextMenu(event, '${s.id}', '${side}')"
                    onmouseenter="onSegmentHoverEnter(event, '${s.id}', '${side}')"
                    onmousemove="onSegmentHoverMove(event)"
                    onmouseleave="onSegmentHoverLeave('${s.id}')"
-                   title="Nhấp chuột trái: Xem chi tiết · Chuột phải: Sửa đợt">
+                   aria-label="Rê chuột để xem thông tin đợt">
               </div>`;
     }).join("");
 
     // CẢ 2 BIỂU ĐỒ ĐỀU CÓ coord-y-label ĐỂ TRỤC ĐỨNG 0% VÀ CÁC THANH HOÀN TOÀN THẲNG HÀNG
-    const yLabelHtml = isCurr ? `
-      <div class="coord-y-label"
-           onclick="handleProjectLabelClick(event, '${cKey}')"
-           onmouseenter="onProjectNameHoverEnter(event, '${cKey}')"
-           onmouseleave="onProjectNameHoverLeave()"
-           style="cursor: pointer;"
-           title="Nhấp chuột xem chi tiết dự án">
-        <div class="coord-proj-title">${c.project_title_vi || c.project_title}</div>
-        <div class="coord-contract-sub" style="color: #0284C7;">${codeLabel ? codeLabel + ' · ' : ''}Thu: ${c.curr_pct_collected || 0}%</div>
-        ${c.has_change ? '<div style="font-size: 0.68rem; color: #EAB308; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">⚡ Có biến động tuần</div>' : ''}
-      </div>
-    ` : `
-      <div class="coord-y-label"
-           onclick="handleProjectLabelClick(event, '${cKey}')"
-           onmouseenter="onProjectNameHoverEnter(event, '${cKey}')"
-           onmouseleave="onProjectNameHoverLeave()"
-           style="cursor: pointer;"
-           title="Nhấp chuột xem chi tiết dự án">
-        <div class="coord-proj-title">${c.project_title_vi || c.project_title}</div>
-        ${c.project_title_zh && c.project_title_zh !== (c.project_title_vi || c.project_title) ? `<div class="coord-proj-title-zh" style="font-size: 0.72rem; color: #64748B; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.project_title_zh}</div>` : ''}
-        <div class="coord-contract-sub">${codeLabel ? codeLabel + ' · ' : ''}${c.segment_count} 期款 (khoản)</div>
+    const projectLabel = escapeNotesHtml(c.project_title_vi || c.project_title || '-');
+    const customerLabel = escapeNotesHtml(c.customer_name_vi || c.customer_name || '-');
+    const yLabelHtml = `
+      <div class="coord-y-label" role="button" tabindex="0" onclick="handleProjectLabelClick(event, '${cKey}')"
+           onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleProjectLabelClick(event, '${cKey}'); }"
+           title="${projectLabel} · ${customerLabel} · ${escapeNotesHtml(codeLabel)}">
+        <div class="coord-proj-title">${projectLabel}</div>
+        <div class="coord-customer-title">${customerLabel}</div>
       </div>
     `;
 
@@ -1880,12 +1940,13 @@ function renderCoordinateChartSide(side, contracts) {
     const hasOverdue = !!c.has_overdue_curr || (c.segments || []).some(s => s.curr_status === "DELAYED");
     const hasUrgent = !!c.has_urgent_curr || (c.segments || []).some(s => s.curr_status === "URGENT");
     const hasChange = !!c.has_change;
-    const isActive = !!c.is_active_attention || hasChange || hasOverdue || hasUrgent || hasUnstarted;
+    const isActive = hasChange || hasOverdue || hasUrgent;
     const custClean = (c.customer_name || "").trim().toLowerCase();
 
     return `
       <div class="coord-bar-row"
            data-contract-key="${cKey}"
+           data-search="${encodeURIComponent(normalizeChartSearch([c.project_title_vi, c.project_title, c.project_title_zh, c.customer_name_vi, c.customer_name, c.contract_code].join(' ')))}"
            data-customer="${encodeURIComponent(custClean)}"
            data-is-active="${isActive ? '1' : '0'}"
            data-has-change="${hasChange ? '1' : '0'}"
@@ -1913,29 +1974,12 @@ function renderCoordinateChartSide(side, contracts) {
   container.innerHTML = rowsHtml;
 }
 
-// Chuột phải vào khoản trên biểu đồ -> Mở Modal Sửa Đợt Công Nợ
-function handleSegmentContextMenu(event, segId, side) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  hideSegmentTooltip();
-  hideProjectHoverCard();
-  openEditReceivableModal(segId);
-}
-
 // Click vào tên dự án ở Biểu đồ -> Hiển thị Modal/Card tổng quan dự án (Toggle)
 function handleProjectLabelClick(event, cKey) {
   if (event && event.stopPropagation) {
     event.stopPropagation();
   }
-  if (activeClickedContractKey === cKey) {
-    hideProjectHoverCard();
-    return;
-  }
-  hideSegmentTooltip();
-  activeClickedContractKey = cKey;
-  showProjectDetailCard(event, cKey);
+  openContractEditor(cKey);
 }
 
 function showProjectDetailCard(event, cKey) {
@@ -1944,6 +1988,8 @@ function showProjectDetailCard(event, cKey) {
 
   const card = document.getElementById("projectDetailHoverCard");
   if (!card) return;
+  // Keep the detail above the fullscreen chart and outside scrolling containers.
+  if (card.parentElement !== document.body) document.body.appendChild(card);
 
   const titleEl = document.getElementById("projCardTitle");
   const custEl = document.getElementById("projCardCustomer");
@@ -1962,9 +2008,9 @@ function showProjectDetailCard(event, cKey) {
   if (codeEl) codeEl.textContent = (c.contract_code && c.contract_code !== "-") ? c.contract_code : "Chưa có số HĐ";
   if (grossEl) grossEl.textContent = c.total_gross_formatted || "0 ₫";
   if (recEl) recEl.textContent = c.curr_received_formatted || "0 ₫";
-  
-  const debtVal = Math.max(0, (c.total_gross || 0) - (c.curr_received || 0));
-  if (debtEl) debtEl.textContent = formatCurrencyVN(debtVal);
+
+  const debtVal = Math.max(0, c.curr_debt ?? ((c.total_gross || 0) - (c.curr_received || 0)));
+  if (debtEl) debtEl.textContent = formatVND(debtVal);
   if (rateEl) rateEl.textContent = `${c.curr_pct_collected || 0}%`;
 
   if (listEl) {
@@ -1974,34 +2020,37 @@ function showProjectDetailCard(event, cKey) {
       const stText = s.curr_status_label_vi || s.curr_status;
       const rec = parseFloat(s.curr_received) || 0;
       const debt = parseFloat(s.curr_debt) || Math.max(0, (s.gross_amount || 0) - rec);
-      
+
       return `
-        <div class="proj-card-ms-row" style="padding: 0.35rem 0.5rem; border-bottom: 1px solid #1E293B; display: flex; justify-content: space-between; align-items: center; font-size: 0.74rem;">
-          <div style="flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 0.5rem;">
-            <strong style="color: #F8FAFC;">Đợt ${idx + 1}: ${s.milestone_name_vi || s.milestone_name}</strong>
+        <div class="proj-card-ms-row">
+          <div class="proj-card-ms-name">
+            <strong>${s.is_missing_schedule || s.is_aggregate_history ? '' : `Đợt ${s.seg_index || idx + 1}: `}${s.milestone_name_vi || s.milestone_name}</strong>
             <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.35rem;">(${s.width_pct}%)</span>
+            ${s.payment_basis === 'inferred_preceding_paid' ? `<div class="schedule-warning">Đã thu theo thứ tự đợt; chậm nhất ${formatDateVN(s.paid_by_date)}. Chưa rõ ngày thực nhận.</div>` : ''}
+            ${s.is_aggregate_history ? '<div class="schedule-warning">Tổng lịch sử theo email xác nhận chỉ còn 10%; chưa tách các đợt, chưa rõ ngày thực nhận.</div>' : ''}
           </div>
-          <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+          <div class="proj-card-ms-summary">
             <span style="font-family: monospace; font-weight: 700; color: #38BDF8;">${s.gross_formatted || "0 ₫"}</span>
             <span class="coord-seg ${stColor}" style="width: 10px; height: 10px; border-radius: 2px; display: inline-block;"></span>
-            <span style="font-size: 0.7rem; color: #CBD5E1;">${stText}</span>
+            <span style="font-size: 0.7rem;">${stText}</span>
           </div>
         </div>
       `;
-    }).join("");
+    }).join("") + (c.schedule_warning ? `<p class="schedule-warning">${c.schedule_warning}</p>` : '');
   }
 
   card.style.display = "block";
-  document.querySelectorAll(".coord-y-label-box").forEach(el => el.classList.remove("selected-active"));
-  const activeYLabel = document.querySelector(`.coord-y-label-box[data-contract-key="${cKey}"]`);
-  if (activeYLabel) activeYLabel.classList.add("selected-active");
+  card.focus({ preventScroll: true });
+  document.querySelectorAll(".coord-y-label").forEach(el => {
+    el.classList.toggle("selected-active", el.closest(".coord-bar-row")?.dataset.contractKey === cKey);
+  });
 }
 
 function hideProjectHoverCard() {
   const card = document.getElementById("projectDetailHoverCard");
   if (card) card.style.display = "none";
   activeClickedContractKey = null;
-  document.querySelectorAll(".coord-y-label-box").forEach(el => el.classList.remove("selected-active"));
+  document.querySelectorAll(".coord-y-label").forEach(el => el.classList.remove("selected-active"));
 }
 
 function onProjectNameHoverEnter(event, cKey) {
@@ -2051,21 +2100,35 @@ function getStatusLabelVN(status) {
   }
 }
 
-// Click chuột trái vào khoản trên biểu đồ -> Ghim hiển thị Card chi tiết nền trắng
-function handleSegmentClick(event, segId, side) {
+// ==============================================================================
+// FLOATING CHI TIẾT ĐỢT CÔNG NỢ & TƯƠNG TÁC CHUỘT
+// (Chuột trái: Sửa đợt · Chuột phải: Xem chi tiết · Hover: Chỉ highlight dòng & thanh, không bật modal/card)
+// ==============================================================================
+
+// Chuột trái vào khoản trên biểu đồ -> Mở Modal Sửa Đợt Công Nợ (Chuẩn thiết kế gốc)
+function handleSegmentLeftClick(event, segId, side) {
   if (event) {
     if (event.stopPropagation) event.stopPropagation();
   }
+  hideSegmentTooltip();
+  hideProjectHoverCard();
+  openEditReceivableModal(segId);
+}
+
+// Chuột phải vào khoản trên biểu đồ -> Mở / Ghim xem Card Chi Tiết Đợt (Chuẩn thiết kế gốc)
+function handleSegmentRightClick(event, segId, side) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  hideProjectHoverCard();
 
   const sIdStr = String(segId);
-  // Nếu nhấp lại chính khoản đang ghim -> Toggle đóng
+  // Nếu nhấp chuột phải lại chính khoản đang mở -> Toggle đóng
   if (activeClickedSegId === sIdStr) {
     hideSegmentTooltip();
     return;
   }
-
-  // Đóng project hover card nếu đang mở
-  hideProjectHoverCard();
 
   // Bỏ phát sáng active của khoản cũ
   removeSegmentActiveHighlight();
@@ -2079,17 +2142,16 @@ function handleSegmentClick(event, segId, side) {
   showSegmentDetailCard(event, segId, side);
 }
 
-// Chuột phải vào khoản trên biểu đồ -> Mở Modal Sửa Đợt Công Nợ
-function handleSegmentContextMenu(event, segId, side) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  hideSegmentTooltip();
-  openEditReceivableModal(segId);
+// Tương thích ngược nếu các nơi khác gọi handleSegmentClick / handleSegmentContextMenu
+function handleSegmentClick(event, segId, side) {
+  handleSegmentLeftClick(event, segId, side);
 }
 
-// Hiển thị Card chi tiết đợt thanh toán khi CLICK (Nền trắng, viền xanh thanh lịch, tương phản cao)
+function handleSegmentContextMenu(event, segId, side) {
+  handleSegmentRightClick(event, segId, side);
+}
+
+// Hiển thị Card chi tiết đợt thanh toán khi BẤM CHUỘT PHẢI (Nền trắng, viền xanh thanh lịch, tương phản cao)
 function showSegmentDetailCard(event, segId, side) {
   const info = segmentLookupMap[segId] || segmentLookupMap[String(segId)];
   if (!info) {
@@ -2147,7 +2209,7 @@ function showSegmentDetailCard(event, segId, side) {
 
     <div class="tt-row" style="margin-bottom: 0.35rem;">
       <span class="tt-k">Số tiền khoản / 款項金額:</span>
-      <span class="tt-v" style="color: #0284C7; font-size: 0.94rem; font-weight: 800;">${s.gross_formatted || formatCurrencyVN(s.gross_amount)}</span>
+      <span class="tt-v" style="color: #0284C7; font-size: 0.94rem; font-weight: 800;">${s.gross_formatted || formatVND(s.gross_amount)}</span>
     </div>
 
     <div class="tt-row" style="margin-top: 0.25rem;">
@@ -2181,9 +2243,10 @@ function showSegmentDetailCard(event, segId, side) {
       </div>
     ` : ''}
 
-    <div style="margin-top: 0.65rem; padding-top: 0.45rem; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end;">
+    <div style="margin-top: 0.65rem; padding-top: 0.45rem; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.68rem; color: #94A3B8;">👆 Chuột phải: Đóng · Chuột trái: Sửa</span>
       <button type="button" class="btn btn-outline-primary btn-sm" onclick="hideSegmentTooltip(event); openEditReceivableModal('${s.id}')" style="font-size: 0.74rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 6px;">
-        ✏️ Chỉnh sửa đợt này (Chuột phải)
+        ✏️ Mở form sửa đợt (Chuột trái)
       </button>
     </div>
   `;
@@ -2193,8 +2256,9 @@ function showSegmentDetailCard(event, segId, side) {
   positionSegmentTooltip(event);
 }
 
-// Khi rê chuột vào từng khoản (Hover)
+// Compact read-only information on hover; editing lives in the contract dialog.
 function onSegmentHoverEnter(event, segId, side) {
+  if (performance.now() < chartScrollQuietUntil) return;
   // Highlight đồng bộ cả 2 bên biểu đồ
   document.querySelectorAll(`.coord-seg[data-seg-id="${segId}"]`).forEach(el => {
     el.classList.add("seg-hover-synced");
@@ -2203,69 +2267,38 @@ function onSegmentHoverEnter(event, segId, side) {
   const info = segmentLookupMap[segId] || segmentLookupMap[String(segId)];
   if (info) {
     onRowHoverEnter(info.contract.contract_key);
-  }
-
-  // Nếu chưa ghim khoản nào bằng click trái -> Hiện preview tooltip nhanh
-  if (!activeClickedSegId) {
-    const tooltip = document.getElementById("chartSegmentTooltip");
-    if (!tooltip || !info) return;
-
     const s = info.segment;
-    const c = info.contract;
-
-    const isPlanMode = currentCompMode === "curr_to_next";
-    const prevLabelText = isPlanMode ? "Tuần này:" : "Tuần trước:";
-    const currLabelText = isPlanMode ? "Tuần tới:" : "Tuần này:";
-
-    const prevPill = `<span class="badge-status-pill ${getStatusPillClass(s.prev_status)}">${getStatusLabelVN(s.prev_status)}</span>`;
-    const currPill = `<span class="badge-status-pill ${getStatusPillClass(s.curr_status)}">${getStatusLabelVN(s.curr_status)}</span>`;
-
-    const cleanMilestone = (s.milestone_name_vi || s.milestone_name || "").split("\n")[0];
-    const dueDisplay = (s.due_date && s.due_date !== '-') ? formatDateVN(s.due_date) : 'Theo tiến độ';
-    const paidDisplay = (s.paid_date && s.paid_date !== '-') ? formatDateVN(s.paid_date) : null;
-
-    tooltip.innerHTML = `
-      <div style="font-weight: 800; font-size: 0.84rem; color: #0F172A; margin-bottom: 2px;">
-        📌 ${cleanMilestone} <span class="tt-seg-pct" style="float: right;">${s.width_pct}% HĐ</span>
-      </div>
-      <div style="font-size: 0.74rem; color: #64748B; margin-bottom: 0.35rem;">
-        ${c.project_title_vi || c.project_title}
-      </div>
-      <div class="tt-row">
-        <span class="tt-k">Số tiền:</span>
-        <span class="tt-v" style="color: #0284C7; font-weight: 800;">${s.gross_formatted || formatCurrencyVN(s.gross_amount)}</span>
-      </div>
-      <div class="tt-row">
-        <span class="tt-k">${prevLabelText}</span>
-        <span class="tt-v">${prevPill}</span>
-      </div>
-      <div class="tt-row">
-        <span class="tt-k">${currLabelText}</span>
-        <span class="tt-v">${currPill}</span>
-      </div>
-      <div class="tt-row" style="margin-top: 0.2rem; border-top: 1px dashed #CBD5E1; padding-top: 0.25rem;">
-        <span class="tt-k">${paidDisplay ? '✅ Thực thu:' : '📅 Hạn TT:'}</span>
-        <span class="tt-v">${paidDisplay || dueDisplay}</span>
-      </div>
-      <div style="margin-top: 0.35rem; font-size: 0.68rem; color: #94A3B8; text-align: center; border-top: 1px dotted #E2E8F0; padding-top: 0.25rem;">
-        👆 Nhấp chuột trái: Ghim chi tiết · Chuột phải: Sửa đợt
-      </div>
-    `;
-
-    // Khi hover, pointer-events: none để không bắt chuột và click xuyên thẳng vào khoản
-    tooltip.style.pointerEvents = "none";
-    tooltip.style.display = "block";
-    positionSegmentTooltip(event);
+    const curr = side === 'curr';
+    const tooltip = document.getElementById('chartSegmentTooltip');
+    if (tooltip) {
+      if (tooltip.parentElement !== document.body) document.body.appendChild(tooltip);
+      tooltip.innerHTML = `<div class="chart-segment-compact">
+        <strong>Đợt ${s.seg_index || ''} / 第${s.seg_index || ''}期: ${escapeNotesHtml(s.milestone_name_vi || s.milestone_name || '')}</strong>
+        ${s.milestone_name_zh && s.milestone_name_zh !== (s.milestone_name_vi || s.milestone_name) ? `<div lang="zh-Hant">${escapeNotesHtml(s.milestone_name_zh)}</div>` : ''}
+        <div>Tỷ lệ / 比例: ${s.width_pct}%</div>
+        <div>Phải thu / 應收金額: ${formatVND(s.gross_amount)}</div>
+        <div>Trạng thái / 收款狀態: ${escapeNotesHtml(curr ? s.curr_status_label_vi : s.prev_status_label_vi)} / ${escapeNotesHtml(curr ? s.curr_status_label_zh : s.prev_status_label_zh)}</div>
+        <div>Đã thu / 已收金額: ${formatVND(curr ? s.curr_received : s.prev_received)}</div>
+        <div>Còn phải thu / 未收餘額: ${formatVND(curr ? s.curr_debt : s.prev_debt)}</div>
+        <div>Hạn thanh toán / 付款期限: ${escapeNotesHtml(s.due_date || '-')}</div>
+        <div>Ngày thu / 收款日: ${escapeNotesHtml(s.paid_date || '-')}</div>
+        <div>Chứng từ / 單據狀態: ${escapeNotesHtml(s.doc_status_vi || s.doc_status || '-')}</div>
+        ${s.doc_status_zh && s.doc_status_zh !== (s.doc_status_vi || s.doc_status) ? `<div lang="zh-Hant">${escapeNotesHtml(s.doc_status_zh)}</div>` : ''}
+      </div>`;
+      tooltip.classList.add('compact-hover');
+      tooltip.style.display = 'block';
+      tooltip.style.pointerEvents = 'none';
+      positionSegmentTooltip(event);
+    }
   }
 }
 
 function onSegmentHoverMove(event) {
-  if (!activeClickedSegId) {
-    positionSegmentTooltip(event);
-  }
+  positionSegmentTooltip(event);
 }
 
 function onSegmentHoverLeave(segId) {
+  hideSegmentTooltip();
   document.querySelectorAll(`.coord-seg[data-seg-id="${segId}"]`).forEach(el => {
     el.classList.remove("seg-hover-synced");
   });
@@ -2273,11 +2306,6 @@ function onSegmentHoverLeave(segId) {
   const info = segmentLookupMap[segId] || segmentLookupMap[String(segId)];
   if (info) {
     onRowHoverLeave(info.contract.contract_key);
-  }
-
-  // Nếu không bị ghim bởi click, ẩn tooltip
-  if (!activeClickedSegId) {
-    hideSegmentTooltip();
   }
 }
 
@@ -2345,27 +2373,55 @@ function onRowHoverLeave(cKey) {
   });
 }
 
+let chartScrollQuietUntil = 0;
+
 function setupSynchronizedScrollAndHover() {
-  const pScroll = document.getElementById("prevChartScroll");
-  const cScroll = document.getElementById("currChartScroll");
+  const pScroll = document.getElementById("leftBarsScrollArea");
+  const cScroll = document.getElementById("rightBarsScrollArea");
 
   if (!pScroll || !cScroll) return;
 
-  pScroll.onscroll = function () {
-    if (!isSyncingScroll) {
-      isSyncingScroll = true;
-      cScroll.scrollTop = pScroll.scrollTop;
-      isSyncingScroll = false;
+  const mirroredPositions = new WeakMap();
+  const quietHover = () => {
+    chartScrollQuietUntil = performance.now() + 160;
+    hideSegmentTooltip();
+  };
+  const syncFrom = (source, target) => {
+    if (mirroredPositions.get(source) === source.scrollTop) {
+      mirroredPositions.delete(source);
+      return;
+    }
+    quietHover();
+    if (Math.abs(target.scrollTop-source.scrollTop)>0.5) {
+      target.scrollTop=source.scrollTop;
+      mirroredPositions.set(target,target.scrollTop);
     }
   };
+  pScroll.onscroll=()=>syncFrom(pScroll,cScroll);
+  cScroll.onscroll=()=>syncFrom(cScroll,pScroll);
 
-  cScroll.onscroll = function () {
-    if (!isSyncingScroll) {
-      isSyncingScroll = true;
-      pScroll.scrollTop = cScroll.scrollTop;
-      isSyncingScroll = false;
+  // Drive both panes with one wheel step instead of competing scroll animations.
+  const wheel = event => {
+    if (event.ctrlKey || event.shiftKey || Math.abs(event.deltaX)>Math.abs(event.deltaY)) return;
+    if (!event.deltaY) return;
+    event.preventDefault();
+    quietHover();
+    const source=event.currentTarget;
+    const unit=event.deltaMode===1?16:event.deltaMode===2?source.clientHeight:1;
+    const max=Math.max(0,Math.min(pScroll.scrollHeight-pScroll.clientHeight,cScroll.scrollHeight-cScroll.clientHeight));
+    const top=Math.max(0,Math.min(max,source.scrollTop+event.deltaY*unit));
+    for (const pane of [pScroll,cScroll]) {
+      pane.scrollTop=top;
+      mirroredPositions.set(pane,pane.scrollTop);
     }
   };
+  for (const pane of [pScroll,cScroll]) {
+    if (pane._comparisonWheel) pane.removeEventListener('wheel',pane._comparisonWheel);
+    pane._comparisonWheel=wheel;
+    pane.addEventListener('wheel',wheel,{passive:false});
+  }
+  // Reconcile positions after a refresh/filter without adding duplicate listeners.
+  cScroll.scrollTop = pScroll.scrollTop;
 }
 
 // ==============================================================================
@@ -2376,7 +2432,12 @@ function onFilterChangesDropdownChange() {
   filterComparisonItems();
 }
 
+function normalizeChartSearch(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
+}
+
 function filterComparisonItems() {
+  const searchTerms = normalizeChartSearch(document.getElementById('compSearch')?.value).split(/\s+/).filter(Boolean);
   const filterVal = document.getElementById("compFilterChanges")?.value || "active_only";
   const customerVal = (document.getElementById("compFilterCustomer")?.value || "all").toLowerCase();
   const allRows = document.querySelectorAll(".coord-bar-row");
@@ -2425,7 +2486,9 @@ function filterComparisonItems() {
       matchFilter = segCount >= 2;
     }
 
-    const isVisible = matchCust && matchFilter;
+    const searchText = decodeURIComponent(row.getAttribute('data-search') || '');
+    const matchSearch = searchTerms.every(term => searchText.includes(term));
+    const isVisible = matchCust && matchFilter && matchSearch;
     row.style.display = isVisible ? "flex" : "none";
     if (isVisible && row.closest("#prevBarsContainer")) {
       visibleCount++;
@@ -2585,6 +2648,12 @@ async function saveWeeklySnapshot(snapshotDate, notes) {
 // Phím tắt Esc đóng biểu đồ toàn màn hình
 document.addEventListener("keydown", function (e) {
   if (e.key === "Escape") {
+    if (document.getElementById('contractScheduleDialog')?.open) return;
+    const projectCard = document.getElementById("projectDetailHoverCard");
+    if (projectCard && projectCard.style.display === "block") {
+      hideProjectHoverCard();
+      return;
+    }
     const editModal = document.getElementById("modalEditReceivable");
     if (editModal && editModal.style.display !== "none") {
       closeEditReceivableModal();
@@ -2613,3 +2682,12 @@ document.addEventListener("click", function (e) {
     }
   }
 });
+
+// Chuyển trực tiếp sang Trung Tâm Soạn Email Nhắc Nợ từ Modal Công Nợ
+window.goToEmailFromSegmentDetail = function() {
+  if (typeof activeClickedSegId !== "undefined" && activeClickedSegId) {
+    window.location.href = `/emails?source=receivable&id=${activeClickedSegId}`;
+  } else {
+    window.location.href = `/emails?source=receivable`;
+  }
+};

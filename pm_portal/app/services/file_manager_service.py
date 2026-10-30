@@ -544,6 +544,9 @@ def _move_and_update_references(source: Path, destination: Path, *, trash: bool 
     old, new = str(source.resolve()), str(destination.resolve())
     moved = False
     try:
+        has_workflow=conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='workflow_files'").fetchone()
+        if has_workflow and conn.execute('SELECT 1 FROM workflow_files WHERE path=?',(old,)).fetchone():
+            raise ValueError('Đây là chứng từ đã gắn công việc. Giữ nguyên tệp gốc; tải bản bổ sung trong Việc cần làm để bảo toàn lịch sử.')
         # Reminder attachments may be stored as JSON and need a dedicated editor.
         rows = conn.execute("SELECT attachment_path, attachments FROM custom_reminders").fetchall()
         if any(old in str(row[0] or "") or old in str(row[1] or "") for row in rows):

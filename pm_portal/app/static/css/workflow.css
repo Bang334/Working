@@ -1,0 +1,1379 @@
+/* ==========================================================================
+   HONG MING GLOBAL PM PORTAL - WORKFLOW & AUDIT TRAIL STYLESHEET
+   Design Language: Cohesive with Trang Chủ - Tổng Quan Dự Án (tracker.css)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Workspace Container & Page Base
+   -------------------------------------------------------------------------- */
+.workflow-workspace,
+.wf-page {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 1.6rem 2rem 3.5rem;
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  color: #0f172a;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   2. Hero Section (Cohesive with tracker.css .dashboard-hero)
+   -------------------------------------------------------------------------- */
+.wf-hero,
+.wf-intro {
+  position: relative;
+  isolation: isolate;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem 2rem;
+  margin-bottom: 0;
+  padding: 1.55rem 1.85rem;
+  overflow: hidden;
+  color: #f8fafc;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(56, 189, 248, 0.34), transparent 14rem),
+    linear-gradient(118deg, #0f2850 0%, #164182 52%, #2563b7 100%);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 16px 38px rgba(30, 64, 175, 0.18);
+}
+
+.wf-hero::after,
+.wf-intro::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -80px;
+  right: 15%;
+  width: 190px;
+  height: 190px;
+  border: 34px solid rgba(255, 255, 255, 0.055);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.wf-hero-copy,
+.wf-intro > div:first-child {
+  flex: 1 1 420px;
+  min-width: 280px;
+  max-width: 760px;
+}
+
+.wf-eyebrow,
+.dashboard-kicker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem 0.85rem;
+  margin-bottom: 0.7rem;
+  color: #bfdbfe;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.65rem;
+  color: #dcfce7;
+  background: rgba(22, 163, 74, 0.22);
+  border: 1px solid rgba(134, 239, 172, 0.24);
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.live-indicator > span {
+  width: 7px;
+  height: 7px;
+  background: #4ade80;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.11);
+}
+
+.dashboard-date-range {
+  white-space: nowrap;
+}
+
+.wf-hero h2,
+.wf-intro h2 {
+  margin: 0;
+  font-size: clamp(1.55rem, 2.2vw, 2.15rem);
+  font-weight: 780;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+  color: #ffffff;
+  word-break: normal;
+}
+
+.wf-hero p,
+.wf-intro p {
+  max-width: 680px;
+  margin: 0.55rem 0 0;
+  color: #dbeafe;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.wf-hero-actions,
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  flex: 1 1 380px;
+  max-width: 100%;
+}
+
+.dashboard-action {
+  min-height: 42px;
+  padding: 0.5rem 0.95rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.dashboard-actions .btn-outline {
+  color: #eff6ff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.dashboard-actions .btn-outline:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.dashboard-action-email {
+  color: #e0f2fe !important;
+  background: rgba(14, 165, 233, 0.2) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  font-weight: 700 !important;
+}
+
+.dashboard-action-email:hover {
+  color: #ffffff !important;
+  background: rgba(14, 165, 233, 0.35) !important;
+  border-color: #38bdf8 !important;
+}
+
+.dashboard-actions .btn-primary,
+.wf-intro > button.wf-primary {
+  color: #17417b;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  box-shadow: 0 8px 20px rgba(2, 8, 23, 0.18);
+  font-weight: 700;
+}
+
+.dashboard-actions .btn-primary:hover,
+.wf-intro > button.wf-primary:hover {
+  color: #0f2850;
+  background: #eff6ff;
+  border-color: #eff6ff;
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   3. Notifications & Alerts (#wf-alert)
+   -------------------------------------------------------------------------- */
+#wf-alert {
+  min-height: 0;
+}
+
+.wf-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.06);
+  animation: fadeInNotice 0.2s ease-out;
+}
+
+.wf-message.error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.06);
+}
+
+@keyframes fadeInNotice {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --------------------------------------------------------------------------
+   4. Create Task Panel (#wf-create)
+   -------------------------------------------------------------------------- */
+#wf-create.wf-box {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 18px;
+  padding: 1.6rem 2rem;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  margin-bottom: 0.5rem;
+  animation: fadeInNotice 0.22s ease-out;
+}
+
+#wf-create h3 {
+  margin: 0 0 1.15rem;
+  font-size: 1.2rem;
+  font-weight: 780;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+#wf-create p {
+  margin: 0.85rem 0 1.15rem;
+  padding: 0.75rem 1rem;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: #1e40af;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   5. Metric Cards & KPI Grid (#wf-summary)
+   Cohesive with tracker.css .kpi-grid & .kpi-card
+   -------------------------------------------------------------------------- */
+.wf-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.wf-stat {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.15rem 1.25rem;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #e1e8f1;
+  border-radius: 16px;
+  box-shadow: 0 7px 22px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  font: inherit;
+  outline: none;
+}
+
+.wf-stat::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 16px 16px 0 0;
+  transition: height 180ms ease;
+}
+
+.wf-stat::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  bottom: -28px;
+  width: 80px;
+  height: 80px;
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+.wf-stat span {
+  display: block;
+  order: 1;
+  margin-bottom: 0.35rem;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.wf-stat strong {
+  display: block;
+  order: 2;
+  color: #0f172a;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.wf-stat small {
+  display: block;
+  order: 3;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  min-height: 1rem;
+}
+
+/* Specific Accent Styles per Group */
+.wf-stat.active { color: #059669; }
+.wf-stat.active::before { background: #059669; }
+.wf-stat.active:hover {
+  transform: translateY(-2px);
+  border-color: #6ee7b7;
+  box-shadow: 0 12px 28px rgba(5, 150, 105, 0.09);
+}
+.wf-stat.active.selected {
+  background: #f0fdf4;
+  border-color: #059669;
+  box-shadow: 0 0 0 2px #059669, 0 12px 28px rgba(5, 150, 105, 0.12);
+}
+.wf-stat.active strong { color: #065f46; }
+
+.wf-stat.waiting { color: #4f46e5; }
+.wf-stat.waiting::before { background: #4f46e5; }
+.wf-stat.waiting:hover {
+  transform: translateY(-2px);
+  border-color: #a5b4fc;
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.09);
+}
+.wf-stat.waiting.selected {
+  background: #eef2ff;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px #4f46e5, 0 12px 28px rgba(79, 70, 229, 0.12);
+}
+.wf-stat.waiting strong { color: #3730a3; }
+
+.wf-stat.review { color: #d97706; }
+.wf-stat.review::before { background: #d97706; }
+.wf-stat.review:hover {
+  transform: translateY(-2px);
+  border-color: #fcd34d;
+  box-shadow: 0 12px 28px rgba(217, 119, 6, 0.09);
+}
+.wf-stat.review.selected {
+  background: #fffbeb;
+  border-color: #d97706;
+  box-shadow: 0 0 0 2px #d97706, 0 12px 28px rgba(217, 119, 6, 0.12);
+}
+.wf-stat.review strong { color: #92400e; }
+
+.wf-stat.closed { color: #10b981; }
+.wf-stat.closed::before { background: #10b981; }
+.wf-stat.closed:hover {
+  transform: translateY(-2px);
+  border-color: #6ee7b7;
+  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.09);
+}
+.wf-stat.closed.selected {
+  background: #f0fdf4;
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px #10b981, 0 12px 28px rgba(16, 185, 129, 0.12);
+}
+.wf-stat.closed strong { color: #047857; }
+
+.wf-stat.all { color: #2563eb; }
+.wf-stat.all::before { background: #2563eb; }
+.wf-stat.all:hover {
+  transform: translateY(-2px);
+  border-color: #93c5fd;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.09);
+}
+.wf-stat.all.selected {
+  background: #eff6ff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px #2563eb, 0 12px 28px rgba(37, 99, 235, 0.12);
+}
+.wf-stat.all strong { color: #1d4ed8; }
+
+/* --------------------------------------------------------------------------
+   6. Search & Filter Toolbar (.wf-toolbar)
+   Cohesive with tracker.css .projects-header
+   -------------------------------------------------------------------------- */
+.wf-toolbar {
+  background: #ffffff;
+  border: 1px solid #e1e8f1;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.wf-filters {
+  display: grid;
+  grid-template-columns: minmax(260px, 2fr) minmax(170px, 1fr) minmax(170px, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+  margin: 0;
+}
+
+.wf-page label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.02em;
+}
+
+.wf-page input,
+.wf-page select,
+.wf-page textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.84rem;
+  color: #0f172a;
+  background: #ffffff;
+  box-sizing: border-box;
+  min-width: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wf-page input:focus,
+.wf-page select:focus,
+.wf-page textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  outline: none;
+}
+
+.wf-page input[type="search"] {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>');
+  background-repeat: no-repeat;
+  background-position: 0.75rem center;
+  background-size: 15px 15px;
+  padding-left: 2.3rem;
+}
+
+.wf-page button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  padding: 0.55rem 1rem;
+  background: #ffffff;
+  border-radius: 10px;
+  color: #1e293b;
+  font-size: 0.84rem;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.18s ease;
+}
+
+.wf-page button:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.wf-page button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+#wf-refresh {
+  min-height: 40px;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+#wf-refresh:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.wf-filter-more {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.65rem;
+  margin: 0 !important;
+}
+
+.wf-filter-more summary {
+  cursor: pointer;
+  font-size: 0.76rem !important;
+  font-weight: 700;
+  color: #2563eb;
+  padding: 0.4rem 0;
+  user-select: none;
+}
+
+.wf-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 0.75rem 0 0.25rem;
+}
+
+.wf-result-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.65rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+#wf-results {
+  font-weight: 650;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+}
+
+.wf-page #wf-reset {
+  font-size: 0.78rem;
+  border: 1px solid transparent;
+  padding: 0.25rem 0.6rem;
+  background: transparent;
+  color: #64748b;
+  text-decoration: underline;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.wf-page #wf-reset:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+/* --------------------------------------------------------------------------
+   7. Two-Column Workspace Layout (.wf-layout)
+   -------------------------------------------------------------------------- */
+.wf-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Left Pane: Task List (.wf-list-pane) */
+.wf-list-pane {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  padding-right: 0.4rem;
+  min-width: 0;
+}
+
+.wf-list-pane::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wf-list-pane::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wf-list-pane::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.wf-list-group {
+  margin: 0 0 1.25rem;
+}
+
+.wf-list-group h3 {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  padding: 0.65rem 0.4rem;
+  margin: 0 0 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+  overflow-wrap: anywhere;
+}
+
+.wf-list-group h3 span {
+  background: #e2e8f0;
+  color: #0f172a;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+/* Task Item Card (.wf-case) */
+.wf-page .wf-case {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.1rem 1.15rem !important;
+  margin: 0 0 0.75rem !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.wf-page .wf-case:hover {
+  transform: translateY(-1px);
+  border-color: #94a3b8;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+}
+
+.wf-page .wf-case.active {
+  background: #eff6ff;
+  border-color: #2563eb;
+  border-left: 4px solid #2563eb;
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.12);
+}
+
+.wf-case-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.wf-tag {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #334155;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid #e2e8f0;
+}
+
+.wf-status {
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 0.2rem 0.55rem;
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.wf-status.active {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.wf-status.waiting {
+  background: #eef2ff;
+  color: #4338ca;
+  border-color: #c7d2fe;
+}
+
+.wf-status.review {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.wf-status.closed {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.wf-case strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.92rem;
+  font-weight: 780;
+  color: #0f172a;
+  line-height: 1.45;
+  margin: 0.45rem 0 0.35rem;
+  overflow-wrap: anywhere;
+}
+
+.wf-case-ref {
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: #2563eb;
+  margin: 0 0 0.35rem;
+  overflow-wrap: anywhere;
+}
+
+.wf-case-state {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: #64748b;
+  margin: 0 0 0.6rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wf-case-meta {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.6rem;
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.wf-urgent {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 750;
+  font-size: 0.68rem;
+}
+
+/* --------------------------------------------------------------------------
+   8. Right Pane: Task Detail (#wf-detail)
+   Cohesive with tracker.css .dashboard-panel
+   -------------------------------------------------------------------------- */
+#wf-detail {
+  background: #ffffff;
+  border: 1px solid #e1e8f1;
+  border-radius: 18px;
+  padding: 1.85rem 2.2rem;
+  box-shadow: 0 7px 22px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+#wf-detail .wf-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.25rem 1.4rem;
+  margin: 1rem 0;
+}
+
+.wf-box {
+  background: #ffffff;
+  border: 1px solid #e1e8f1;
+  border-radius: 16px;
+  padding: 1.5rem;
+  min-width: 0;
+}
+
+.wf-box h3 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 780;
+  color: #0f172a;
+}
+
+.wf-box h4 {
+  margin: 1.35rem 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: #1e293b;
+}
+
+/* Empty State */
+.wf-empty {
+  text-align: center;
+  padding: 4.5rem 2rem;
+  color: #64748b;
+  font-size: 0.88rem;
+}
+
+.wf-empty > span {
+  display: block;
+  font-size: 2.75rem;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.wf-empty h3 {
+  font-size: 1.2rem !important;
+  font-weight: 780;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.wf-empty p {
+  line-height: 1.65;
+  max-width: 460px;
+  margin: 0 auto 1.25rem;
+  color: #64748b;
+}
+
+.wf-empty button {
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #2563eb;
+  border-radius: 10px;
+  padding: 0.6rem 1.25rem;
+  font-weight: 700;
+}
+
+.wf-empty button:hover {
+  background: #1d4ed8;
+}
+
+/* Detail Head */
+.wf-head {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.wf-head h3 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.35;
+  margin: 0.5rem 0 0.35rem;
+}
+
+.wf-head > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.wf-head > a:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+.wf-subtitle {
+  font-size: 0.84rem;
+  color: #475569;
+  line-height: 1.65;
+}
+
+/* Progress Stepper */
+.wf-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0;
+  padding: 0.85rem 1.15rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.wf-step {
+  font-size: 0.74rem;
+  font-weight: 650;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  background: #ffffff;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.wf-step.done {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+  font-weight: 700;
+}
+
+.wf-step.now {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  font-weight: 750;
+}
+
+/* Next Step Callout Box */
+.wf-next {
+  position: relative;
+  padding: 1.35rem 1.6rem;
+  border-radius: 14px;
+  background: #f0f7ff;
+  border: 1px solid #bfdbfe;
+  border-left: 5px solid #2563eb;
+  margin: 1.25rem 0;
+  line-height: 1.65;
+}
+
+.wf-next.review {
+  background: #fffbeb;
+  border-color: #fde68a;
+  border-left-color: #d97706;
+}
+
+.wf-next.waiting {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  border-left-color: #4f46e5;
+}
+
+.wf-next strong {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0.35rem 0 0.4rem;
+}
+
+.wf-next p {
+  margin: 0.35rem 0;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.wf-next a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  transition: all 0.15s ease;
+}
+
+.wf-next a:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.wf-source-state {
+  font-size: 0.8rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 0.65rem;
+  margin-top: 0.65rem !important;
+  color: #475569;
+}
+
+/* Missing Requirements / Blockers */
+.wf-page .wf-missing {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-left: 4px solid #f59e0b;
+  padding: 0.85rem 1.15rem;
+  border-radius: 10px;
+  margin: 1rem 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #92400e;
+}
+
+.wf-page .wf-missing summary {
+  font-weight: 750;
+  cursor: pointer;
+  margin-bottom: 0.4rem;
+}
+
+.wf-page .wf-missing ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+}
+
+/* Form Fields & Grid */
+.wf-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.wf-check {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.85rem 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.wf-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #2563eb;
+  flex-shrink: 0;
+}
+
+.wf-page textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.6;
+  font-family: inherit;
+}
+
+/* Section Accordion Wrappers */
+.wf-detail-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.85rem 1.25rem;
+  margin: 1rem 0;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.wf-detail-section summary,
+.wf-page details summary {
+  cursor: pointer;
+  font-weight: 750;
+  font-size: 0.88rem;
+  color: #0f172a;
+  padding: 0.45rem 0;
+  user-select: none;
+}
+
+.wf-detail-section[open] {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+}
+
+/* Action Buttons Bar */
+.wf-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 1.15rem 0;
+}
+
+.wf-page .wf-primary {
+  background: linear-gradient(135deg, #17417b 0%, #1e40af 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(30, 64, 175, 0.25);
+}
+
+.wf-page .wf-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0f2850 0%, #17417b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.35);
+  color: #ffffff;
+}
+
+/* File Attachment List */
+.wf-files {
+  padding: 0;
+  list-style: none;
+  margin: 0.85rem 0;
+}
+
+.wf-files li {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  background: #f8fafc;
+  overflow-wrap: anywhere;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  transition: border-color 0.15s ease;
+}
+
+.wf-files li:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.wf-files li a {
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.wf-files li a:hover {
+  text-decoration: underline;
+}
+
+.wf-files li small {
+  display: block;
+  color: #64748b;
+  font-size: 0.74rem;
+  margin-top: 0.2rem;
+}
+
+/* Email & Outlook Cards */
+.wf-mail {
+  padding: 1rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  margin: 0.75rem 0;
+}
+
+.wf-mail strong {
+  font-size: 0.88rem;
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.wf-mail pre {
+  white-space: pre-wrap;
+  max-height: 220px;
+  overflow: auto;
+  font-family: inherit;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.85rem;
+  color: #1e293b;
+}
+
+/* Events & Timeline */
+.wf-events {
+  padding: 0;
+  list-style: none;
+  margin: 0.75rem 0;
+}
+
+.wf-events li {
+  padding: 0.65rem 0.85rem;
+  border-left: 2px solid #cbd5e1;
+  margin-left: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: #f8fafc;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.wf-events small {
+  display: block;
+  color: #64748b;
+  font-size: 0.72rem;
+  margin-top: 0.2rem;
+}
+
+/* Project Integration Panel */
+.wf-project-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  margin-top: 1.5rem !important;
+  padding: 1.25rem 1.5rem;
+}
+
+.wf-divider {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5rem 0;
+}
+
+.wf-note,
+.wf-foot {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.65;
+  margin: 0.5rem 0;
+}
+
+.wf-foot {
+  text-align: center;
+  padding: 0.5rem 0 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   9. Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (min-width: 1600px) {
+  .wf-layout {
+    grid-template-columns: 420px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1200px) {
+  .wf-hero,
+  .wf-intro {
+    align-items: flex-start;
+  }
+
+  .wf-hero-actions,
+  .dashboard-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .wf-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .wf-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .wf-list-pane {
+    position: static;
+    max-height: 420px;
+  }
+
+  .wf-filters {
+    grid-template-columns: minmax(200px, 2fr) 1fr 1fr auto;
+  }
+
+  .wf-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .workflow-workspace,
+  .wf-page {
+    padding: 1rem 1rem 3rem;
+  }
+
+  .wf-hero,
+  .wf-intro {
+    min-height: 0;
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .wf-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .wf-stat {
+    padding: 1rem;
+  }
+
+  .wf-stat strong {
+    font-size: 1.5rem;
+  }
+
+  .wf-toolbar {
+    padding: 1rem;
+  }
+
+  .wf-filters {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .wf-search-label {
+    grid-column: 1 / -1;
+  }
+
+  #wf-refresh {
+    grid-column: 1 / -1;
+  }
+
+  .wf-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .wf-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #wf-detail {
+    padding: 1.25rem;
+  }
+
+  .wf-head {
+    flex-direction: column;
+  }
+}

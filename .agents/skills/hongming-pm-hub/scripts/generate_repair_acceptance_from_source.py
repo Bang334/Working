@@ -29,9 +29,14 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from openpyxl import load_workbook
 
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 LOGGER = logging.getLogger("repair_acceptance_notes")
-DEFAULT_SOURCE = Path(r"E:\Working\Bieu Mau\Biên bản sữa chữa.xlsx")
-DEFAULT_TARGET = Path(r"E:\Working\Bieu Mau\Mau_Goc_Nghiem_Thu_Sua_Chua.xlsx")
+DEFAULT_SOURCE = Path(_workspace_path('Bieu Mau\\Biên bản sữa chữa.xlsx'))
+DEFAULT_TARGET = Path(_workspace_path('Bieu Mau\\Mau_Goc_Nghiem_Thu_Sua_Chua.xlsx'))
 
 NOTE_LABELS = ("ghi chú", "備註")
 STOP_MARKERS = (
@@ -777,7 +782,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--target", type=Path, default=DEFAULT_TARGET)
-    parser.add_argument("--workspace", type=Path, default=Path(r"E:\Working"))
+    parser.add_argument("--workspace", type=Path, default=Path(_workspace_path('')))
     parser.add_argument(
         "--result-json",
         type=Path,

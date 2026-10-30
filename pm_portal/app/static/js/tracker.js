@@ -574,7 +574,7 @@
                   ${escapeHtml(m.status_label || (isPaid ? "Đã thu đủ" : "Chờ xử lý"))}
                 </span>
                 ${!isPaid ? `
-                  <button type="button" class="row-action-btn primary" onclick="markMilestonePaidFromTracker(${m.id}, '${contract.contract_code}', '${escapeHtml(m.milestone_name)}', ${amt})" style="padding: 1px 6px; font-size: 0.64rem; font-weight: 750; background: #ecfdf5; color: #047857; border-color: #a7f3d0;" title="Xác nhận đã nhận tiền đợt này">
+                  <button type="button" class="row-action-btn primary" onclick="markMilestonePaidFromTracker(${m.id}, '${contract.contract_code}', '${escapeHtml(m.milestone_name)}', ${amt})" style="padding: 1px 6px; font-size: 0.64rem; font-weight: 750; background: #ecfdf5; color: #047857; border-color: #a7f3d0;" title="Mở quy trình để đối chiếu tiền thực nhận và chứng từ">
                     💰 Đã thu
                   </button>
                 ` : `
@@ -626,34 +626,8 @@
     }
   };
 
-  window.markMilestonePaidFromTracker = async function (milestoneId, contractCode, milestoneName, expectedAmt) {
-    const paidDate = prompt(`Xác nhận ngày đã thu tiền cho "${milestoneName}" (HĐ: ${contractCode}):`, new Date().toLocaleDateString("vi-VN"));
-    if (!paidDate) return;
-
-    const invoiceNo = prompt("Nhập số hóa đơn VAT (nếu có, để trống nếu chưa xuất):", "");
-
-    try {
-      if (typeof showToast === "function") showToast("Đang ghi nhận thanh toán...", "info");
-      const res = await fetch(`/api/v1/dossier/milestones/${milestoneId}/mark-paid`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paid_date: paidDate,
-          invoice_no: invoiceNo || "",
-          amount: expectedAmt,
-        }),
-      });
-      const data = await res.json();
-      if (data.status === "success") {
-        if (typeof showToast === "function") showToast(data.message, "success");
-        await loadDashboardData();
-        openDossierModal(contractCode);
-      } else {
-        if (typeof showToast === "function") showToast(data.message || "Lỗi cập nhật", "error");
-      }
-    } catch (err) {
-      if (typeof showToast === "function") showToast("Lỗi: " + err.message, "error");
-    }
+  window.markMilestonePaidFromTracker = function (milestoneId) {
+    window.location.href = `/workflows?milestone=${encodeURIComponent(milestoneId)}`;
   };
 
   window.unmarkMilestonePaidFromTracker = async function (milestoneId, contractCode) {

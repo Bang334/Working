@@ -22,3 +22,21 @@ pm_portal/template_full_details.txt
 scratch/
 Taskbar-Aurora/
 .vscode/
+
+# Temporary & cache
+.tmp/
+.pytest_cache/
+*.log
+
+# Credentials & backups
+database/local_gemini_keys.json
+database/backups/
+outputs/
+
+# QA test run dumps & raw emails
+.qa/
+mail/Huong_Dan_Nguoi_Moi_20261029/
+Ho So Du An/Bao Gia/From_Outlook/
+
+# Large signed customer contracts
+Ho So Du An/Hop Dong/SEIYO_HMV04102026SY0001_Da_Ky_20261013.pdf

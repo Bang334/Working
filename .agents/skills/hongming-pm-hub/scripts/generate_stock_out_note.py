@@ -11,6 +11,11 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.drawing.image import Image
 from openpyxl.utils import get_column_letter
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 def create_stock_out_excel(output_path):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -75,7 +80,7 @@ def create_stock_out_excel(output_path):
     )
 
     # 1. Chèn Logo
-    logo_path = r"E:\Working\.agents\skills\hongming-pm-hub\resources\images\image2.png"
+    logo_path = _workspace_path('.agents\\skills\\hongming-pm-hub\\resources\\images\\image2.png')
     if os.path.exists(logo_path):
         img = Image(logo_path)
         img.width = 160
@@ -465,5 +470,5 @@ def create_stock_out_excel(output_path):
     print(f"Xuat file thanh cong tai: {output_path}")
 
 if __name__ == "__main__":
-    out_file = r"e:\Working\PHIEU_XUAT_KHO_KIEM_BAN_GIAO_THIET_BI.xlsx"
+    out_file = _workspace_path('PHIEU_XUAT_KHO_KIEM_BAN_GIAO_THIET_BI.xlsx')
     create_stock_out_excel(out_file)

@@ -6,8 +6,8 @@ echo ========================================================
 echo.
 
 echo [1/2] Dang mo trinh duyet de xac thuc Google Drive...
-set "GDRIVE_OAUTH_PATH=C:\Users\BANG\.gemini\credentials\gcp-oauth.keys.json"
-set "GDRIVE_CREDENTIALS_PATH=C:\Users\BANG\.gemini\credentials\gdrive-token.json"
+set "GDRIVE_OAUTH_PATH=%USERPROFILE%\.gemini\credentials\gcp-oauth.keys.json"
+set "GDRIVE_CREDENTIALS_PATH=%USERPROFILE%\.gemini\credentials\gdrive-token.json"
 call npx -y @modelcontextprotocol/server-gdrive auth
 
 echo.

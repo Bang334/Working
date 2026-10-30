@@ -100,6 +100,9 @@ Khi người dùng yêu cầu thực hiện một nhiệm vụ, hãy kích hoạ
 
 ---
 
+### Báo cáo tuần PowerPoint PM Hong Ming / BANG
+- Khi tạo hoặc sửa báo cáo tuần dạng trình chiếu, mặc định dùng mẫu người dùng duyệt ngày 30/10/2026. Đọc [hướng dẫn mẫu báo cáo tuần](./references/weekly_report_presentation.md) trước khi làm; dùng PPTX mẫu làm tham chiếu thực tế, không quay lại mẫu nền đen cũ. Yêu cầu mới của người dùng được ưu tiên.
+
 ## 2. THƯ MỤC TÀI NGUYÊN (RESOURCES & REFERENCES)
 
 - [Bảng từ vựng chuyên ngành Việt - Trung](./references/bilingual_glossary.md): Tra cứu nhanh thuật ngữ IoT, Phần cứng, Kế toán, Hợp đồng.

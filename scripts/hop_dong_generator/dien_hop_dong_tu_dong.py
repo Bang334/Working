@@ -30,6 +30,11 @@ from docx.oxml.ns import qn
 from docx.text.paragraph import Paragraph
 
 # Import bộ phân tích AI nếu có
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 try:
     from ai_contract_parser import parse_contract_info_with_ai
 except ImportError:
@@ -981,7 +986,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Điền hợp đồng tự động bảo toàn 100% bố cục - tích hợp AI phân tích."
     )
-    parser.add_argument("--template", "-t", default=r"E:\Working\Bieu Mau\Mau_Goc_Hop_Dong_Mua_Ban.docx", help="File Word mẫu (.docx)")
+    parser.add_argument("--template", "-t", default=_workspace_path('Bieu Mau\\Mau_Goc_Hop_Dong_Mua_Ban.docx'), help="File Word mẫu (.docx)")
     parser.add_argument("--data", "-d", help="File JSON chứa dữ liệu hợp đồng")
     parser.add_argument("--ai-text", "-a", help="Đoạn văn bản tự do để AI tự động phân tích và điền")
     default_output = os.path.join(

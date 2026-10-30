@@ -34,6 +34,11 @@ import math
 import os
 import sys
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
@@ -455,9 +460,9 @@ def generate_pouhui_with_reference_format(template_path, output_path):
         print(f"[THÔNG BÁO] File đang mở, đã lưu dự phòng tại: {alt}")
 
 if __name__ == "__main__":
-    tmpl = r"E:\Working\Bieu Mau\Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx"
-    out1 = r"E:\Working\ChuaHieu\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx"
-    out2 = r"E:\Working\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx"
+    tmpl = _workspace_path('Bieu Mau\\Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx')
+    out1 = _workspace_path('ChuaHieu\\ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx')
+    out2 = _workspace_path('ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx')
 
     print("Đang tạo file Báo giá Pou Hui chuẩn tham khảo...")
     generate_pouhui_with_reference_format(tmpl, out1)

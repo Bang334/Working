@@ -58,11 +58,13 @@ from app.controllers.custom_reminder_controller import (
 )
 
 from app.controllers.quotation_controller import (
+    download_outlook_quotation_file_controller,
     download_quotation_file_controller,
     generate_quotation_excel_controller,
     generate_quotation_word_controller,
     get_quotation_detail_controller,
     get_quotation_history_controller,
+    list_outlook_quotation_files_controller,
     list_quotation_files_controller,
     parse_raw_quotation_text_controller,
     save_quotation_controller,
@@ -266,14 +268,14 @@ async def import_existing_contract_endpoint(
     try:
         import json
         from app.services.contract_service import save_imported_contract
-        
+
         parsed_data = json.loads(contract_data) if isinstance(contract_data, str) else contract_data
         file_bytes = None
         file_name = None
         if file:
             file_bytes = await file.read()
             file_name = file.filename
-            
+
         result = save_imported_contract(
             contract_data=parsed_data,
             file_bytes=file_bytes,
@@ -551,34 +553,19 @@ async def reset_milestone_endpoint(milestone_id: int):
 @router.post("/dossier/milestones/{milestone_id}/mark-paid")
 async def mark_milestone_paid_endpoint(milestone_id: int, payload: Dict[str, Any]):
     """Confirm payment received for a milestone and update contract financial total."""
-    paid_date = payload.get("paid_date")
-    invoice_no = payload.get("invoice_no")
-    actual_amount = payload.get("amount")
-    if actual_amount is not None:
-        try:
-            actual_amount = float(actual_amount)
-        except ValueError:
-            actual_amount = None
-
-    result = mark_milestone_paid(
-        milestone_id=milestone_id,
-        paid_date=str(paid_date) if paid_date else None,
-        invoice_no=str(invoice_no) if invoice_no else None,
-        actual_amount=actual_amount,
-    )
-    if not result:
-        raise HTTPException(status_code=404, detail="Không tìm thấy đợt thanh toán.")
-    return {
-        "status": "success",
-        "message": f"Đã xác nhận thanh toán thành công cho {result['milestone']['milestone_name']}!",
-        "data": result,
-    }
+    raise HTTPException(status_code=409, detail={
+        "message": "Ghi nhận tiền thực nhận và chứng từ kế toán trong Việc cần làm để giữ đầy đủ nhật ký.",
+        "workflow_url": f"/workflows?milestone={milestone_id}",
+    })
 
 
 @router.post("/dossier/milestones/{milestone_id}/unmark-paid")
 async def unmark_milestone_paid_endpoint(milestone_id: int):
     """Revert a paid milestone back to pending / waiting status."""
-    result = unmark_milestone_paid(milestone_id)
+    try:
+        result = unmark_milestone_paid(milestone_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if not result:
         raise HTTPException(status_code=404, detail="Không tìm thấy đợt thanh toán.")
     return {
@@ -691,7 +678,7 @@ async def generate_payment_request_sheet_endpoint(payload: Dict[str, Any]):
     try:
         contract_code = payload.get("contract_code") or "HMV151020250001"
         milestone_name = payload.get("milestone_name") or "Đợt 2"
-        
+
         result = generate_payment_request_excel(
             contract_code=contract_code,
             milestone_name=milestone_name,
@@ -816,6 +803,18 @@ async def download_quotation_file_endpoint(file_name: str):
 async def list_quotation_files_endpoint():
     """Retrieve list of generated quotation files."""
     return list_quotation_files_controller()
+
+
+@router.get("/quotation/outlook-files")
+async def list_outlook_quotation_files_endpoint():
+    """Retrieve list of actual quotation files downloaded from Outlook."""
+    return list_outlook_quotation_files_controller()
+
+
+@router.get("/quotation/download-outlook/{file_name}")
+async def download_outlook_quotation_file_endpoint(file_name: str):
+    """Download quotation file from Outlook archive."""
+    return download_outlook_quotation_file_controller(file_name)
 
 
 # ==========================================
@@ -1149,8 +1148,3 @@ async def upload_file_endpoint(
 ):
     """Tải file mới lên kho hồ sơ theo công ty và danh mục."""
     return await upload_file_controller(file=file, category=category, company=company)
-
-
-
-
-

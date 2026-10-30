@@ -26,6 +26,11 @@
       <span>Quản Lý Hồ Sơ & File</span>
     </a>
 
+    <a href="/workflows" data-nav-id="workflows" class="nav-item {% if active_tab == 'workflows' %}active{% endif %}" title="Việc tiếp theo, hồ sơ trình ký, bản scan, Outlook và xác nhận tiền về">
+      <span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M9 5h12M9 12h12M9 19h12M2 5l2 2 3-4M2 12l2 2 3-4M2 19l2 2 3-4"/></svg></span>
+      <span>Việc Cần Làm</span><span class="sidebar-unread-badge" id="workflowCount" style="display:none"></span>
+    </a>
+
     <div class="nav-section-title" data-section-id="project_flow">Chuỗi hồ sơ dự án</div>
 
     <a href="/quotations" data-nav-id="quotations" class="nav-item {% if active_tab == 'quotations' %}active{% endif %}" {% if active_tab == 'quotations' %}aria-current="page"{% endif %}>
@@ -78,6 +83,11 @@
       <span>Phiếu Xuất Kho & Bàn Giao</span>
     </a>
 
+    <a href="/shipping-documents" data-nav-id="shipping_documents" class="nav-item {% if active_tab == 'shipping_documents' %}active{% endif %}" {% if active_tab == 'shipping_documents' %}aria-current="page"{% endif %} title="Tạo Invoice và Packing List từ nhiều tài liệu và nội dung bằng AI">
+      <span class="nav-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 12h8M8 16h8"/></svg></span>
+      <span>Invoice & Packing List</span>
+    </a>
+
     <a href="/acceptance" data-nav-id="acceptance" class="nav-item {% if active_tab == 'acceptance' %}active{% endif %}" {% if active_tab == 'acceptance' %}aria-current="page"{% endif %}>
       <span class="nav-icon" aria-hidden="true">
         <svg class="icon" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -107,6 +117,15 @@
       </span>
       <span>Thanh Lý Hợp Đồng</span>
     </a>
+
+    <a href="/emails" data-nav-id="email_center" class="nav-item {% if active_tab == 'email_center' %}active{% endif %}" {% if active_tab == 'email_center' %}aria-current="page"{% endif %} title="Trung tâm soạn thảo, xem trước và mô phỏng gửi email B2B song ngữ">
+      <span class="nav-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </span>
+      <span>Soạn Email & Mô Phỏng</span>
+    </a>
+
+
 
     <div class="nav-section-title" data-section-id="styling">Giao diện & Kiểu chữ</div>
 

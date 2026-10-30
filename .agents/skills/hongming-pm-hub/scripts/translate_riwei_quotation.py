@@ -19,6 +19,11 @@ import openpyxl
 from openpyxl.styles import Alignment, Font
 from copy import copy
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 if sys.stdout.encoding != 'utf-8':
     try:
         sys.stdout.reconfigure(encoding='utf-8')
@@ -543,8 +548,8 @@ def translate_workbook(input_path, output_path):
     print(f"Successfully saved to: {output_path}")
 
 if __name__ == "__main__":
-    src_file = r"E:\Working\●SQ2026日威報價單(SMB-MES-QMS-WMS)-海外.xlsx"
-    dst_file = r"E:\Working\●SQ2026日威報價單(SMB-MES-QMS-WMS)-海外_SongNgu_Viet_Trung.xlsx"
+    src_file = _workspace_path('●SQ2026日威報價單(SMB-MES-QMS-WMS)-海外.xlsx')
+    dst_file = _workspace_path('●SQ2026日威報價單(SMB-MES-QMS-WMS)-海外_SongNgu_Viet_Trung.xlsx')
     
     translate_workbook(src_file, dst_file)
 

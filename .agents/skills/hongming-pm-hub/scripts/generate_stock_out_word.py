@@ -13,6 +13,11 @@ from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import nsdecls, qn
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
     """Thiết lập padding lề trong cho ô bảng"""
     tc = cell._tc
@@ -352,5 +357,5 @@ def create_stock_out_docx(output_path):
     print(f"Xuat file Word thanh cong tai: {output_path}")
 
 if __name__ == "__main__":
-    out_file = r"e:\Working\PHIEU_XUAT_KHO_KIEM_BAN_GIAO_THIET_BI.docx"
+    out_file = _workspace_path('PHIEU_XUAT_KHO_KIEM_BAN_GIAO_THIET_BI.docx')
     create_stock_out_docx(out_file)

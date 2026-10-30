@@ -5,6 +5,9 @@ Bao gồm hình ảnh thực tế, mã S/N, P/N, IMEI, thông số và bảng tr
 """
 
 import os
+from pathlib import Path
+
+WORKING_DIR = Path(__file__).resolve().parents[2]
 import sys
 from PIL import Image
 import openpyxl
@@ -13,8 +16,8 @@ from openpyxl.drawing.image import Image as XLImage
 from openpyxl.utils import get_column_letter
 
 # Đường dẫn thư mục ảnh gốc
-IMG_DIR = r"C:\Users\BANG\Downloads\My Documents [26-10-2026 13_34]"
-THUMB_DIR = r"E:\Working\.tmp\thiet_bi_dfv_thumbnails"
+IMG_DIR = str(Path.home() / "Downloads" / 'My Documents [26-10-2026 13_34]')
+THUMB_DIR = str(WORKING_DIR / '.tmp/thiet_bi_dfv_thumbnails')
 os.makedirs(THUMB_DIR, exist_ok=True)
 
 # Danh sách dữ liệu thiết bị
@@ -207,7 +210,7 @@ def make_thumbnails():
         orig = os.path.join(IMG_DIR, dev["img_file"])
         thumb_file = f"thumb_{dev['stt']}_{dev['img_file']}"
         thumb_dest = os.path.join(THUMB_DIR, thumb_file)
-        
+
         im = Image.open(orig)
         if dev["is_portrait"]:
             # Ảnh dọc 720x1280: scale về width ~65, height ~115
@@ -215,7 +218,7 @@ def make_thumbnails():
         else:
             # Ảnh ngang 1280x720: scale về width ~130, height ~73
             target_size = (130, 73)
-            
+
         im_resized = im.resize(target_size, Image.LANCZOS)
         im_resized.save(thumb_dest, "JPEG", quality=90)
         thumb_paths[dev["stt"]] = (thumb_dest, target_size, orig)
@@ -223,17 +226,17 @@ def make_thumbnails():
 
 def build_excel(out_path):
     wb = openpyxl.Workbook()
-    
+
     # -------------------------------------------------------------
     # SHEET 1: CHI TIẾT THIẾT BỊ (DEVICES LIST)
     # -------------------------------------------------------------
     ws1 = wb.active
     ws1.title = "Danh Sách Thiết Bị (明細表)"
     ws1.views.sheetView[0].showGridLines = True
-    
+
     # Định nghĩa Styles & Màu sắc chuyên nghiệp
     FONT_FAMILY = "Microsoft JhengHei"
-    
+
     font_corp = Font(name=FONT_FAMILY, size=14, bold=True, color="1F4E79")
     font_title = Font(name=FONT_FAMILY, size=13, bold=True, color="002060")
     font_subtitle = Font(name=FONT_FAMILY, size=11, bold=True, color="333333")
@@ -245,7 +248,7 @@ def build_excel(out_path):
     font_hs = Font(name="Consolas", size=10.5, bold=True, color="0B5394")
     font_fault = Font(name=FONT_FAMILY, size=9, bold=False, color="900C3F")
     font_summary = Font(name=FONT_FAMILY, size=10.5, bold=True, color="1F4E79")
-    
+
     fill_header = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
     fill_meta = PatternFill(start_color="F2F5F9", end_color="F2F5F9", fill_type="solid")
     fill_zebra_1 = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
@@ -253,7 +256,7 @@ def build_excel(out_path):
     fill_hs = PatternFill(start_color="E8F4F8", end_color="E8F4F8", fill_type="solid")
     fill_fault = PatternFill(start_color="FDF2E9", end_color="FDF2E9", fill_type="solid")
     fill_summary = PatternFill(start_color="EAECEE", end_color="EAECEE", fill_type="solid")
-    
+
     bd_thin = Side(border_style="thin", color="D0D7DE")
     border_cell = Border(left=bd_thin, right=bd_thin, top=bd_thin, bottom=bd_thin)
     border_header = Border(
@@ -268,31 +271,31 @@ def build_excel(out_path):
         left=bd_thin,
         right=bd_thin
     )
-    
+
     align_center = Alignment(horizontal="center", vertical="center", wrap_text=True)
     align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
     align_center_top = Alignment(horizontal="center", vertical="top", wrap_text=True)
     align_left_top = Alignment(horizontal="left", vertical="top", wrap_text=True)
-    
+
     # 1. Header công ty & Tiêu đề
     ws1.merge_cells("A1:J1")
     ws1["A1"] = "CÔNG TY TNHH TOÀN CẦU HONG MING / 浤詺全體顧問有限公司 (HONG MING GLOBAL CO., LTD.)"
     ws1["A1"].font = font_corp
     ws1["A1"].alignment = Alignment(horizontal="center", vertical="center")
     ws1.row_dimensions[1].height = 25
-    
+
     ws1.merge_cells("A2:J2")
     ws1["A2"] = "BẢNG KÊ THIẾT BỊ BÁO HỎNG & ĐỀ NGHỊ BỔ SUNG THAY THẾ (DARFON / DFV)"
     ws1["A2"].font = font_title
     ws1["A2"].alignment = Alignment(horizontal="center", vertical="center")
     ws1.row_dimensions[2].height = 22
-    
+
     ws1.merge_cells("A3:J3")
     ws1["A3"] = "達方電子 (DFV) 故障設備更換清單及台灣工廠維修備品補充分類表"
     ws1["A3"].font = font_subtitle
     ws1["A3"].alignment = Alignment(horizontal="center", vertical="center")
     ws1.row_dimensions[3].height = 20
-    
+
     # Metadata info bar
     ws1.merge_cells("A4:J4")
     ws1["A4"] = "Dự án: DFV (Darfon Vietnam) | Ngày lập: 26/10/2026 | Người lập: Nguyễn Sỹ Kim Bằng (PM) | Phê duyệt: Jenson (張總) | Tiếp nhận: Jessica (台灣採購/財務主管)"
@@ -300,7 +303,7 @@ def build_excel(out_path):
     ws1["A4"].fill = fill_meta
     ws1["A4"].alignment = Alignment(horizontal="center", vertical="center")
     ws1.row_dimensions[4].height = 20
-    
+
     # 2. Tiêu đề các cột (Column Headers)
     headers = [
         ("STT\n序號", 6),
@@ -314,7 +317,7 @@ def build_excel(out_path):
         ("Hiện Trạng Lỗi Ghi Nhận\n故障情況說明", 26),
         ("Đánh Dấu & Ghi Chú\n標記及備註說明", 24),
     ]
-    
+
     header_row = 5
     ws1.row_dimensions[header_row].height = 36
     for col_idx, (h_text, col_w) in enumerate(headers, start=1):
@@ -325,30 +328,30 @@ def build_excel(out_path):
         cell.border = border_header
         col_letter = get_column_letter(col_idx)
         ws1.column_dimensions[col_letter].width = col_w
-        
+
     # 3. Đổ dữ liệu 11 thiết bị
     start_row = 6
     for i, dev in enumerate(DEVICES):
         row = start_row + i
         ws1.row_dimensions[row].height = 120  # Chiều cao rộng rãi hiển thị ảnh to rõ nét
         fill_row = fill_zebra_2 if (i % 2 == 1) else fill_zebra_1
-        
+
         # Col 1: STT
         c1 = ws1.cell(row=row, column=1, value=dev["stt"])
         c1.alignment = align_center
         c1.font = font_data_bold
         c1.fill = fill_row
         c1.border = border_cell
-        
+
         # Col 2: Ảnh gốc độ phân giải cao 100% (giữ nguyên gốc không nén)
         c2 = ws1.cell(row=row, column=2, value="")
         c2.alignment = align_center
         c2.fill = fill_row
         c2.border = border_cell
-        
+
         orig_path = os.path.join(IMG_DIR, dev["img_file"])
         c2.hyperlink = orig_path
-        
+
         # Nhúng trực tiếp file ảnh gốc nguyên bản vào Excel
         xl_img = XLImage(orig_path)
         if dev["is_portrait"]:
@@ -359,10 +362,10 @@ def build_excel(out_path):
             # Ảnh ngang 1280x720: hiển thị to rõ nét (rộng 196px, cao 110px)
             xl_img.width = 196
             xl_img.height = 110
-            
+
         cell_coord = f"B{row}"
         ws1.add_image(xl_img, cell_coord)
-        
+
         # Col 3: Chủng loại
         cat_text = f"{dev['category_vi']}\n{dev['category_zh']}"
         c3 = ws1.cell(row=row, column=3, value=cat_text)
@@ -370,42 +373,42 @@ def build_excel(out_path):
         c3.font = font_data_bold
         c3.fill = fill_row
         c3.border = border_cell
-        
+
         # Col 4: Tên & Model
         c4 = ws1.cell(row=row, column=4, value=dev["name_model"])
         c4.alignment = align_left
         c4.font = font_data_bold
         c4.fill = fill_row
         c4.border = border_cell
-        
+
         # Col 5: P/N
         c5 = ws1.cell(row=row, column=5, value=dev["pn"])
         c5.alignment = align_center
         c5.font = font_data
         c5.fill = fill_row
         c5.border = border_cell
-        
+
         # Col 6: S/N
         c6 = ws1.cell(row=row, column=6, value=dev["sn"])
         c6.alignment = align_center
         c6.font = font_sn
         c6.fill = fill_row
         c6.border = border_cell
-        
+
         # Col 7: IMEI & Specs
         c7 = ws1.cell(row=row, column=7, value=dev["specs"])
         c7.alignment = align_left
         c7.font = font_data
         c7.fill = fill_row
         c7.border = border_cell
-        
+
         # Col 8: HS Code
         c8 = ws1.cell(row=row, column=8, value=dev["hs_code"])
         c8.alignment = align_center
         c8.font = font_hs
         c8.fill = fill_hs
         c8.border = border_cell
-        
+
         # Col 9: Hiện trạng lỗi
         fault_text = f"{dev['fault_vi']}\n{dev['fault_zh']}"
         c9 = ws1.cell(row=row, column=9, value=fault_text)
@@ -413,7 +416,7 @@ def build_excel(out_path):
         c9.font = font_fault
         c9.fill = fill_fault
         c9.border = border_cell
-        
+
         # Col 10: Đánh dấu & Ghi chú
         mark_text = f"{dev['marking']}\n{dev['marking_zh']}"
         c10 = ws1.cell(row=row, column=10, value=mark_text)
@@ -434,11 +437,11 @@ def build_excel(out_path):
     for col in range(2, 4):
         ws1.cell(row=sum_row, column=col).fill = fill_summary
         ws1.cell(row=sum_row, column=col).border = border_summary
-        
+
     ws1.merge_cells(f"D{sum_row}:J{sum_row}")
     c_sum_detail = ws1.cell(
-        row=sum_row, 
-        column=4, 
+        row=sum_row,
+        column=4,
         value="11 Thiết bị & Phụ kiện (3 Máy tính bảng HT10 + 4 Đế sạc HT10 Cradle S + 4 Bộ nguồn Adapter 12V 2A)\n合計 11 件設備及配件（3台HT10平板 + 4個充電底座 + 4個12V 2A電源適應器）"
     )
     c_sum_detail.alignment = align_left
@@ -463,26 +466,26 @@ def build_excel(out_path):
     # -------------------------------------------------------------
     ws2 = wb.create_sheet(title="Tổng Hợp HS Code & Nhập Khẩu")
     ws2.views.sheetView[0].showGridLines = True
-    
+
     ws2.merge_cells("A1:I1")
     ws2["A1"] = "BẢNG TỔNG HỢP MÃ HS CODE & ĐỀ NGHỊ BỔ SUNG THAY THẾ (DARFON / DFV)"
     ws2["A1"].font = font_title
     ws2["A1"].alignment = Alignment(horizontal="center", vertical="center")
     ws2.row_dimensions[1].height = 24
-    
+
     ws2.merge_cells("A2:I2")
     ws2["A2"] = "進口報關海關編碼 (HS Code) 及台灣工廠備品補充匯總表"
     ws2["A2"].font = font_subtitle
     ws2["A2"].alignment = Alignment(horizontal="center", vertical="center")
     ws2.row_dimensions[2].height = 20
-    
+
     ws2.merge_cells("A3:I3")
     ws2["A3"] = "Căn cứ chỉ đạo Sếp Trương (Jenson): Tổng hợp danh mục & mã HS Code phục vụ bộ phận Mua hàng & Tài chính (Jessica - 碧娟) làm thủ tục nhập khẩu bổ sung từ Đài Loan."
     ws2["A3"].font = font_meta
     ws2["A3"].fill = fill_meta
     ws2["A3"].alignment = Alignment(horizontal="center", vertical="center")
     ws2.row_dimensions[3].height = 20
-    
+
     s2_headers = [
         ("STT\n序號", 6),
         ("Hạng Mục Hàng Hóa\n貨品名稱 (中/越)", 28),
@@ -494,7 +497,7 @@ def build_excel(out_path):
         ("Xuất Xứ\n產地", 12),
         ("Mục Đích & Hiện Trạng Nghiệp Vụ\n補充原因及業務說明", 36),
     ]
-    
+
     ws2.row_dimensions[4].height = 32
     for col_idx, (h_text, col_w) in enumerate(s2_headers, start=1):
         cell = ws2.cell(row=4, column=col_idx, value=h_text)
@@ -503,7 +506,7 @@ def build_excel(out_path):
         cell.alignment = align_center
         cell.border = border_header
         ws2.column_dimensions[get_column_letter(col_idx)].width = col_w
-        
+
     s2_data = [
         {
             "stt": 1,
@@ -550,65 +553,65 @@ def build_excel(out_path):
             "purpose": "Đi kèm đồng bộ: 4 bộ sạc adapter tương ứng với 4 đế sạc để bàn (gửi kèm để kiểm tra đồng bộ nguồn và dock sạc)."
         }
     ]
-    
+
     for row_idx, item in enumerate(s2_data, start=5):
         ws2.row_dimensions[row_idx].height = 42
         fill_row = fill_zebra_2 if (row_idx % 2 == 1) else fill_zebra_1
-        
+
         c1 = ws2.cell(row=row_idx, column=1, value=item["stt"])
         c1.alignment = align_center
         c1.font = font_data_bold
         c1.fill = fill_row
         c1.border = border_cell
-        
+
         c2 = ws2.cell(row=row_idx, column=2, value=item["name"])
         c2.alignment = align_left
         c2.font = font_data_bold
         c2.fill = fill_row
         c2.border = border_cell
-        
+
         c3 = ws2.cell(row=row_idx, column=3, value=item["model"])
         c3.alignment = align_left
         c3.font = font_data
         c3.fill = fill_row
         c3.border = border_cell
-        
+
         c4 = ws2.cell(row=row_idx, column=4, value=item["qty"])
         c4.alignment = align_center
         c4.font = font_data_bold
         c4.fill = fill_row
         c4.border = border_cell
-        
+
         c5 = ws2.cell(row=row_idx, column=5, value=item["unit"])
         c5.alignment = align_center
         c5.font = font_data
         c5.fill = fill_row
         c5.border = border_cell
-        
+
         c6 = ws2.cell(row=row_idx, column=6, value=item["hs"])
         c6.alignment = align_center
         c6.font = font_hs
         c6.fill = fill_hs
         c6.border = border_cell
-        
+
         c7 = ws2.cell(row=row_idx, column=7, value=item["tax"])
         c7.alignment = align_center
         c7.font = font_data
         c7.fill = fill_row
         c7.border = border_cell
-        
+
         c8 = ws2.cell(row=row_idx, column=8, value=item["origin"])
         c8.alignment = align_center
         c8.font = font_data
         c8.fill = fill_row
         c8.border = border_cell
-        
+
         c9 = ws2.cell(row=row_idx, column=9, value=item["purpose"])
         c9.alignment = align_left
         c9.font = font_data
         c9.fill = fill_row
         c9.border = border_cell
-        
+
     # Dòng tổng kết
     s2_sum_row = 5 + len(s2_data)
     ws2.row_dimensions[s2_sum_row].height = 28
@@ -621,13 +624,13 @@ def build_excel(out_path):
     for col in range(2, 4):
         ws2.cell(row=s2_sum_row, column=col).fill = fill_summary
         ws2.cell(row=s2_sum_row, column=col).border = border_summary
-        
+
     c_qty = ws2.cell(row=s2_sum_row, column=4, value="=SUM(D5:D8)")
     c_qty.alignment = align_center
     c_qty.font = font_summary
     c_qty.fill = fill_summary
     c_qty.border = border_summary
-    
+
     ws2.merge_cells(f"E{s2_sum_row}:I{s2_sum_row}")
     c_sum_txt = ws2.cell(row=s2_sum_row, column=5, value="14 Hạng mục thiết bị & linh kiện (Bao gồm 11 món gửi bảo hành + 3 viên pin cấp mới thay thế)")
     c_sum_txt.alignment = align_left
@@ -637,12 +640,12 @@ def build_excel(out_path):
     for col in range(6, 10):
         ws2.cell(row=s2_sum_row, column=col).fill = fill_summary
         ws2.cell(row=s2_sum_row, column=col).border = border_summary
-        
+
     # Khối ghi chú & Chữ ký phía dưới
     note_start = s2_sum_row + 2
     ws2.merge_cells(f"A{note_start}:I{note_start}")
     ws2.cell(row=note_start, column=1, value="* Ghi chú quan trọng cho bộ phận Thu mua & Tài chính (Jessica - 碧娟):").font = Font(name=FONT_FAMILY, size=10, bold=True, color="002060")
-    
+
     notes = [
         "1. Theo phản hồi từ nhóm hiện trường và Sếp Trương (Jenson), các máy tính bảng HT10 hiện tại bị lỗi mất mạng và 3 viên pin đi kèm đã bị phồng nghiêm trọng (电池鼓包), không thể gửi kèm theo đường hàng không/chuyển phát nhanh.",
         "2. Đề nghị nhà máy Đài Loan (達方 / AMobile) chuẩn bị sẵn 3 thân máy HT10 mới, 3 viên pin mới nguyên seal và 4 đế sạc mới để đổi bù bảo hành.",
@@ -663,7 +666,7 @@ def build_excel(out_path):
     ws2.cell(row=sig_row, column=6).alignment = align_center
     ws2.cell(row=sig_row, column=8, value="ĐẠI DIỆN ĐÀI LOAN / 台灣對接").font = font_summary
     ws2.cell(row=sig_row, column=8).alignment = align_center
-    
+
     ws2.row_dimensions[sig_row+1].height = 18
     ws2.cell(row=sig_row+1, column=2, value="(Ký & ghi rõ họ tên)").font = font_meta
     ws2.cell(row=sig_row+1, column=2).alignment = align_center
@@ -671,7 +674,7 @@ def build_excel(out_path):
     ws2.cell(row=sig_row+1, column=6).alignment = align_center
     ws2.cell(row=sig_row+1, column=8, value="(Ký & ghi rõ họ tên)").font = font_meta
     ws2.cell(row=sig_row+1, column=8).alignment = align_center
-    
+
     ws2.row_dimensions[sig_row+4].height = 20
     ws2.cell(row=sig_row+4, column=2, value="Nguyễn Sỹ Kim Bằng\n(PM Hong Ming)").font = font_data_bold
     ws2.cell(row=sig_row+4, column=2).alignment = align_center
@@ -694,7 +697,7 @@ def build_excel(out_path):
 
 if __name__ == "__main__":
     from datetime import datetime
-    target_dir = r"E:\Working\Ho So Du An\Cong Ty\DFV_Darfon\Thiet Bi"
+    target_dir = str(WORKING_DIR / 'Ho So Du An/Cong Ty/DFV_Darfon/Thiet Bi')
     os.makedirs(target_dir, exist_ok=True)
     if not os.path.isdir(IMG_DIR):
         raise FileNotFoundError("Thiếu thư mục ảnh nguồn: " + IMG_DIR)

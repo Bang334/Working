@@ -19,9 +19,14 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import nsdecls, qn
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 sys.stdout.reconfigure(encoding='utf-8')
 
-WORKING_DIR = Path(r"E:\Working")
+WORKING_DIR = Path(_workspace_path(''))
 OUTPUTS_DIR = WORKING_DIR / "pm_portal" / "outputs"
 DOSSIER_DIR = WORKING_DIR / "Ho So Du An" / "Nghiem Thu"
 TEMPLATE_PATH = WORKING_DIR / "Bieu Mau" / "Mau_Goc_Nghiem_Thu_Lap_Dat_CX.docx"
@@ -457,7 +462,7 @@ if __name__ == "__main__":
     build_installation_acceptance_document(cx_data, TEMPLATE_PATH, out_dossier)
 
     # 2. Xuất file vào thư mục Downloads của người dùng
-    out_downloads = Path(r"C:\Users\BANG\Downloads\Bien_ban_nghiem_thu_HMV151020250001_CX.docx")
+    out_downloads = Path(str(__import__('pathlib').Path.home() / 'Downloads/Bien_ban_nghiem_thu_HMV151020250001_CX.docx'))
     build_installation_acceptance_document(cx_data, TEMPLATE_PATH, out_downloads)
 
     # 3. Xuất file vào thư mục pm_portal/outputs

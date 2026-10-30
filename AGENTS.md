@@ -65,7 +65,26 @@ Tài liệu này định nghĩa bối cảnh doanh nghiệp, vai trò trách nhi
      4. *Khổ in:* Khóa chặt vùng in `$A$1:$H$28`, PageBreakPreview, Zoom 60%, Scale 38%, không loang viền ngoài.
      5. *Bám sát 100% bản vẽ sơ đồ nguyên lý (Zero Deviation from Schematic Drawing):* Phân tích chính xác số lượng thiết bị từ sơ đồ đơn tuyến, TUYỆT ĐỐI KHÔNG tự suy diễn hoặc tùy tiện tăng giảm số lượng (ví dụ: trên bản vẽ vẽ 1 Gateway kết nối 4 trạm biến áp qua vòng RS485 thì bóc tách đúng 1 Gateway, không tự ý sửa thành 2). Mọi prompt AI và code bóc tách phải trung thành tuyệt đối với bản vẽ.
      6. *Gộp bộ nguồn PW vào Gateway CC2051 (Hardware Bundle Rule):* Bộ nguồn 24VDC (電源供應器) chỉ cần 1 cái và **BẮT BUỘC ĐƯỢC GỘP CHUNG VÀO DÒNG GATEWAY CC2051** vì được bán kèm trọn gói (`Gateway thu thập dữ liệu CC2051 (kèm bộ nguồn 24VDC) / CC2051 工業級資料收集閘道器 (含24VDC電源供應器)`). Nhờ đó, toàn bộ danh mục gồm thiết bị, vật tư phụ và thi công có đúng **7 hạng mục**, khớp chính xác 1:1 với 7 dòng (`Row 13:19`) của mẫu gốc, bảng tổng tiền tại `Row 21:23`, vùng in `$A$1:$H$27`.
+9. **Cơ chế Ghi Nhận Lỗi, Đúc Rút Bài Học & Chống Tái Phạm (Failure Log & Anti-Regression Protocol - BẮT BUỘC):**
+   - **Nguyên tắc "Sai một lần - Khắc sâu vĩnh viễn" (Zero Repetitive Mistake Rule):**
+     1. *Ghi nhận ngay lập tức khi phát hiện lỗi:* Bất cứ khi nào gặp lỗi kỹ thuật (Lỗi giao diện scroll/overflow CSS, lỗi Starlette Jinja2 argument, lỗi PowerShell escaping, lỗi Outlook COM security popup, lỗi Excel loang viền/ngắt trang...), trợ lý AI BẮT BUỘC phải ghi nhận ngay vào Sổ tay lưu vết lỗi: `d:\Working\FAILURE_LESSONS_LEARNED.md`.
+     2. *Cấu trúc bắt buộc của mỗi mục ghi lỗi:*
+        - **Mã lỗi (Error Code):** VD: `ERR-001 (CSS Scroll Lock)`, `ERR-002 (Jinja2 Argument)`, v.v.
+        - **Hiện tượng (Symptom):** Người dùng hoặc hệ thống gặp hiện tượng gì.
+        - **Nguyên nhân gốc rễ (Root Cause):** File nào, dòng code nào, thuộc tính nào gây ra lỗi.
+        - **Cách làm SAI trước đó (Anti-Pattern - TUYỆT ĐỐI CẤM LẶP LẠI):** Cách mà trước đó AI đã làm sai.
+        - **Giải pháp ĐÚNG TRIỆT ĐỂ (Permanent Solution):** Cách làm chuẩn xác 100%.
+        - **Quy tắc kiểm thử phòng ngừa (Verification Checklist):** Tiêu chí kiểm tra chéo trước khi bàn giao cho người dùng.
+     3. *Đối chiếu bắt buộc trước khi bắt đầu tác vụ mới (Pre-Flight Failure Check):* Trước khi viết code hoặc tạo tài liệu mới, AI bắt buộc phải tra cứu lại `FAILURE_LESSONS_LEARNED.md` để chắc chắn không thử lại những cách đã từng thất bại trong quá khứ.
+
 
 
 ## 9. GHI NHỚ LỖI KỸ THUẬT
 - Khi viết, sửa, chạy hoặc kiểm thử mã/script, áp dụng skill `error-memory` tại `C:\Users\BANG\.codex\skills\error-memory\SKILL.md`. Tra cứu có chọn lọc các lỗi liên quan trước khi làm; khi gặp lỗi có ích cho lần sau, cập nhật nhật ký theo skill, ghi rõ môi trường, cách xử lý và kết quả xác minh; không lưu bí mật hoặc dữ liệu khách hàng.
+
+## 10. MẪU POWERPOINT BÁO CÁO TUẦN ĐÃ ĐƯỢC DUYỆT
+- Người dùng duyệt ngày **30/10/2026** và yêu cầu các agent từ nay dùng mẫu này cho báo cáo tuần PM Hong Ming/BANG, trừ khi người dùng yêu cầu mẫu khác.
+- File tham chiếu: `D:\Working\Ho So Du An\Bao Cao\Tuan\Bao_Cao_Tuan_BANG_20261026-20261031_Thiet_Ke_Moi.pptx`. Không dùng bản nền đen/chữ nhỏ cùng kỳ trước khi thiết kế lại.
+- Mẫu cá nhân có bản sao PPTX độc lập: `C:\Users\HM-Sales01\.codex\skills\artifact-template-bao-cao-tuan-hong-ming-bang\SKILL.md`; hướng dẫn chi tiết tại `.agents/skills/hongming-pm-hub/references/weekly_report_presentation.md`.
+- Giữ phong cách đã duyệt: 16:9; nền trắng, xanh navy và xanh ngọc; Calibri cho tiếng Việt, Microsoft JhengHei cho tiếng Trung Phồn thể; lịch theo hàng ngày với hai cột sáng/chiều; kết quả công việc đặt Việt bên trái, Trung bên phải; tiêu đề rõ, khoảng trắng thoáng, chân trang nhất quán.
+- Tạo bản sao rồi thay ngày, người báo cáo và công việc theo nguồn mới. Không sao chép các công việc/trạng thái của tuần mẫu thành dữ liệu tuần mới, không tự bịa phần chưa cập nhật. Số slide điều chỉnh theo lượng nội dung, không bắt buộc luôn 11. Không ghi đè mẫu chuẩn.

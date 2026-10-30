@@ -290,3 +290,87 @@ def list_quotation_files_controller() -> Dict[str, Any]:
         "files": files,
         "active_quotations": active_quotes
     }
+
+
+def list_outlook_quotation_files_controller() -> Dict[str, Any]:
+    """Controller to list all real quotation files downloaded from Outlook (From_Outlook)."""
+    outlook_dir = WORKING_DIR / "Ho So Du An" / "Bao Gia" / "From_Outlook"
+    outlook_dir.mkdir(parents=True, exist_ok=True)
+
+    meta_map = {
+        "Inbox_61_報價單-茂鼎科技-20260721-越南ECOPRIME-橘子亞洲-電表設備.pdf": {
+            "title": "Báo Giá Thiết Bị Đo Điện Năng DAE (Mao Ding / ECO PRIME)",
+            "partner": "ECO PRIME / 茂鼎科技 / Orange Asia",
+            "preset_key": "pouhui"
+        },
+        "Inbox_56_DAE設備-牌價表-越南總經銷報價.pdf": {
+            "title": "Bảng Giá Đại Lý Phân Phối Thiết Bị DAE Tại VN (USD)",
+            "partner": "DAE Technology / 總經銷",
+            "preset_key": "daeusd"
+        },
+        "Inbox_58_22202-260600005.pdf": {
+            "title": "Đơn Hàng Sửa Chữa Thiết Bị RFID RFR900 (CX PO)",
+            "partner": "CX Technology (VN) Co., Ltd.",
+            "preset_key": "cxrepair"
+        },
+        "CX_RFID_Bao_gia_sua_loi_202609_V1.1.xlsx": {
+            "title": "Báo Giá Sửa Lỗi Thiết Bị RFID RFR900 (13.7M VND)",
+            "partner": "CX Technology (VN) Co., Ltd.",
+            "preset_key": "cxrepair"
+        },
+        "ECO PRIME_Báo Giá Đồng Hồ Điện & CC2051_Pou Hui_20261021.xlsx": {
+            "title": "Báo Giá Đồng Hồ Điện & Gateway CC2051 (4 Trạm Biến Áp)",
+            "partner": "ECO PRIME / Pou Hui (Phổ Huệ)",
+            "preset_key": "pouhui"
+        }
+    }
+
+    files = []
+    for f in outlook_dir.glob("*.*"):
+        if f.is_file() and not f.name.startswith("~$"):
+            stat = f.stat()
+            ext = f.suffix.lstrip(".").lower()
+            meta = meta_map.get(f.name, {})
+
+            files.append({
+                "file_name": f.name,
+                "file_path": str(f.resolve()),
+                "file_format": ext,
+                "file_size": stat.st_size,
+                "file_size_formatted": f"{stat.st_size / 1024:.1f} KB",
+                "title": meta.get("title") or f.name,
+                "partner": meta.get("partner") or "Đối tác Hong Ming Global",
+                "preset_key": meta.get("preset_key") or "",
+                "download_url": f"/api/v1/quotation/download-outlook/{f.name}"
+            })
+
+    files.sort(key=lambda x: x["file_size"], reverse=True)
+    return {
+        "status": "success",
+        "total": len(files),
+        "files": files
+    }
+
+
+def download_outlook_quotation_file_controller(file_name: str) -> FileResponse:
+    """Controller to download real quotation files from Outlook archive."""
+    clean_name = os.path.basename(file_name)
+    target_path = WORKING_DIR / "Ho So Du An" / "Bao Gia" / "From_Outlook" / clean_name
+
+    if not target_path.is_file():
+        raise HTTPException(status_code=404, detail="Không tìm thấy tệp báo giá từ Outlook.")
+
+    if clean_name.lower().endswith(".pdf"):
+        media_type = "application/pdf"
+    elif clean_name.lower().endswith(".xlsx"):
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    elif clean_name.lower().endswith(".docx"):
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    else:
+        media_type = "application/octet-stream"
+
+    return FileResponse(
+        path=str(target_path),
+        filename=clean_name,
+        media_type=media_type
+    )

@@ -160,6 +160,34 @@
     }
     document.addEventListener("DOMContentLoaded", refreshSidebarRemindersAlert);
   </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      try {
+        const response = await fetch('/api/workflows');
+        if (!response.ok) return;
+        const data = await response.json();
+        const count = data.cases.filter(item => item.attention && item.queue_group === 'active').length;
+        const kinds={'/quotations':['quotation'],'/contracts':['contract'],'/repair-contracts':['contract'],
+          '/po':['procurement'],'/delivery':['delivery'],'/acceptance':['acceptance'],
+          '/tracker':['contract','payment','acceptance','delivery','warranty'],'/receivables':['payment']};
+        const relevant=kinds[location.pathname];
+        if(relevant){
+          const section=document.createElement('details');
+          section.style.cssText='flex:0 0 auto;max-height:200px;overflow:auto;margin:12px 0;padding:14px;border:1px solid #dbe5ef;border-radius:12px;background:#fff;color:#123047';
+          const summary=document.createElement('summary');summary.textContent='Công việc và hồ sơ liên quan · dùng chung với Việc cần làm';section.append(summary);
+          const description=document.createElement('p');description.textContent='Mở đúng công việc để xem bản ký, thư Outlook, bước đang chờ và xác nhận nghiệp vụ. Dữ liệu nguồn được đối chiếu lại khi mở trang.';section.append(description);
+          const ul=document.createElement('ul');
+          data.cases.filter(x=>relevant.includes(x.kind)).forEach(x=>{
+            const li=document.createElement('li'),a=document.createElement('a');a.href='/workflows?case='+x.id;
+            a.textContent=x.title+' · '+x.customer+' · '+(x.queue_label || x.current?.title || 'Đã hoàn tất')+
+              (x.business_confirmations?.length ? ' · Có xác nhận nghiệp vụ' : '');li.append(a);ul.append(li);
+          });section.append(ul);document.querySelector('#main-content > header')?.after(section);
+        }
+        const badge = document.getElementById('workflowCount');
+        if (badge && count) { badge.textContent = count; badge.style.display = ''; badge.title = count + ' việc cần xử lý hoặc gần hạn'; }
+      } catch (error) { console.debug('Chưa tải được danh sách việc cần làm'); }
+    });
+  </script>
   {% block scripts %}{% endblock %}
 
 </body>

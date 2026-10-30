@@ -290,6 +290,13 @@ def init_db():
                 f"ALTER TABLE payment_milestones ADD COLUMN {column_name} {definition}"
             )
 
+    ar_columns = {row[1] for row in cursor.execute('PRAGMA table_info(project_receivables)')}
+    for name, definition in (('start_date','TEXT'),('payment_term_days','INTEGER'),
+                             ('paid_by_date','TEXT'),('payment_basis','TEXT'),
+                             ('installment_order','INTEGER'),('project_group','TEXT')):
+        if name not in ar_columns:
+            cursor.execute(f'ALTER TABLE project_receivables ADD COLUMN {name} {definition}')
+
     # Backward-compatible migration for custom_reminders (folder_path & attachments)
     cr_columns = {
         row[1] for row in cursor.execute("PRAGMA table_info(custom_reminders)").fetchall()
@@ -613,6 +620,9 @@ def scan_and_index_documents(conn: sqlite3.Connection):
 def get_contracts_dossier() -> List[Dict[str, Any]]:
     """Return all contracts with their milestones and linked documents."""
     conn = get_db_connection()
+    from app.services.payment_state_service import reconcile_existing
+    reconcile_existing(conn)
+    conn.commit()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -814,6 +824,12 @@ def reset_payment_milestone(milestone_id: int) -> Optional[Dict[str, Any]]:
     return result
 
 
+def contract_received_total(conn, contract_id):
+    """Include verified partial receipts without changing the agreed milestone value."""
+    from app.services.payment_state_service import contract_total
+    return contract_total(conn,contract_id)
+
+
 def mark_milestone_paid(
     milestone_id: int,
     paid_date: Optional[str] = None,
@@ -831,7 +847,10 @@ def mark_milestone_paid(
 
     contract_id = row["contract_id"]
     contract_code = row["contract_code"]
-    milestone_amount = float(actual_amount if actual_amount is not None else row["amount"])
+    milestone_amount = float(row["amount"])
+    if actual_amount is not None and abs(float(actual_amount)-milestone_amount)>0.001:
+        conn.close()
+        raise ValueError("Thu một phần cần ghi từng khoản thực nhận trong Việc cần làm; không đổi giá trị đợt thu.")
 
     if not paid_date:
         paid_date = datetime.now().strftime("%d/%m/%Y")
@@ -854,7 +873,7 @@ def mark_milestone_paid(
         SELECT SUM(amount) FROM payment_milestones
         WHERE contract_id = ? AND status = 'PAID'
     """, (contract_id,))
-    new_paid = float(cursor.fetchone()[0] or 0.0)
+    new_paid = contract_received_total(conn, contract_id)
 
     # Check contract total
     cursor.execute("SELECT total_amount, status FROM contracts WHERE id = ?", (contract_id,))
@@ -900,6 +919,11 @@ def unmark_milestone_paid(milestone_id: int) -> Optional[Dict[str, Any]]:
 
     contract_id = row["contract_id"]
     contract_code = row["contract_code"]
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='workflow_receipts'").fetchone():
+        verified = conn.execute('SELECT 1 FROM workflow_receipts r JOIN workflow_cases w ON w.id=r.case_id WHERE w.milestone_id=?',(milestone_id,)).fetchone()
+        if verified:
+            conn.close()
+            raise ValueError('Đợt này có khoản thu đã đối chiếu và nhật ký. Cần kế toán xử lý điều chỉnh, không hủy bằng nút đánh dấu cũ.')
     triggered = row["triggered"]
     due_date = row["due_date"]
 
@@ -945,7 +969,7 @@ def unmark_milestone_paid(milestone_id: int) -> Optional[Dict[str, Any]]:
         SELECT SUM(amount) FROM payment_milestones
         WHERE contract_id = ? AND status = 'PAID'
     """, (contract_id,))
-    new_paid = float(cursor.fetchone()[0] or 0.0)
+    new_paid = contract_received_total(conn, contract_id)
 
     cursor.execute("SELECT total_amount, status FROM contracts WHERE id = ?", (contract_id,))
     c_row = cursor.fetchone()

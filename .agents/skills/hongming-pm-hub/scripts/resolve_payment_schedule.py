@@ -9,6 +9,11 @@ import sys
 from pathlib import Path
 
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -17,7 +22,7 @@ def main() -> int:
     )
     parser.add_argument("text", nargs="?", default="", help="Mô tả tỷ lệ, thời hạn và mục đích từng đợt")
     parser.add_argument("--input-file", type=Path, help="Tệp UTF-8 chứa mô tả đầu vào")
-    parser.add_argument("--workspace", type=Path, default=Path(r"E:\Working"))
+    parser.add_argument("--workspace", type=Path, default=Path(_workspace_path('')))
     parser.add_argument("--company", default="")
     parser.add_argument("--project", default="")
     args = parser.parse_args()

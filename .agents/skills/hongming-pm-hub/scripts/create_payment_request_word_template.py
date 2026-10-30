@@ -14,8 +14,13 @@ import shutil
 from pathlib import Path
 
 
-TEMPLATE = Path(r"E:\Working\Bieu Mau\Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx")
-DEFAULT_OUTPUT = Path(r"E:\Working\Bieu Mau\đơn yêu cầu NCC thanh toán-Bản mới.docx")
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
+TEMPLATE = Path(_workspace_path('Bieu Mau\\Mau_Goc_De_Nghi_Thanh_Toan_NCC.docx'))
+DEFAULT_OUTPUT = Path(_workspace_path('Bieu Mau\\đơn yêu cầu NCC thanh toán-Bản mới.docx'))
 
 
 def next_fallback(path: Path) -> Path:

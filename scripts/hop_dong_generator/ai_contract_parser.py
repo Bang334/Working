@@ -24,18 +24,21 @@ if str(PORTAL_DIR) not in sys.path:
 
 from app.services.payment_schedule_service import resolve_payment_schedule
 
-# API Key mặc định của hệ thống
-DEFAULT_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDIGsxjjDNtk6_fvp_fpPKFBX-etiimtv4")
+try:
+    from app.config import DEFAULT_GEMINI_KEYS, DEFAULT_GEMINI_KEY, CANDIDATE_MODELS, DEFAULT_MODEL
+except Exception:
+    DEFAULT_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+    DEFAULT_GEMINI_KEYS = [DEFAULT_GEMINI_KEY] if DEFAULT_GEMINI_KEY else []
+    CANDIDATE_MODELS = [
+        "gemini-3.5-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-lite-latest",
+    ]
+    DEFAULT_MODEL = CANDIDATE_MODELS[0]
 
-# Danh sách Model AI ưu tiên (Ưu tiên 3.5-flash-lite, 3.1-flash-lite)
-CANDIDATE_MODELS = [
-    "gemini-3.5-flash-lite",
-    "gemini-3.1-flash-lite",
-    "gemini-3.5-flash",
-    "gemini-3.8-flash",
-    "gemini-2.5-flash",
-]
-DEFAULT_MODEL = CANDIDATE_MODELS[0]
 
 
 SYSTEM_PROMPT = """Bạn là trợ lý AI chuyên nghiệp về bóc tách và chuẩn hóa dữ liệu hợp đồng mua bán thiết bị / phần mềm song ngữ Việt - Trung cho CÔNG TY TNHH TOÀN CẦU HONG MING.
@@ -111,7 +114,7 @@ def parse_contract_info_with_ai(
 
     models_to_try = [model_name] if model_name != DEFAULT_MODEL else CANDIDATE_MODELS
     last_error = None
-    
+
     prompt = f"{SYSTEM_PROMPT}\n\nDƯỚI ĐÂY LÀ DỮ LIỆU ĐẦU VÀO CẦN PHÂN TÍCH:\n\"\"\"\n{raw_input_text}\n\"\"\""
     payload = {
         "contents": [
@@ -138,7 +141,7 @@ def parse_contract_info_with_ai(
                 response_data = json.loads(res.read().decode("utf-8"))
                 candidate = response_data.get("candidates", [])[0]
                 text_out = candidate["content"]["parts"][0]["text"].strip()
-                
+
                 # Loại bỏ markdown fences nếu có
                 if text_out.startswith("```json"):
                     text_out = text_out[7:]
@@ -147,7 +150,7 @@ def parse_contract_info_with_ai(
                 if text_out.endswith("```"):
                     text_out = text_out[:-3]
                 text_out = text_out.strip()
-                
+
                 parsed_json = json.loads(text_out)
                 parsed_json["phan_bo_thanh_toan"] = resolve_payment_schedule(
                     raw_input_text, parsed_json
@@ -164,7 +167,7 @@ def parse_contract_info_with_ai(
 if __name__ == "__main__":
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-        
+
     test_input = """
     Tên công ty: CÔNG TY TNHH CÔNG NGHỆ JINXUN VIỆT NAM
     Địa chỉ: Thôn Trụ, Phường Việt Hòa, Thành phố Hải Phòng, Việt Nam

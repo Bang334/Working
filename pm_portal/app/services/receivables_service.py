@@ -207,6 +207,7 @@ def get_receivable(item_id: int) -> Optional[Dict[str, Any]]:
         conn.close()
         if row:
             d = dict(row)
+            d['_data_source'] = 'database'
             d["days_left"] = calculate_days_left(d.get("due_date"))
             return d
     except Exception:
@@ -431,35 +432,18 @@ def update_receivable(item_id: int, data: Dict[str, Any]) -> bool:
             item_id,
         ))
 
-        # Synchronize linked contract milestone if exists
-        linked_ms_id = merged.get("linked_milestone_id")
-        if linked_ms_id:
-            if merged.get("paid_date"):
-                cursor.execute("""
-                    UPDATE payment_milestones SET
-                        triggered = 1,
-                        status = 'PAID',
-                        status_label = 'Đã thanh toán',
-                        paid_date = ?
-                    WHERE id = ?
-                """, (merged.get("paid_date"), linked_ms_id))
-            elif "paid_date" in data:
-                cursor.execute("""
-                    UPDATE payment_milestones SET
-                        triggered = 0,
-                        status = 'PENDING',
-                        status_label = 'Chờ thanh toán',
-                        paid_date = NULL
-                    WHERE id = ?
-                """, (linked_ms_id,))
-
         affected = cursor.rowcount
+        from app.services.payment_state_service import apply_ar
+        apply_ar(conn,item_id,allow_unpay=True)
         conn.commit()
         conn.close()
         if affected > 0:
             return True
     except Exception:
-        pass
+        # A failed real-data update must never fall through to another dataset
+        # merely because a sample or imported file happens to have the same id.
+        if existing.get('_data_source') == 'database':
+            raise
 
     # Fallback: update Sample JSON if item exists there
     sample_path = os.path.join(os.path.dirname(__file__), "..", "data", "receivables_sample_data.json")
@@ -552,18 +536,6 @@ def update_receivable_status(item_id: int, status: str, paid_date: Optional[str]
             WHERE id = ?
         """, (gross, actual_paid_date, item_id))
 
-        # Synchronize linked contract milestone if exists
-        linked_ms_id = item.get("linked_milestone_id")
-        if linked_ms_id:
-            cursor.execute("""
-                UPDATE payment_milestones SET
-                    triggered = 1,
-                    status = 'PAID',
-                    status_label = 'Đã thanh toán',
-                    paid_date = ?
-                WHERE id = ?
-            """, (actual_paid_date, linked_ms_id))
-
     else:
         # Revert to pending/delayed with debt re-evaluated consistently
         cur_received = float(item.get("received_amount") or 0.0)
@@ -579,15 +551,33 @@ def update_receivable_status(item_id: int, status: str, paid_date: Optional[str]
             WHERE id = ?
         """, (status, new_received, new_debt, item_id))
 
+    from app.services.payment_state_service import apply_ar
+    apply_ar(conn,item_id,allow_unpay=True)
     conn.commit()
     conn.close()
     return True
 
 
 def update_receivable_notes(item_id: int, notes: str) -> bool:
-    """Directly update collection follow-up notes inline."""
+    """Update the shared contract note; uncontracted rows stay independent."""
     conn = get_db_connection()
     cursor = conn.cursor()
+    item = cursor.execute(
+        "SELECT contract_code, customer_name FROM project_receivables WHERE id = ?",
+        (item_id,),
+    ).fetchone()
+    if item is None:
+        conn.close()
+        return False
+    code = str(item["contract_code"] or "").strip()
+    if code and code not in ("-", "None"):
+        cursor.execute("""
+            UPDATE project_receivables SET notes = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE TRIM(contract_code) = ? AND TRIM(COALESCE(customer_name, '')) = ?
+        """, (notes, code, str(item["customer_name"] or "").strip()))
+        conn.commit()
+        conn.close()
+        return True
     cursor.execute("""
         UPDATE project_receivables SET
             notes = ?,
@@ -655,8 +645,10 @@ def sync_from_existing_contracts(clear_first: bool = False, clear_all: bool = Fa
         cursor.execute("DELETE FROM sqlite_sequence WHERE name='project_receivables'")
         conn.commit()
     elif clear_first:
-        # Chỉ xóa các mốc đồng bộ từ hợp đồng, bảo toàn 100% các công nợ độc lập không liên kết hợp đồng
-        cursor.execute("DELETE FROM project_receivables WHERE linked_milestone_id IS NOT NULL")
+        # Retain reviewed dates, VAT, project separation and inference provenance.
+        # Cleaning removes only links whose source milestone no longer exists.
+        cursor.execute("""DELETE FROM project_receivables WHERE linked_milestone_id IS NOT NULL
+            AND linked_milestone_id NOT IN (SELECT id FROM payment_milestones)""")
         conn.commit()
 
     cursor.execute("""
@@ -925,14 +917,16 @@ def _reconstruct_item_state_at_date(item: Dict[str, Any], as_of_date_str: str) -
     current_received = float(item.get("received_amount") or 0.0)
 
     paid_date_str = parse_flexible_date(item.get("paid_date"))
+    paid_by_str = parse_flexible_date(item.get("paid_by_date"))
     due_date_str = parse_flexible_date(item.get("due_date"))
     promised_date_str = parse_flexible_date(item.get("customer_promised_date"))
 
     # 1. Determine if already paid on or prior to as_of
     is_paid_at_date = False
-    if paid_date_str:
+    if paid_date_str or paid_by_str:
         try:
-            p_date = datetime.strptime(paid_date_str, "%Y-%m-%d").date()
+            # A bound records "paid by this date", never an invented receipt date.
+            p_date = datetime.strptime(paid_date_str or paid_by_str, "%Y-%m-%d").date()
             if p_date <= as_of:
                 is_paid_at_date = True
         except Exception:
@@ -941,7 +935,7 @@ def _reconstruct_item_state_at_date(item: Dict[str, Any], as_of_date_str: str) -
     if is_paid_at_date:
         rec_at_date = gross if current_received >= gross else current_received
         debt_at_date = max(0.0, gross - rec_at_date)
-        status_at_date = "PAID"
+        status_at_date = "PAID" if gross > 0 and rec_at_date >= gross else "PENDING"
         days_left_at_date = None
     else:
         rec_at_date = 0.0
@@ -978,7 +972,7 @@ def _reconstruct_item_state_at_date(item: Dict[str, Any], as_of_date_str: str) -
         "remaining_debt": round(debt_at_date, 2),
         "collection_status": status_at_date,
         "days_left": days_left_at_date,
-        "is_paid": is_paid_at_date,
+        "is_paid": status_at_date == "PAID",
         "is_overdue": status_at_date == "OVERDUE",
     }
 
@@ -1212,19 +1206,6 @@ def get_weekly_comparison_data(
             "upload_id": upload_id,
             "badge": "📂 File Tải Lên (獨立檔案)"
         }
-    elif data_source == "sample":
-        sample_path = os.path.join(os.path.dirname(__file__), "..", "data", "receivables_sample_data.json")
-        try:
-            with open(sample_path, "r", encoding="utf-8") as f:
-                sample_json = json.load(f)
-            all_raw_items = [dict(it) for it in sample_json.get("receivables", [])]
-        except Exception:
-            all_raw_items = list_receivables()
-        data_source_meta = {
-            "type": "sample",
-            "name": "Dữ liệu mẫu chuẩn hóa",
-            "badge": "🧪 Dữ Liệu Mẫu (示範數據)"
-        }
     else:
         # Default: 'db' (Live SQLite database records)
         all_raw_items = list_receivables(customer=customer, order_by_urgency=False)
@@ -1357,6 +1338,13 @@ def get_weekly_comparison_data(
             "contract_code": it.get("contract_code") or "-",
             "gross_amount": gross,
             "gross_formatted": format_currency_vn(gross),
+            "net_amount": it.get('net_amount'),
+            "vat_rate": it.get('vat_rate'),
+            "total_contract_amount": it.get('total_contract_amount'),
+            "project_group": it.get('project_group'),
+            "installment_order": it.get('installment_order'),
+            "paid_by_date": it.get('paid_by_date'),
+            "payment_basis": it.get('payment_basis'),
             "due_date": it.get("due_date"),
             "paid_date": it.get("paid_date"),
             "customer_promised_date": it.get("customer_promised_date"),
@@ -1432,6 +1420,9 @@ def get_weekly_comparison_data(
             c_key = f"PROJ_{curr_items[idx].get('id')}"
         else:
             c_key = c_code
+        group = str(curr_items[idx].get("project_group") or "").strip()
+        if group:
+            c_key += '::' + group
         contract_groups_map.setdefault(c_key, []).append(idx)
 
     def _split_bilingual_lines(raw_text: Optional[str]) -> Tuple[str, str]:
@@ -1448,6 +1439,8 @@ def get_weekly_comparison_data(
         if c_code == "HMV021020260001":
             return ("Hệ thống kết nối máy SMB (Cheng Feng)", "SMB 機聯網系統 (承豐樂華)")
         if c_code == "HMV060620250001":
+            return ("Phần mềm IoT Visual SMB (Vonmax)", "IoT Visual SMB 軟體 (弘聲)")
+        if c_code == "HMV060620250002":
             return ("Phần cứng kết nối máy SMB (Vonmax)", "SMB 機聯網硬體 (弘聲)")
         if c_code == "HMSY200720260001":
             return ("Phương án nâng cấp trực quan hóa SMB", "SMB 可視化升級方案 (正揚)")
@@ -1524,12 +1517,34 @@ def get_weekly_comparison_data(
 
     contracts_comparison = []
     for c_key, indices in contract_groups_map.items():
-        first_curr = curr_items[indices[0]]
+        indices.sort(key=lambda i: (int(curr_items[i].get('installment_order') or 999), i))
+        first_curr = next((curr_items[i] for i in indices
+                           if curr_items[i].get('payment_basis') != 'inferred_preceding_paid'),
+                          curr_items[indices[0]])
         c_code_disp = first_curr.get("contract_code") if not c_key.startswith("PROJ_") else "-"
         proj_title_vi, proj_title_zh = _clean_project_display_name_bilingual(first_curr.get("project_name") or "", c_code_disp)
         cust_name_vi, cust_name_zh = _format_bilingual_customer(first_curr.get("customer_name") or "-")
 
         group_gross = sum(float(curr_items[i].get("gross_amount") or 0.0) for i in indices)
+        listed_gross = group_gross
+        group_net = sum(float(curr_items[i].get('net_amount') or curr_items[i].get('gross_amount') or 0) for i in indices)
+        totals = {float(curr_items[i].get('total_contract_amount') or 0) for i in indices}
+        rates = {float(curr_items[i].get('vat_rate') or 0) for i in indices}
+        contract_net = next(iter(totals)) if len(totals) == 1 else 0
+        schedule_warning = ''
+        missing_pct = 0.0
+        if contract_net > 0 and group_net <= contract_net + 1 and len(rates) == 1:
+            group_gross = round(contract_net * (1 + next(iter(rates))), 2)
+            missing_pct = round(max(0, (contract_net - group_net) / contract_net * 100), 2)
+            if missing_pct > 0.01:
+                schedule_warning = f'Thiếu dữ liệu các đợt trước ({missing_pct:g}% HĐ); chưa xác định đã thu hay còn nợ.'
+        elif contract_net > 0 and group_net > contract_net + 1:
+            schedule_warning = 'Tổng các đợt vượt giá trị hợp đồng: cần đối chiếu, không coi là lịch đủ 100%.'
+        elif len(totals) > 1:
+            schedule_warning = 'Các dòng khác tổng giá trị hợp đồng: cần tách đúng dự án trước khi xác nhận tỷ lệ.'
+        if first_curr.get('project_group'):
+            proj_title_vi = first_curr['project_group']
+            proj_title_zh = first_curr['project_group']
         group_prev_rec = sum(float(prev_items[i].get("received_amount") or 0.0) for i in indices)
         group_curr_rec = sum(float(curr_items[i].get("received_amount") or 0.0) for i in indices)
 
@@ -1564,7 +1579,7 @@ def get_weekly_comparison_data(
                 prev_all_paid_c = False
 
             if group_gross > 0:
-                if s_idx == seg_count - 1:
+                if s_idx == seg_count - 1 and missing_pct <= 0.01:
                     w_pct = round(max(0.0, 100.0 - accum_pct), 2)
                 else:
                     w_pct = round((seg_gross / group_gross) * 100.0, 2)
@@ -1619,6 +1634,9 @@ def get_weekly_comparison_data(
                 "start_date": c_it.get("start_date") or "-",
                 "payment_term_days": c_it.get("payment_term_days"),
                 "paid_date": c_it.get("paid_date") or "-",
+                "paid_by_date": c_it.get("paid_by_date") or "-",
+                "payment_basis": c_it.get("payment_basis") or "",
+                "is_aggregate_history": c_it.get('payment_basis') == 'email_remaining_balance',
                 "customer_promised_date": c_it.get("customer_promised_date") or "-",
                 "doc_status": c_it.get("doc_status") or "-",
                 "doc_status_vi": doc_vi,
@@ -1671,8 +1689,19 @@ def get_weekly_comparison_data(
         )
         is_fully_paid = (group_curr_rec >= group_gross - 1.0) and group_gross > 0
         has_remaining_debt = not is_fully_paid
-        is_active_attention = bool(has_change or has_overdue_curr or has_urgent_curr or has_unstarted_next)
+        is_active_attention = bool(has_change or has_overdue_curr or has_urgent_curr)
 
+        if missing_pct > 0.01:
+            segments.insert(0, {
+                'id': 'missing:' + c_key, 'is_missing_schedule': True,
+                'width_pct': round(100 - sum(s['width_pct'] for s in segments), 2),
+                'milestone_name': 'Các đợt trước chưa có dữ liệu / 前期期款待核實',
+                'milestone_name_vi': 'Các đợt trước chưa có dữ liệu',
+                'gross_amount': 0, 'gross_formatted': 'Chưa xác định',
+                'prev_status': 'UNKNOWN', 'curr_status': 'UNKNOWN',
+                'curr_status_label_vi': 'Chưa xác định đã thu / còn nợ',
+                'curr_received': 0, 'notes': schedule_warning,
+            })
         contracts_comparison.append({
             "contract_key": c_key,
             "contract_code": c_code_disp,
@@ -1683,6 +1712,10 @@ def get_weekly_comparison_data(
             "customer_name_vi": cust_name_vi,
             "customer_name_zh": cust_name_zh,
             "total_gross": group_gross,
+            "listed_gross": listed_gross,
+            "curr_debt": round(listed_gross - group_curr_rec, 2),
+            "schedule_warning": schedule_warning,
+            "schedule_complete": not schedule_warning,
             "total_gross_formatted": format_currency_vn(group_gross),
             "prev_received": group_prev_rec,
             "prev_received_formatted": format_currency_vn(group_prev_rec),

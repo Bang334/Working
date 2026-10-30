@@ -71,7 +71,7 @@ def generate_eco_prime_excel(
     template_path = ECO_PRIME_TEMPLATE_PATH
     if not template_path.is_file():
         # Fallback thử tìm ở thư mục cha
-        fallback_path = Path("E:/Working/Bieu Mau/Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx")
+        fallback_path = WORKING_DIR / "Bieu Mau" / "Mau_Goc_Bao_Gia_ECO_PRIME_Dong_Ho_Dien.xlsx"
         if fallback_path.is_file():
             template_path = fallback_path
         else:

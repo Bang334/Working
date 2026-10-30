@@ -148,10 +148,16 @@ def test_organized_files_and_signature_mapping():
     }
     for filename, names in expected.items():
         tree = ast.parse((script_dir / filename).read_text(encoding="utf-8"))
-        constants = {node.targets[0].id: node.value.value for node in tree.body
-                     if isinstance(node, ast.Assign) and len(node.targets) == 1
-                     and isinstance(node.targets[0], ast.Name)
-                     and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str)}
+        # Evaluate only path declarations; never execute document-generation scripts.
+        constants = {"Path": Path, "__file__": str(script_dir / filename)}
+        for node in tree.body:
+            if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                    and isinstance(node.targets[0], ast.Name)
+                    and node.targets[0].id in {"WORKING_DIR", *names}):
+                constants[node.targets[0].id] = eval(
+                    compile(ast.Expression(node.value), filename, "eval"),
+                    {"__builtins__": {"str": str}}, constants,
+                )
         for name in names:
             assert Path(constants[name]).exists(), (filename, name)
     assert voucher.FALLBACK_TEMPLATE.is_file()

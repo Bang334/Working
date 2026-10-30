@@ -10,6 +10,11 @@ from typing import Any, Dict, List
 import openpyxl
 
 
+# Locate the project independently of the drive letter on this computer.
+_WORKSPACE_ROOT = next((p for p in __import__('pathlib').Path(__file__).resolve().parents if (p / 'pm_portal' / 'app').is_dir()), __import__('pathlib').Path.cwd())
+def _workspace_path(relative):
+    return str(_WORKSPACE_ROOT / relative.replace(chr(92), '/'))
+
 def _widths(ws) -> Dict[str, Any]:
     return {column: ws.column_dimensions[column].width for column in "ABCDEFGHI"}
 
@@ -79,7 +84,7 @@ def main() -> int:
     parser.add_argument(
         "--template",
         type=Path,
-        default=Path(r"E:\Working\Bieu Mau\Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx"),
+        default=Path(_workspace_path('Bieu Mau\\Mau_Goc_De_Nghi_Thanh_Toan_NCC.xlsx')),
     )
     args = parser.parse_args()
     result = verify(args.template, args.output)

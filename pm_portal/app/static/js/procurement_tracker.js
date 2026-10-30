@@ -473,7 +473,7 @@
           ${categoryBadge}
         </td>
         <td style="text-align: center; font-weight: 700; white-space: nowrap;">
-          <span style="font-size: 0.92rem; color: #1F4E79;">${o.quantity || 1}</span> 
+          <span style="font-size: 0.92rem; color: #1F4E79;">${o.quantity || 1}</span>
           <small style="color: var(--text-muted); font-size: 0.75rem;">${o.unit || "Bộ"}</small>
         </td>
         <td>
@@ -481,24 +481,24 @@
         </td>
         <td style="text-align: center; white-space: nowrap;">
           <div class="inline-date-picker-wrap">
-            <input type="date" class="inline-date-input" value="${o.order_date || ''}" 
-                   onchange="updatePoInlineDate(${o.id}, 'order_date', this.value)" 
+            <input type="date" class="inline-date-input" value="${o.order_date || ''}"
+                   onchange="updatePoInlineDate(${o.id}, 'order_date', this.value)"
                    title="Chọn ngày đặt hàng">
             ${o.order_date ? `<button type="button" class="btn-clear-date" onclick="clearPoDateInline(${o.id}, 'order_date', event)" title="Xóa ngày đặt">×</button>` : ''}
           </div>
         </td>
         <td style="text-align: center; white-space: nowrap;">
           <div class="inline-date-picker-wrap eta-wrap">
-            <input type="date" class="inline-date-input eta-input" value="${o.eta_date || ''}" 
-                   onchange="updatePoInlineDate(${o.id}, 'eta_date', this.value)" 
+            <input type="date" class="inline-date-input eta-input" value="${o.eta_date || ''}"
+                   onchange="updatePoInlineDate(${o.id}, 'eta_date', this.value)"
                    title="Chọn ngày giao dự kiến ETA">
             ${o.eta_date ? `<button type="button" class="btn-clear-date" onclick="clearPoDateInline(${o.id}, 'eta_date', event)" title="Xóa ngày ETA">×</button>` : ''}
           </div>
         </td>
         <td style="text-align: center; white-space: nowrap;" id="actual-date-cell-${o.id}">
           <div class="inline-date-picker-wrap actual-wrap">
-            <input type="date" class="inline-date-input actual-input" value="${o.actual_delivery_date || ''}" 
-                   onchange="updatePoInlineDate(${o.id}, 'actual_delivery_date', this.value)" 
+            <input type="date" class="inline-date-input actual-input" value="${o.actual_delivery_date || ''}"
+                   onchange="updatePoInlineDate(${o.id}, 'actual_delivery_date', this.value)"
                    title="Chọn ngày giao hàng thực tế">
             ${o.actual_delivery_date ? `<button type="button" class="btn-clear-date" onclick="clearPoDateInline(${o.id}, 'actual_delivery_date', event)" title="Xóa ngày giao thực tế">×</button>` : ''}
           </div>
@@ -527,6 +527,9 @@
           </div>
         </td>
         <td style="text-align: center; white-space: nowrap;">
+          <a href="/emails?source=po&id=${o.id}" class="btn btn-outline btn-sm" title="✉️ Soạn Email Đặt Hàng (PO) gửi Nhà Cung Cấp" style="padding: 4px 8px; margin-right: 4px; color: #0284c7; border-color: rgba(2,132,199,0.3);">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </a>
           <button type="button" class="btn btn-outline btn-sm" onclick="openEditOrderModal(${o.id})" title="Chỉnh sửa đơn hàng" style="padding: 4px 8px; margin-right: 4px;">
             <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
@@ -1821,4 +1824,3 @@
     }
   });
 })();
-

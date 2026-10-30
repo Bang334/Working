@@ -8,6 +8,22 @@ const SidebarTabManager = {
 
   TABS: [
     {
+      id: "shipping_documents",
+      section: "project_flow",
+      name: "Invoice & Packing List",
+      icon: "📦",
+      url: "/shipping-documents",
+      desc: "Trích xuất nhiều file, ghi chú bằng AI và tạo hai hồ sơ giao hàng Excel",
+    },
+    {
+      id: "workflows",
+      section: "admin",
+      name: "Việc Cần Làm",
+      icon: "✅",
+      url: "/workflows",
+      desc: "Hướng dẫn từng bước, hồ sơ trình ký, Outlook và xác nhận tiền về",
+    },
+    {
       id: "dashboard",
       section: "admin",
       name: "Trang Chủ · Tổng Quan Dự Án",
